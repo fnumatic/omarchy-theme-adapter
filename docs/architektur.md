@@ -132,6 +132,13 @@ Omarchy-Default = erstes der sortierten `backgrounds/` = `1-funky-shapes.webp`
 Umsetzung: `src/render/wallpaper.ts` setzt `picture-uri` + `picture-uri-dark` per gsettings
 (`install wallpaper [NAME]`); URIs sind snapshot-/reset-abgedeckt.
 
+### 3.8 GNOME Shell / PaperWM-Topbar
+Auf diesem System rendert PaperWM die Top-Bar selbst (transparent, Klasse
+`topbar-transparent-background`). Offizieller Eingriffspunkt: `~/.config/paperwm/user.css`
+(Extension aus/ein zum Aktivieren, kein Logout). Umsetzung: `src/render/shell.ts` verwaltet
+einen markierten Dawn-Block (Topbar-Hintergrund + Schrift in Dawn-Farben); Fremdinhalt bleibt
+unangetastet. Snapshot/Reset: `reset shell`.
+
 ### 3.8 Icons
 Passendes Dawn-kompatibles Icon-Theme (auszuwählen, offen). Omarchy-Referenz:
 `themes/rose-pine/icons.theme` = `Yaru-blue`.

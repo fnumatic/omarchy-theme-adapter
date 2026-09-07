@@ -4,8 +4,9 @@ import { loadSnapshot } from "./state.ts";
 import type { GSettingsRunner } from "./gsettings.ts";
 import { GTK3_THEME_NAME } from "./render/gtk3.ts";
 import { MARKER as GTK4_MARKER } from "./render/gtk4.ts";
+import { MARKER as SHELL_MARKER, END_MARKER as SHELL_END_MARKER } from "./render/shell.ts";
 
-export type ResetTarget = "ghostty" | "gtk3" | "gtk4" | "libreoffice" | "vscode" | "wallpaper";
+export type ResetTarget = "ghostty" | "gtk3" | "gtk4" | "libreoffice" | "vscode" | "wallpaper" | "shell";
 
 export interface ResetOptions {
   dry: boolean;
@@ -17,9 +18,15 @@ export interface ResetOptions {
   libreofficeConfigFile?: string;
   /** VS-Code-settings (Default: Code) — für Tests überschreibbar */
   vscodeSettingsFile?: string;
+  /** PaperWM-user.css (Default) — für Tests überschreibbar */
+  paperwmUserCssFile?: string;
   /** Ohne Angabe: alles wiederherstellen */
   target?: ResetTarget;
   gs: GSettingsRunner;
+}
+
+function paperwmUserCssFile(opts: ResetOptions): string {
+  return opts.paperwmUserCssFile ?? `${process.env.HOME}/.config/paperwm/user.css`;
 }
 
 function vscodeSettingsFile(opts: ResetOptions): string {
@@ -198,6 +205,40 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
     } else {
       await opts.gs.set("org.gnome.desktop.background", key, val);
       console.log(`   ✓ Wallpaper ${key} wiederhergestellt: ${val}`);
+    }
+  }
+  }
+
+  if (want("shell")) {
+  // PaperWM-user.css: Original wiederherstellen bzw. nur unseren Block entfernen
+  const pwFile = paperwmUserCssFile(opts);
+  if (snap.paperwmUserCssText === undefined || snap.paperwmUserCssExisted === undefined) {
+    console.log(`   − PaperWM: kein Original im Snapshot (alter Snapshot), übersprungen`);
+  } else if (opts.dry) {
+    console.log(`  dry-run: stelle ${pwFile} aus Snapshot wieder her`);
+  } else if (snap.paperwmUserCssExisted && snap.paperwmUserCssText !== null) {
+    await writeEnsured(pwFile, snap.paperwmUserCssText);
+    console.log(`   ✓ PaperWM-user.css wiederhergestellt: ${pwFile}`);
+  } else {
+    try {
+      const text = await readFile(pwFile, "utf8");
+      if (!text.includes(SHELL_MARKER)) {
+        console.log(`   − ${pwFile} enthält keinen rosepine-Block, unangetastet`);
+      } else {
+        const start = text.indexOf(`/* ${SHELL_MARKER}`);
+        const endToken = `/* ${SHELL_END_MARKER} */`;
+        const end = text.indexOf(endToken, start);
+        if (end === -1) throw new Error(`Block beschädigt in ${pwFile}, bitte manuell prüfen.`);
+        const head = text.slice(0, start).replace(/\s+$/u, "");
+        const tail = text.slice(end + endToken.length).replace(/^\s+/u, "");
+        const next = (head ? head + "\n\n" : "") + (tail ? tail + "\n" : "");
+        if (next) await writeFile(pwFile, next);
+        else await rm(pwFile, { force: true });
+        console.log(`   ✓ rosepine-Block aus ${pwFile} entfernt (Rest erhalten)`);
+      }
+    } catch (e) {
+      if (e instanceof Error && e.message.includes("beschädigt")) throw e;
+      console.log(`   − keine PaperWM-user.css vorhanden, nichts zu tun`);
     }
   }
   }

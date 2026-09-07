@@ -17,6 +17,8 @@ export interface Snapshot {
   vscodeSettingsText: string | null;
   wallpaperPictureUri: string | null;
   wallpaperPictureUriDark: string | null;
+  paperwmUserCssExisted: boolean | null;
+  paperwmUserCssText: string | null;
 }
 
 export function statePath(overrideDir?: string): string {
@@ -52,6 +54,10 @@ function vscodeSettingsPath(): string {
   return `${process.env.HOME}/.config/Code/User/settings.json`;
 }
 
+function paperwmUserCssPath(): string {
+  return `${process.env.HOME}/.config/paperwm/user.css`;
+}
+
 async function readOptional(path: string): Promise<{ existed: boolean; text: string | null }> {
   try {
     return { existed: true, text: await readFile(path, "utf8") };
@@ -77,10 +83,12 @@ export async function ensureSnapshot(
     const needsLO = !("libreofficeConfigText" in raw);
     const needsVscode = !("vscodeSettingsText" in raw);
     const needsWallpaper = !("wallpaperPictureUri" in raw);
-    if (needsGtk4 || needsLO || needsVscode || needsWallpaper) {
+    const needsPaperwm = !("paperwmUserCssText" in raw);
+    if (needsGtk4 || needsLO || needsVscode || needsWallpaper || needsPaperwm) {
       const g = needsGtk4 ? await readOptional(gtk4CssPath()) : null;
       const lo = needsLO ? await readOptional(libreofficeConfigPath()) : null;
       const vs = needsVscode ? await readOptional(vscodeSettingsPath()) : null;
+      const pw = needsPaperwm ? await readOptional(paperwmUserCssPath()) : null;
       const migrated: Snapshot = {
         ...existing,
         ...(needsGtk4 ? { gtk4CssExisted: g!.existed, gtk4CssText: g!.text } : {}),
@@ -96,6 +104,9 @@ export async function ensureSnapshot(
               wallpaperPictureUriDark: await gs.get("org.gnome.desktop.background", "picture-uri-dark"),
             }
           : {}),
+        ...(needsPaperwm
+          ? { paperwmUserCssExisted: pw!.existed, paperwmUserCssText: pw!.text }
+          : {}),
       };
       const p = statePath(overrideDir);
       await mkdir(p.slice(0, p.lastIndexOf("/")), { recursive: true });
@@ -110,6 +121,7 @@ export async function ensureSnapshot(
   const gtk4 = await readOptional(gtk4CssPath());
   const lo = await readOptional(libreofficeConfigPath());
   const vs = await readOptional(vscodeSettingsPath());
+  const pw = await readOptional(paperwmUserCssPath());
 
   const snap: Snapshot = {
     version: 1,
@@ -126,6 +138,8 @@ export async function ensureSnapshot(
     vscodeSettingsText: vs.text,
     wallpaperPictureUri: await gs.get("org.gnome.desktop.background", "picture-uri"),
     wallpaperPictureUriDark: await gs.get("org.gnome.desktop.background", "picture-uri-dark"),
+    paperwmUserCssExisted: pw.existed,
+    paperwmUserCssText: pw.text,
   };
   const p = statePath(overrideDir);
   await mkdir(p.slice(0, p.lastIndexOf("/")), { recursive: true });

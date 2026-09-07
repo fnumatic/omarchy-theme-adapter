@@ -42,9 +42,10 @@ Verwendung:
   rosepine-gnome install vscode [--dry-run]   Rose-Pine-Dawn-Theme in VS Code (Extension + colorTheme)
   rosepine-gnome install wallpaper [NAME] [--dry-run]
                                               Rose-Pine-Wallpaper setzen (Default: Omarchy-Default)
+  rosepine-gnome install shell [--dry-run]    PaperWM-Topbar in Dawn (user.css-Block)
   rosepine-gnome apply [--dry-run] [--colors FILE]
                                               System-Light-Schema setzen (MVP)
-  rosepine-gnome reset [--dry-run] [ghostty|gtk3|gtk4|libreoffice|vscode|wallpaper]
+  rosepine-gnome reset [--dry-run] [ghostty|gtk3|gtk4|libreoffice|vscode|wallpaper|shell]
                                               Originalzustand aus Snapshot wiederherstellen (ohne Ziel: alles)
 
 Optionen:
@@ -201,8 +202,18 @@ async function main(): Promise<void> {
         } catch (e) {
           C.die(`install wallpaper fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`);
         }
+      } else if (args.cmds[1] === "shell") {
+        await snapshotOnce(args.dry);
+        await withColors(args, async (c) => {
+          try {
+            const { installShellPaperwm, renderShellPaperwm } = await import("./render/shell.ts");
+            await installShellPaperwm(renderShellPaperwm(c), { dry: args.dry });
+          } catch (e) {
+            C.die(`install shell fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`);
+          }
+        });
       } else {
-        C.die(`install: unbekanntes Ziel '${args.cmds[1] ?? ""}' (ghostty|gtk3|gtk4|libreoffice|vscode|wallpaper)`);
+        C.die(`install: unbekanntes Ziel '${args.cmds[1] ?? ""}' (ghostty|gtk3|gtk4|libreoffice|vscode|wallpaper|shell)`);
       }
       break;
 
@@ -225,7 +236,7 @@ async function main(): Promise<void> {
     case "reset": {
       C.log(`Originalzustand wiederherstellen`);
       const t = args.cmds[1];
-      const targets = ["ghostty", "gtk3", "gtk4", "libreoffice", "vscode", "wallpaper"];
+      const targets = ["ghostty", "gtk3", "gtk4", "libreoffice", "vscode", "wallpaper", "shell"];
       if (t !== undefined && !targets.includes(t)) {
         C.die(`reset: unbekanntes Ziel '${t}' (${targets.join("|")})`);
       }

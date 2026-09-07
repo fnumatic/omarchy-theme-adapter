@@ -170,6 +170,7 @@ rosepinetheme/
 │       └── libreoffice.ts    # LO folgt dem System-Theme (Automatic, mit Backup) (TS)
 │       └── vscode.ts         # VS-Code-Theme (Extension + colorTheme, JSONC-sicher) (TS)
 │       └── wallpaper.ts      # Wallpaper setzen (Omarchy-Default 1-funky-shapes) (TS)
+│       └── shell.ts          # PaperWM-Topbar in Dawn (user.css-Block) (TS)
 ├── bin/
 │   └── rosepine-gnome        # Wrapper → bun src/cli.ts
 └── docs/
