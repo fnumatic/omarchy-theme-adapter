@@ -34,6 +34,15 @@ test("installWallpaper --dry-run setzt nichts", async () => {
   expect(gs.sets).toHaveLength(0);
 });
 
+test("Default bevorzugt 2-dot-map.webp, sonst erste sortierte", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "rpg-wp-pref-"));
+  await writeFile(join(dir, "1-a.webp"), "x");
+  await writeFile(join(dir, "2-dot-map.webp"), "x");
+  const gs = fakeGSettings();
+  const res = await installWallpaper({ dry: false, backgrounds: dir, gs });
+  expect(res.file.endsWith("2-dot-map.webp")).toBe(true);
+});
+
 test("installWallpaper setzt picture-uri + picture-uri-dark", async () => {
   const dir = await twoImages();
   const gs = fakeGSettings();
