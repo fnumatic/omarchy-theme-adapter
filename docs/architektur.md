@@ -83,12 +83,23 @@ Deep-Override optional als `~/.config/gtk-3.0/gtk.css`.
   eigene Blöcke werden idempotent aktualisiert (Marker). Betroffene Apps müssen neu gestartet werden.
 - **Bekannte Grenze:** kein Voll-Theme wie bei GTK3, sondern ein Recolor-Overlay auf Adwaita-Basis.
 
+**Fensterecken (Rundung):**
+- Omarchy (Hyprland) setzt standardmäßig `decoration.rounding = 0` (scharfe Ecken) sowie Shadow/Blur aus
+  (`default/hypr/looknfeel.lua`). Rose Pine und fast alle Themes überschreiben das nicht → scharfe Ecken;
+  einzige Ausnahme im Theme-Universum: `solitude` mit `rounding = 6`.
+- GNOME/libadwaita bringt dagegen gerundete CSD-Ecken mit (~12 px). Per Test bestätigt, dass die Rundung
+  über GTK-CSS steuerbar ist: `window.csd, window { border-radius: 0 }` im gtk4-Overlay macht Fenster scharf.
+- Daher setzt `src/render/gtk4.ts` `border-radius: 0` — dem Omarchy-`rounding = 0`-Standard folgend.
+- **Hinweis:** Der Mutter-Compositor legt zusätzlich einen „rounded clip" auf Fenster; der CSS-Wert wirkt auf
+  CSD/GTK4-Fenster und wurde visuell bestätigt.
+
 ### 3.4 Terminal: Ghostty (gewähltes Ziel, 2026-09-07)
 > Ptyxis/GNOME-Terminal-Profil verworfen: auf diesem System ist **Ghostty** das aktive
 > Terminal und Ptyxis produktiv ungenutzt.
 
-Ghostty themen via **Theme-Datei** `~/.config/ghostty/themes/rose-pine-dawn.conf` + `theme = rose-pine-dawn.conf` in der config.
-**Wichtig:** Ghostty listet User-Themes MIT Endung (`rose-pine-dawn.conf (user)`); die `theme`-Referenz
+Ghostty themen via **Theme-Datei** `<config>/ghostty/themes/<theme>.conf` + `theme = <theme>.conf` in der config
+(Theme-ID = Verzeichnisname, z. B. `rose-pine.conf`).
+**Wichtig:** Ghostty listet User-Themes MIT Endung (`rose-pine.conf (user)`); die `theme`-Referenz
 muss exakt dem Dateinamen entsprechen, sonst meldet Ghostty „theme not found".
 Mapping exakt aus Omarchy `default/themed/ghostty.conf.tpl` (Option B):
 
