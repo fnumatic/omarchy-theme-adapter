@@ -8,12 +8,23 @@ import { MARKER as SHELL_MARKER, END_MARKER as SHELL_END_MARKER, CLOSER_HINT as 
 
 /** Ubuntu-Standard, falls ein früher Snapshot bereits unser GTK-Theme enthielt. */
 export const UBUNTU_DEFAULT_GTK_THEME = "Yaru";
+/** Ghostty 1.3 startet ohne Theme-Eintrag dunkel; Ubuntu-heller Fallback. */
+export const GHOSTTY_DEFAULT_THEME = "GitHub Light Default";
 
 /** Ein Snapshot darf nie den vom Tool erzeugten Theme-Namen als Original zurückspielen. */
 export function restoreGtkTheme(snapshotTheme: string | null): { theme: string | null; migrated: boolean } {
   const theme = snapshotTheme?.replace(/^'|'$/gu, "") ?? null;
   if (theme === GTK3_THEME_NAME) return { theme: UBUNTU_DEFAULT_GTK_THEME, migrated: true };
   return { theme, migrated: false };
+}
+
+/** Frühere Snapshots konnten unsere Ghostty-Zeile fälschlich als Original sichern. */
+export function restoreGhosttyConfig(snapshotText: string | null): { text: string; migrated: boolean } | null {
+  if (snapshotText === null) return null;
+  if (/^\s*theme\s*=\s*rose-pine-dawn(?:\.conf)?\s*$/mu.test(snapshotText)) {
+    return { text: `theme = ${GHOSTTY_DEFAULT_THEME}\n`, migrated: true };
+  }
+  return { text: snapshotText, migrated: false };
 }
 
 export type ResetTarget = "ghostty" | "gtk3" | "gtk4" | "libreoffice" | "vscode" | "wallpaper" | "shell";
@@ -87,20 +98,30 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
   if (opts.dry) {
     console.log(`  dry-run: stelle ${cfg} aus Snapshot wieder her`);
   } else if (snap.ghosttyConfigExisted && snap.ghosttyConfigText !== null) {
-    await writeEnsured(cfg, snap.ghosttyConfigText);
-    console.log(`   ✓ Ghostty-Config wiederhergestellt: ${cfg}`);
+    const ghosttyRestore = restoreGhosttyConfig(snap.ghosttyConfigText)!;
+    await writeEnsured(cfg, ghosttyRestore.text);
+    console.log(
+      ghosttyRestore.migrated
+        ? `   ✓ Ghostty-Standardtheme gesetzt: ${GHOSTTY_DEFAULT_THEME} (fehlerhaften alten Snapshot migriert)`
+        : `   ✓ Ghostty-Config wiederhergestellt: ${cfg}`,
+    );
   } else {
-    // Es gab vorher keine Config: nur unsere theme-Zeile entfernen,
-    // Datei sonst unangetastet lassen.
+    // Es gab vorher keine Config. Ghostty 1.3 verwendet ohne Theme-Eintrag
+    // Dark Modern; für den hellen Ubuntu-Standard schreiben wir daher einen
+    // expliziten Built-in-Theme-Eintrag.
     try {
       const text = await readFile(cfg, "utf8");
-      const cleaned = text.replace(/^[ \t]*theme[ \t]*=.*$/mu, "").replace(/\n{3,}/gu, "\n\n");
-      if (cleaned !== text) {
-        await writeFile(cfg, cleaned);
-        console.log(`   ✓ theme-Zeile aus ${cfg} entfernt`);
+      const replaced = text.replace(/^[ \t]*theme[ \t]*=.*$/mu, `theme = ${GHOSTTY_DEFAULT_THEME}`);
+      const next = replaced === text && text.trim() === ""
+        ? `theme = ${GHOSTTY_DEFAULT_THEME}\n`
+        : replaced;
+      if (next !== text) {
+        await writeEnsured(cfg, next);
+        console.log(`   ✓ Ghostty-Standardtheme gesetzt: ${GHOSTTY_DEFAULT_THEME}`);
       }
     } catch {
-      console.log(`   − keine Ghostty-Config vorhanden, nichts zu tun`);
+      await writeEnsured(cfg, `theme = ${GHOSTTY_DEFAULT_THEME}\n`);
+      console.log(`   ✓ Ghostty-Standardtheme gesetzt: ${GHOSTTY_DEFAULT_THEME}`);
     }
   }
 

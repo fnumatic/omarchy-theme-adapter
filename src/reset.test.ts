@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fakeGSettings } from "./gsettings.ts";
 import { ensureSnapshot, loadSnapshot } from "./state.ts";
-import { resetAll, restoreGtkTheme, UBUNTU_DEFAULT_GTK_THEME } from "./reset.ts";
+import { resetAll, restoreGtkTheme, restoreGhosttyConfig, UBUNTU_DEFAULT_GTK_THEME, GHOSTTY_DEFAULT_THEME } from "./reset.ts";
 
 const ORIG_XDG_CONFIG = process.env.XDG_CONFIG_HOME;
 afterEach(() => {
@@ -49,6 +49,36 @@ test("reset migriert vergifteten RosePineDawn-Snapshot auf Yaru", () => {
   });
   expect(restoreGtkTheme("'Adwaita'")).toEqual({ theme: "Adwaita", migrated: false });
   expect(restoreGtkTheme(null)).toEqual({ theme: null, migrated: false });
+});
+
+test("reset migriert vergifteten Ghostty-Rose-Pine-Snapshot auf hellen Standard", () => {
+  expect(restoreGhosttyConfig("theme = rose-pine-dawn\n")).toEqual({
+    text: `theme = ${GHOSTTY_DEFAULT_THEME}\n`, migrated: true,
+  });
+  expect(restoreGhosttyConfig("theme = rose-pine-dawn.conf\n")).toEqual({
+    text: `theme = ${GHOSTTY_DEFAULT_THEME}\n`, migrated: true,
+  });
+  expect(restoreGhosttyConfig("font-size = 14\n")).toEqual({ text: "font-size = 14\n", migrated: false });
+});
+
+test("reset setzt bei ursprünglich leerer Ghostty-Config einen hellen Ghostty-Standard", async () => {
+  const home = await mkdtemp(join(tmpdir(), "rpg-ghostty-default-"));
+  const stateDir = join(home, "state");
+  const cfgDir = join(home, "cfg");
+  await mkdir(join(stateDir, "rosepine-gnome"), { recursive: true });
+  await mkdir(join(cfgDir, "ghostty"), { recursive: true });
+  await writeFile(
+    join(stateDir, "rosepine-gnome", "state.json"),
+    JSON.stringify({
+      version: 1, createdAt: "test", ghosttyConfigExisted: false, ghosttyConfigText: null,
+      gtkTheme: null, colorScheme: null,
+    }),
+  );
+  await writeFile(join(cfgDir, "ghostty", "config"), "theme = rose-pine-dawn.conf\n");
+
+  await resetAll({ dry: false, gs: fakeGSettings(), stateDir, configHome: cfgDir, target: "ghostty" });
+  expect(await readFile(join(cfgDir, "ghostty", "config"), "utf8"))
+    .toBe(`theme = ${GHOSTTY_DEFAULT_THEME}\n`);
 });
 
 test("reset entfernt nur den rosepine-Block aus gtk.css und erhält Fremdinhalt", async () => {
