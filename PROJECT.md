@@ -158,16 +158,12 @@ rosepinetheme/
 │       ├── colors.toml         # verifizierte Quellpalette (Referenz)
 │       └── sources.txt         # Herkunft/Lizenz/Kommitsh der Palette
 ├── src/
-│   ├── colors.toml-parser      # Parser für das Omarchy-Format
-│   ├── render/
-│   │   ├── shell.css
-│   │   ├── gtk3.css
-│   │   ├── gtk4.css
-│   │   ├── terminal
-│   │   └── wallpaper
-│   └── apply/                  # gsettings-/dconf-/Dateikopie-Anwendung
+│   ├── cli.ts                # CLI-Einstieg (Bun)
+│   ├── colors.ts             # colors.toml-Parser + Normalisierung (TS)
+│   └── render/
+│       └── ghostty.ts        # Ghostty-Theme rendern/installieren (TS)
 ├── bin/
-│   └── rosepine-gnome          # CLI-Wrapper
+│   └── rosepine-gnome        # Wrapper → bun src/cli.ts
 └── docs/
     └── architektur.md          # Farb-Semanik & Mapping-Tabellen
 ```
@@ -238,7 +234,7 @@ rosepinetheme/
 | GTK4/libadwaita-Ansatz (generierte CSS vs. `GTK_THEME`-Fallback) | zu evaluieren in Umsetzung |
 | Icon-Theme-Variante (welches passende Dawn-Icon-Theme) | zu wählen |
 | Wallpaper-Quelle (Rose-Pine-Dawn-Assets) | zu beschaffen |
-| Script-Sprache (Shell vs. Optionen) | zu entscheiden |
+| Script-Sprache | **erledigt** — TypeScript, Interpreter Bun (`src/*.ts`, `bun run`) |
 | Testverfahren (Dry-run + Screenshot-Soll-Vergleich) | zu konkretisieren |
 
 ---

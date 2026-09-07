@@ -96,10 +96,10 @@ Mapping exakt aus Omarchy `default/themed/ghostty.conf.tpl` (Option B):
 | `selection-foreground` | `foreground` |
 | `palette 0..15` | `background, red, green, yellow, blue, magenta, cyan, foreground, muted, bright_red, bright_green, bright_yellow, bright_blue, bright_magenta, bright_cyan, bright_foreground` |
 
-Umsetzung: `src/render-ghostty.sh` rendert das Theme; CLI `rosepine-gnome install ghostty`
+Umsetzung: `src/render/ghostty.ts` rendert das Theme; CLI `rosepine-gnome install ghostty`
 schreibt `~/.config/ghostty/themes/rose-pine-dawn.conf` und setzt die `theme`-Zeile (Config-Backup automatisch).
 Render-Adresse/Indexreihenfolge folgt 1:1 dem Omarchy-Template, damit die Farben identisch zur
-Omarchy-Optik sind.
+Omarchy-Optik sind. **Interpreter: TypeScript via Bun.**
 
 ### 3.5 Icons & Wallpaper
 | Element | Quelle |

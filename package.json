@@ -1,0 +1,16 @@
+{
+  "name": "rosepine-gnome",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "rosepine-gnome": "./src/cli.ts"
+  },
+  "scripts": {
+    "cli": "bun src/cli.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "^1"
+  }
+}
