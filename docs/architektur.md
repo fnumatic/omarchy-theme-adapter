@@ -69,8 +69,9 @@ liefert Basistoken; vollständiger Shell-Recolor später.*
 | `@theme_text_color` | `foreground` |
 | `@theme_unfocused_*` | Ableitung aus `-foreground` |
 
-Umsetzung: GTK3-Theme unter `~/.themes/<name>/gtk-3.0/gtk.css`; Deep-Override optional als
-`~/.config/gtk-3.0/gtk.css`. GSettings: `gtk-theme` setzen.
+Umsetzung: `src/render/gtk3.ts` erzeugt das GTK3-Theme unter `~/.themes/RosePineDawn/gtk-3.0/gtk.css`
+(plus `index.theme`) und setzt `gsettings gtk-theme = RosePineDawn` (Dry-run unterstützt).
+Deep-Override optional als `~/.config/gtk-3.0/gtk.css`.
 
 ### 3.3 GTK4 / libadwaita
 - libadwaita ignoriert `gtk-theme` weitgehend; wichtigster Hebel ist eine **Adwaita-Recolor**

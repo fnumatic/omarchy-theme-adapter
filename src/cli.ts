@@ -7,6 +7,11 @@ import {
   renderGhostty,
   GHOSTTY_THEME_NAME,
 } from "./render/ghostty.ts";
+import {
+  installGtk3,
+  renderGtk3,
+  GTK3_THEME_NAME,
+} from "./render/gtk3.ts";
 import { join } from "node:path";
 
 const ROOT = import.meta.dir; // …/src
@@ -18,8 +23,11 @@ Verwendung:
   rosepine-gnome parse [--colors FILE]        colors.toml normalisiert ausgeben
   rosepine-gnome render ghostty [--colors FILE]
                                               Ghostty-Theme (.conf) auf stdout
+  rosepine-gnome render gtk3 [--colors FILE]  GTK3 gtk.css auf stdout
   rosepine-gnome install ghostty [--dry-run] [--colors FILE]
                                               Ghostty-Theme installieren + config setzen
+  rosepine-gnome install gtk3 [--dry-run] [--colors FILE]
+                                              GTK3-Theme + gsettings gtk-theme
   rosepine-gnome apply [--dry-run] [--colors FILE]
                                               System-Light-Schema setzen (MVP)
 
@@ -98,19 +106,35 @@ async function main(): Promise<void> {
       break;
 
     case "render":
-      if (args.cmds[1] !== "ghostty") C.die(`render: unbekanntes Ziel '${args.cmds[1] ?? ""}' (ghostty)`);
-      await withColors(args, (c) => console.log(renderGhostty(c)));
+      if (args.cmds[1] === "ghostty") {
+        await withColors(args, (c) => console.log(renderGhostty(c)));
+      } else if (args.cmds[1] === "gtk3") {
+        await withColors(args, (c) => console.log(renderGtk3(c)));
+      } else {
+        C.die(`render: unbekanntes Ziel '${args.cmds[1] ?? ""}' (ghostty|gtk3)`);
+      }
       break;
 
     case "install":
-      if (args.cmds[1] !== "ghostty") C.die(`install: unbekanntes Ziel '${args.cmds[1] ?? ""}' (ghostty)`);
-      await withColors(args, async (c) => {
-        try {
-          await installGhostty(renderGhostty(c), { dry: args.dry });
-        } catch (e) {
-          C.die(`install ghostty fehlgeschlagen: ${String(e)}`);
-        }
-      });
+      if (args.cmds[1] === "ghostty") {
+        await withColors(args, async (c) => {
+          try {
+            await installGhostty(renderGhostty(c), { dry: args.dry });
+          } catch (e) {
+            C.die(`install ghostty fehlgeschlagen: ${String(e)}`);
+          }
+        });
+      } else if (args.cmds[1] === "gtk3") {
+        await withColors(args, async (c) => {
+          try {
+            await installGtk3(renderGtk3(c), { dry: args.dry });
+          } catch (e) {
+            C.die(`install gtk3 fehlgeschlagen: ${String(e)}`);
+          }
+        });
+      } else {
+        C.die(`install: unbekanntes Ziel '${args.cmds[1] ?? ""}' (ghostty|gtk3)`);
+      }
       break;
 
     case "apply": {

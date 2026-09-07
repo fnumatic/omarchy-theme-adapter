@@ -161,7 +161,8 @@ rosepinetheme/
 │   ├── cli.ts                # CLI-Einstieg (Bun)
 │   ├── colors.ts             # colors.toml-Parser + Normalisierung (TS)
 │   └── render/
-│       └── ghostty.ts        # Ghostty-Theme rendern/installieren (TS)
+│       ├── ghostty.ts        # Ghostty-Theme rendern/installieren (TS)
+│       └── gtk3.ts           # GTK3 gtk.css + index.theme rendern/installieren (TS)
 ├── bin/
 │   └── rosepine-gnome        # Wrapper → bun src/cli.ts
 └── docs/
