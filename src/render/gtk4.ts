@@ -63,7 +63,6 @@ export function renderGtk4(c: Colors): string {
 @define-color insensitive_fg_color ${fgDisabled};
 @define-color theme_selected_bg_color ${selection};
 @define-color theme_selected_fg_color ${fg};
-*/
 
 /* Kompakte Headerbars (Wunsch: flachere Menüleisten).
    Hinweis: GTK-CSS unterstützt weder 'important' noch Fantasie-Typselektoren.
