@@ -1,0 +1,122 @@
+# Architektur: `colors.toml` → GNOME
+
+Stand: 2026-09-07 · Status: Entwurf (MVP)
+
+Dieses Dokument definiert, wie die Omarchy-Farbsemantik (`colors.toml`) auf die
+GNOME-eigenen Schichten abgebildet wird. Es ist die Referenz für Parser, Render-Backends
+und die Anwendung via `gsettings`/`dconf`.
+
+## 1. Paletten-Schema von Omarchy (rose-pine)
+
+| Kategorie | Keys |
+|---|---|
+| Modus | `mode` (`light`/`dark`) |
+| Basishintergrund | `background` |
+| Hintergrundabstufungen | `dark_background`, `darker_background`, `lighter_background` |
+| Basisvordergrund | `foreground` |
+| Vordergrundabstufungen | `dark_foreground`, `light_foreground`, `bright_foreground` |
+| Akzent | `accent` |
+| Auswahl | `selection`, `muted` |
+| ANSI | `red yellow orange green cyan blue magenta brown` + `bright_*` |
+
+> Hinweis: `orange` ist die Øle-Palette-Erweiterung von Omarchy; klassische ANSI kennt
+> kein Orange. Verwendung: als Akzent-/Highlight-Farbe.
+
+## 2. Ziel-Normalform (interne Semantik)
+
+Um Backends robust zu versorgen, wird `colors.toml` in eine neutrale Semantik übersetzt:
+
+```
+NORMAL_BG            = background
+SURFACE              = dark_background      (Standard-Fläche unter bg)
+SURFACE_RAISED       = lighter_background   (Karten/Elevation)
+SURFACE_SINK         = darker_background    (gedrückt/Eingaben)
+NORMAL_FG            = foreground
+FG_MUTED / SECONDARY = light_foreground
+FG_DISABLED          = dark_foreground
+FG_BRIGHT            = bright_foreground
+ACCENT               = accent
+SELECTION_BG         = selection
+OUTLINE/MUTED        = muted
+ANSI_[0..15]         = red..magenta + bright_*
+```
+
+## 3. Mapping `colors.toml` → GNOME-Schichten
+
+### 3.1 GNOME Shell (Hintergrund/Topbar/Fenster)
+| GNOME-Element | Quelle |
+|---|---|
+| Shell-Hintergrund (Login/Overview-Bg) | `background` |
+| Topbar-/Panelfläche | `dark_background` (bei light eher `lighter`/kompositiert) |
+| Topbar-Schrift | `foreground` |
+| Akzent (Fokus/Hervorhebung) | `accent` |
+| Auszeichnung/Selection | `selection` |
+
+Umsetzung: eigenes **GNOME-Shell-Theme-CSS** (`gnome-shell-theme.css`) unter
+`~/.local/share/themes/<name>/gnome-shell/`. GNOME-Shell-Theme selbst liegt in
+`/usr/share/gnome-shell/theme/gnome-shell-theme.gresource`; der verlässliche Weg ist ein
+**User-Theme** (Shell-Extension „User Themes") oder das `GTK_THEME`-Feld. *Status: MVP
+liefert Basistoken; vollständiger Shell-Recolor später.*
+
+### 3.2 GTK3
+| GTK3-Token | Quelle |
+|---|---|
+| `@theme_base_color` | `dark_background` |
+| `@theme_bg_color` | `background` |
+| `@theme_fg_color` | `foreground` |
+| `@theme_selected_bg_color` | `selection` |
+| `@theme_selected_fg_color` | `foreground` (hell auf dunkler Selection) |
+| `@theme_text_color` | `foreground` |
+| `@theme_unfocused_*` | Ableitung aus `-foreground` |
+
+Umsetzung: GTK3-Theme unter `~/.themes/<name>/gtk-3.0/gtk.css`; Deep-Override optional als
+`~/.config/gtk-3.0/gtk.css`. GSettings: `gtk-theme` setzen.
+
+### 3.3 GTK4 / libadwaita
+- libadwaita ignoriert `gtk-theme` weitgehend; wichtigster Hebel ist eine **Adwaita-Recolor**
+  bzw. ein generiertes CSS mit den libadwaita-Variablen (`--window_bg_color`, `--accent_bg_color`,
+  `--sidebar_bg_color` …) im **User-Theme** oder via `GTK_THEME=<theme:light>`.
+- **Bekannte Grenze/Owner:** Omarchy-familiär gibt es das bekannte GTK4-Thema-Problem.
+  Der MVP liefert ein generiertes `libadwaita.css`-Fragment; Vollgenauigkeit wird separat
+  verbucht (Risiko, siehe PROJECT.md §10).
+
+### 3.4 GNOME Terminal
+| Profil-Feld | Quelle |
+|---|---|
+| foreground-color | `foreground` |
+| background-color | `background` |
+| bold-color | `bright_foreground` |
+| palette (16) | `red..magenta` → Zellen 0–7, `bright_*` → Zellen 8–15 (orange in Zelle 3 ersetzt/green? Siehe §5) |
+
+Umsetzung: `dconf write /org/gnome/terminal/legacy/profiles:/:<uuid>/...`
+
+### 3.5 Icons & Wallpaper
+| Element | Quelle |
+|---|---|
+| Icon-Theme | passendes Dawn-kompatibles Icon-Theme (auszuwählen, offen) |
+| Wallpaper | Rose-Pine-Dawn-Bild/Asset (zu beschaffen, offen) |
+
+`gsettings set org.gnome.desktop.interface icon-theme ...`
+`gsettings set org.gnome.desktop.background picture-uri ...`
+
+## 4. Anwendungskette (Pipeline)
+
+```
+colors.toml ─▶ Parser (src/lib-colors.sh) ─▶ normalisierte VAR_* Semantik
+                 │
+                 ├─▶ Render GTK3     → ~/.themes/<name>/gtk-3.0/gtk.css
+                 ├─▶ Render GTK4/lib → CSS-Fragment / GTK_THEME
+                 ├─▶ Render Shell    → gnome-shell CSS-Fragment
+                 ├─▶ Terminal        → dconf-Profil (uuid)
+                 └─▶ System          → gsettings (color-scheme, icon-theme, wallpaper)
+APPLY via org.gnome (gsettings/dconf) + Dateikopie
+```
+
+Alle Schritte idempotent; `--dry-run` gibt nur aus, was geändert würde.
+
+## 5. Offene Fachfragen (bewusst offen, nicht blockierend für MVP)
+- ANSI-Mapping **orange**: echte X-Ansi kennt kein Orange; Proposal: orange auf Zelle 3
+  (yellow) unbelegt lassen oder `bright_yellow`. Entscheidung später.
+- Icon-Theme: Wahl der konkreten Dawn-Variante.
+- Wallpaper: Quelle des Rose-Pine-Dawn-Assets.
+- Exakter Shell-Recolor-Umfang (User-Themes-Extension vs. GTK_THEME).
