@@ -17,6 +17,8 @@ export interface Snapshot {
   vscodeSettingsText: string | null;
   wallpaperPictureUri: string | null;
   wallpaperPictureUriDark: string | null;
+  /** Original des aktiven GNOME-Shell-Themes (User-Themes). */
+  userThemeName: string | null;
   paperwmUserCssExisted: boolean | null;
   paperwmUserCssText: string | null;
   /** Zuletzt angewandtes Theme + generierte Artefakte (für Reset-Cleanup). */
@@ -27,6 +29,7 @@ export interface AppliedTheme {
   id: string;
   ghosttyThemeFile: string;
   gtkThemeName: string;
+  shellThemeName: string | null;
 }
 
 export function statePath(overrideDir?: string): string {
@@ -80,6 +83,16 @@ function paperwmUserCssPath(): string {
   return `${process.env.HOME}/.config/paperwm/user.css`;
 }
 
+/** Aktives GNOME-Shell-Theme (User-Themes) lesen — Schema-Dir ist Extension-spezifisch. */
+async function readUserThemeName(): Promise<string | null> {
+  const schemaDir = `${process.env.HOME}/.local/share/gnome-shell/extensions/user-theme@gnome-shell-extensions.gcampax.github.com/schemas`;
+  const out = await Bun.spawnSync(["gsettings", "get", "org.gnome.shell.extensions.user-theme", "name"], {
+    env: { ...process.env, GSETTINGS_SCHEMA_DIR: schemaDir },
+  });
+  if (out.exitCode !== 0) return null;
+  return new TextDecoder().decode(out.stdout).trim().replace(/^'|'$/gu, "") || null;
+}
+
 async function readOptional(path: string): Promise<{ existed: boolean; text: string | null }> {
   try {
     return { existed: true, text: await readFile(path, "utf8") };
@@ -106,7 +119,8 @@ export async function ensureSnapshot(
     const needsVscode = !("vscodeSettingsText" in raw);
     const needsWallpaper = !("wallpaperPictureUri" in raw);
     const needsPaperwm = !("paperwmUserCssText" in raw);
-    if (needsGtk4 || needsLO || needsVscode || needsWallpaper || needsPaperwm) {
+    const needsUserTheme = !("userThemeName" in raw);
+    if (needsGtk4 || needsLO || needsVscode || needsWallpaper || needsPaperwm || needsUserTheme) {
       const g = needsGtk4 ? await readOptional(gtk4CssPath()) : null;
       const lo = needsLO ? await readOptional(libreofficeConfigPath()) : null;
       const vs = needsVscode ? await readOptional(vscodeSettingsPath()) : null;
@@ -129,6 +143,7 @@ export async function ensureSnapshot(
         ...(needsPaperwm
           ? { paperwmUserCssExisted: pw!.existed, paperwmUserCssText: pw!.text }
           : {}),
+        ...(needsUserTheme ? { userThemeName: await readUserThemeName() } : {}),
         appliedTheme: existing.appliedTheme ?? null,
       };
       const p = statePath(overrideDir);
@@ -161,6 +176,7 @@ export async function ensureSnapshot(
     vscodeSettingsText: vs.text,
     wallpaperPictureUri: await gs.get("org.gnome.desktop.background", "picture-uri"),
     wallpaperPictureUriDark: await gs.get("org.gnome.desktop.background", "picture-uri-dark"),
+    userThemeName: await readUserThemeName(),
     paperwmUserCssExisted: pw.existed,
     paperwmUserCssText: pw.text,
     appliedTheme: null,

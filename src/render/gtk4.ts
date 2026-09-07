@@ -66,38 +66,32 @@ export function renderGtk4(c: Colors): string {
 */
 
 /* Kompakte Headerbars (Wunsch: flachere Menüleisten).
-   Hinweis: libadwaita setzt eigene, teils spezifischere Regeln — daher window-Präfix
-   für höhere Spezifität und !important gegen libadwaita-Vorgaben.
-   Ghostty nutzt zusätzlich eine Tab-Bar (AdwTabBar) — wird hier mit verkleinert. */
+   Hinweis: GTK-CSS unterstützt weder 'important' noch Fantasie-Typselektoren.
+   Valide, spezifische Selektoren, die libadwaita/GTK tatsächlich verarbeitet. */
 window headerbar,
 window .header-bar,
-window menubar,
-window .titlebar,
-window .tabbar,
-window .tab-bar,
-window AdwTabBar {
-  min-height: 24px !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
+window .titlebar {
+  min-height: 24px;
+  padding-top: 0;
+  padding-bottom: 0;
   margin-top: 0;
   margin-bottom: 0;
 }
-window headerbar *,
 window headerbar button,
 window headerbar entry,
 window headerbar menubutton,
-window headerbar .titlebutton,
-window .tabbar box,
-window .tabbar .tab,
-window .tab-bar .tab,
-window .tab-box,
-window tab {
-  min-height: 20px !important;
+window headerbar .titlebutton {
+  min-height: 20px;
   min-width: 20px;
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
+  margin: 1px 2px;
+  padding: 0;
+}
+window .tab-bar,
+window .tabbar,
+window .tab-box tab {
+  min-height: 20px;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 windowcontrols button {
   min-height: 18px;

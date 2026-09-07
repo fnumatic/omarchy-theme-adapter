@@ -44,3 +44,25 @@ export function fakeGSettings(initial: Record<string, string> = {}): GSettingsRu
     },
   };
 }
+
+/**
+ * gsettings-Runner, der eine Sprachschema-Dir setzt (nötig für Extension-Schemas,
+ * z. B. org.gnome.shell.extensions.user-theme, die nicht systemkompiliert sind).
+ */
+export function realGSettingsWithSchemaDir(schemaDir: string): GSettingsRunner {
+  return {
+    async get(schema, key): Promise<string | null> {
+      const out = Bun.spawnSync(["gsettings", "get", schema, key], {
+        env: { ...process.env, GSETTINGS_SCHEMA_DIR: schemaDir },
+      });
+      if (out.exitCode !== 0) return null;
+      return new TextDecoder().decode(out.stdout).trim() || null;
+    },
+    async set(schema, key, value): Promise<number> {
+      const out = Bun.spawnSync(["gsettings", "set", schema, key, value], {
+        env: { ...process.env, GSETTINGS_SCHEMA_DIR: schemaDir },
+      });
+      return out.exitCode ?? -1;
+    },
+  };
+}

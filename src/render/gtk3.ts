@@ -42,9 +42,10 @@ entry { color: ${fg}; background-color: ${base}; }
 treeview, list, row { background-color: ${bg}; color: ${fg}; }
 label { color: ${fg}; }
 
-/* Kompakte Headerbars/Menüleisten (Wunsch: flachere Leisten) */
+/* Kompakte Headerbars/Menüleisten (Wunsch: flachere Leisten).
+   Kein !important — GTK-CSS unterstützt das nicht. */
 headerbar, .header-bar, .titlebar, menubar {
-  min-height: 28px !important;
+  min-height: 24px;
   padding-top: 0;
   padding-bottom: 0;
   margin-top: 0;
@@ -53,7 +54,7 @@ headerbar, .header-bar, .titlebar, menubar {
 headerbar button, headerbar entry,
 .header-bar button, .header-bar entry,
 .titlebar button, .titlebar entry {
-  min-height: 20px !important;
+  min-height: 20px;
   margin-top: 1px;
   margin-bottom: 1px;
   padding-top: 0;

@@ -37,7 +37,7 @@ Verwendung:
   themeswitch reset [--dry-run|--theme <id>] [ziel]
                                               Originalzustand aus Snapshot wiederherstellen
 
-Ziele (install/reset): ghostty|gtk3|gtk4|libreoffice|vscode|wallpaper|shell
+Ziele (install/reset): ghostty|gtk3|gtk4|libreoffice|vscode|wallpaper|shell|shell-theme
 
 Optionen:
   --theme <id>    Theme-Name (Default: rose-pine)
@@ -192,6 +192,22 @@ async function applyTheme(theme: Theme, dry: boolean): Promise<void> {
     C.die(`Shell fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`);
   }
 
+  // GNOME-Shell-Theme (vollständig, Basis Yaru + rekolorierter Override)
+  try {
+    const {
+      readSystemShellBase,
+      renderShellOverride,
+      renderShellTheme,
+      installShellTheme,
+      shellThemeName,
+    } = await import("./render/shellTheme.ts");
+    const base = await readSystemShellBase();
+    const css = renderShellTheme(base, renderShellOverride(c));
+    await installShellTheme(shellThemeName(theme.gtkThemeName), css, { dry });
+  } catch (e) {
+    C.warn(`GNOME-Shell-Theme: ${String(e instanceof Error ? e.message : e)}`);
+  }
+
   // Farbschema + Icon-Theme (System-Grundlage, wie omarchy-theme-set-gnome)
   const scheme = theme.mode === "light" ? "prefer-light" : "prefer-dark";
   if (dry) {
@@ -210,6 +226,7 @@ async function applyTheme(theme: Theme, dry: boolean): Promise<void> {
         id: theme.id,
         ghosttyThemeFile: `${process.env.XDG_CONFIG_HOME || `${process.env.HOME}/.config`}/ghostty/themes/${theme.ghosttyThemeName}`,
         gtkThemeName: theme.gtkThemeName,
+        shellThemeName: `${theme.gtkThemeName}Shell`,
       },
       realGSettings,
     );
@@ -274,6 +291,24 @@ async function installOne(args: Args): Promise<void> {
           .catch((e) => C.die(`install wallpaper fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`));
       });
       break;
+    case "shell-theme":
+      await withTheme(args, async (t) => {
+        await snapshotOnce(args.dry);
+        const {
+          readSystemShellBase,
+          renderShellOverride,
+          renderShellTheme,
+          installShellTheme,
+          shellThemeName,
+        } = await import("./render/shellTheme.ts");
+        const base = await readSystemShellBase().catch((e) =>
+          C.die(`GNOME-Shell-Theme fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`),
+        );
+        const css = renderShellTheme(base, renderShellOverride(t.colors));
+        await installShellTheme(shellThemeName(t.gtkThemeName), css, { dry: args.dry })
+          .catch((e) => C.die(`install shell-theme fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`));
+      });
+      break;
     case "shell":
       await withTheme(args, async (t) => {
         await snapshotOnce(args.dry);
@@ -336,7 +371,7 @@ async function main(): Promise<void> {
     case "reset": {
       C.log(`Originalzustand wiederherstellen`);
       const t = args.cmds[1];
-      const targets = ["ghostty", "gtk3", "gtk4", "libreoffice", "vscode", "wallpaper", "shell"];
+      const targets = ["ghostty", "gtk3", "gtk4", "libreoffice", "vscode", "wallpaper", "shell", "shell-theme"];
       if (t !== undefined && !targets.includes(t)) {
         C.die(`reset: unbekanntes Ziel '${t}' (${targets.join("|")})`);
       }

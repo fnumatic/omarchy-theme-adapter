@@ -1,10 +1,11 @@
 // reset.ts — stellt den im Snapshot gesicherten Originalzustand wieder her.
 import { readFile, rm, writeFile, mkdir } from "node:fs/promises";
 import { loadSnapshot } from "./state.ts";
-import type { GSettingsRunner } from "./gsettings.ts";
+import { realGSettingsWithSchemaDir, type GSettingsRunner } from "./gsettings.ts";
 import { GTK3_THEME_NAME } from "./render/gtk3.ts";
 import { MARKER as GTK4_MARKER } from "./render/gtk4.ts";
 import { MARKER as SHELL_MARKER, END_MARKER as SHELL_END_MARKER, CLOSER_HINT as SHELL_CLOSER_HINT } from "./render/shell.ts";
+import { USER_THEME_SCHEMA } from "./render/shellTheme.ts";
 
 /** Ubuntu-Standard, falls ein früher Snapshot bereits unser GTK-Theme enthielt. */
 export const UBUNTU_DEFAULT_GTK_THEME = "Yaru";
@@ -27,7 +28,7 @@ export function restoreGhosttyConfig(snapshotText: string | null): { text: strin
   return { text: snapshotText, migrated: false };
 }
 
-export type ResetTarget = "ghostty" | "gtk3" | "gtk4" | "libreoffice" | "vscode" | "wallpaper" | "shell";
+export type ResetTarget = "ghostty" | "gtk3" | "gtk4" | "libreoffice" | "vscode" | "wallpaper" | "shell" | "shell-theme";
 
 export interface ResetOptions {
   dry: boolean;
@@ -166,6 +167,35 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
   }
   }
 
+  if (want("shell-theme")) {
+  // Generiertes Shell-Theme entfernen + aktives User-Theme zurücksetzen
+  const themesDir = opts.themesDir ?? `${process.env.HOME}/.themes`;
+  const shName = snap.appliedTheme?.shellThemeName;
+  if (shName) {
+    const shDir = `${themesDir}/${shName}`;
+    if (opts.dry) {
+      console.log(`  dry-run: lösche ${shDir}`);
+    } else {
+      await rm(shDir, { recursive: true, force: true });
+      console.log(`   ✓ GNOME-Shell-Theme gelöscht: ${shDir}`);
+    }
+  } else {
+    console.log(`   − kein angewandtes GNOME-Shell-Theme im Snapshot, übersprungen`);
+  }
+  if (snap.userThemeName !== undefined && snap.userThemeName !== null) {
+    if (opts.dry) {
+      console.log(`  dry-run: ${USER_THEME_SCHEMA} name → ${snap.userThemeName}`);
+    } else {
+      const dir = `${process.env.HOME}/.local/share/gnome-shell/extensions/user-theme@gnome-shell-extensions.gcampax.github.com/schemas`;
+      const ut = realGSettingsWithSchemaDir(dir);
+      await ut.set(USER_THEME_SCHEMA, "name", snap.userThemeName);
+      console.log(`   ✓ User-Themes wiederhergestellt: ${snap.userThemeName}`);
+    }
+  } else {
+    console.log(`   − User-Themes-Original: kein Wert im Snapshot`);
+  }
+  }
+
   if (want("gtk4")) {
   // libadwaita-Overlay (gtk-4.0/gtk.css)
   const cssFile = gtk4CssFile(opts);
@@ -296,6 +326,17 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
     }
   } else {
     console.log(`   − color-scheme: kein Original im Snapshot, übersprungen`);
+  }
+  if (snap.userThemeName !== undefined && snap.userThemeName !== null) {
+    const dir = `${process.env.HOME}/.local/share/gnome-shell/extensions/user-theme@gnome-shell-extensions.gcampax.github.com/schemas`;
+    if (opts.dry) {
+      console.log(`  dry-run: ${USER_THEME_SCHEMA} name → ${snap.userThemeName}`);
+    } else {
+      await realGSettingsWithSchemaDir(dir).set(USER_THEME_SCHEMA, "name", snap.userThemeName);
+      console.log(`   ✓ User-Themes wiederhergestellt: ${snap.userThemeName}`);
+    }
+  } else {
+    console.log(`   − User-Themes-Original: kein Wert im Snapshot`);
   }
   }
 }
