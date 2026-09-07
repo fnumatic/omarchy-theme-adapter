@@ -23,6 +23,8 @@ bun install                        # @types/bun (Dev)
 ./bin/rosepine-gnome install gtk4                       # libadwaita-Overlay (Fensterrahmen) anwenden
 ./bin/rosepine-gnome install libreoffice [--dry-run]  # LO folgt dem System-Theme (nur bei beendetem LO)
 ./bin/rosepine-gnome install vscode [--dry-run]   # Rose-Pine-Dawn-Theme in VS Code (Extension + colorTheme)
+./bin/rosepine-gnome install wallpaper [NAME] [--dry-run]
+                                              Rose-Pine-Wallpaper setzen (Default: Omarchy-Default)
 ./bin/rosepine-gnome reset --dry-run             # Vorschau der Wiederherstellung
 ./bin/rosepine-gnome reset                       # Originalzustand aus Snapshot wiederherstellen
 ```

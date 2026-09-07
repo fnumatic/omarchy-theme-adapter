@@ -6,3 +6,8 @@
 - **Lizenz des Repos:** MIT
 - **Stand (Kommitsh):** siehe beim Import notieren — siehe git log dieses Repos.
 - **Bemerkung:** `mode = "light"`; Stock-Theme ist die helle *Dawn*-Variante. Fetcht am 2026-09-07 per raw.githubusercontent.com. Bei einem Upstream-Update hier bewusst erneut prüfen.
+
+## Backgrounds (Default-Regel wie Omarchy)
+
+Omarchy wählt beim Theme-Wechsel das erste der sortierten `backgrounds/` (`bin/omarchy-theme-set`):
+Default = **`1-funky-shapes.webp`**. Alle vier Dateien liegen unter `backgrounds/` (Stand 2026-09-07).

@@ -5,7 +5,7 @@ import type { GSettingsRunner } from "./gsettings.ts";
 import { GTK3_THEME_NAME } from "./render/gtk3.ts";
 import { MARKER as GTK4_MARKER } from "./render/gtk4.ts";
 
-export type ResetTarget = "ghostty" | "gtk3" | "gtk4" | "libreoffice" | "vscode";
+export type ResetTarget = "ghostty" | "gtk3" | "gtk4" | "libreoffice" | "vscode" | "wallpaper";
 
 export interface ResetOptions {
   dry: boolean;
@@ -180,6 +180,25 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
     console.log(`   ✓ VS-Code-settings wiederhergestellt: ${vsFile}`);
   } else {
     console.log(`   − keine VS-Code-settings im Snapshot, nichts zu tun`);
+  }
+  }
+
+  if (want("wallpaper")) {
+  // Wallpaper-URIs (nur was im Snapshot stand)
+  for (const [key, val] of [
+    ["picture-uri", snap.wallpaperPictureUri],
+    ["picture-uri-dark", snap.wallpaperPictureUriDark],
+  ] as const) {
+    if (val === undefined) {
+      console.log(`   − Wallpaper ${key}: kein Original im Snapshot (alter Snapshot), übersprungen`);
+    } else if (val === null) {
+      console.log(`   − Wallpaper ${key}: kein Original im Snapshot, übersprungen`);
+    } else if (opts.dry) {
+      console.log(`  dry-run: gsettings ${key} → ${val}`);
+    } else {
+      await opts.gs.set("org.gnome.desktop.background", key, val);
+      console.log(`   ✓ Wallpaper ${key} wiederhergestellt: ${val}`);
+    }
   }
   }
 

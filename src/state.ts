@@ -15,6 +15,8 @@ export interface Snapshot {
   libreofficeConfigText: string | null;
   vscodeSettingsExisted: boolean | null;
   vscodeSettingsText: string | null;
+  wallpaperPictureUri: string | null;
+  wallpaperPictureUriDark: string | null;
 }
 
 export function statePath(overrideDir?: string): string {
@@ -74,7 +76,8 @@ export async function ensureSnapshot(
     const needsGtk4 = !("gtk4CssText" in raw);
     const needsLO = !("libreofficeConfigText" in raw);
     const needsVscode = !("vscodeSettingsText" in raw);
-    if (needsGtk4 || needsLO || needsVscode) {
+    const needsWallpaper = !("wallpaperPictureUri" in raw);
+    if (needsGtk4 || needsLO || needsVscode || needsWallpaper) {
       const g = needsGtk4 ? await readOptional(gtk4CssPath()) : null;
       const lo = needsLO ? await readOptional(libreofficeConfigPath()) : null;
       const vs = needsVscode ? await readOptional(vscodeSettingsPath()) : null;
@@ -86,6 +89,12 @@ export async function ensureSnapshot(
           : {}),
         ...(needsVscode
           ? { vscodeSettingsExisted: vs!.existed, vscodeSettingsText: vs!.text }
+          : {}),
+        ...(needsWallpaper
+          ? {
+              wallpaperPictureUri: await gs.get("org.gnome.desktop.background", "picture-uri"),
+              wallpaperPictureUriDark: await gs.get("org.gnome.desktop.background", "picture-uri-dark"),
+            }
           : {}),
       };
       const p = statePath(overrideDir);
@@ -115,6 +124,8 @@ export async function ensureSnapshot(
     libreofficeConfigText: lo.text,
     vscodeSettingsExisted: vs.existed,
     vscodeSettingsText: vs.text,
+    wallpaperPictureUri: await gs.get("org.gnome.desktop.background", "picture-uri"),
+    wallpaperPictureUriDark: await gs.get("org.gnome.desktop.background", "picture-uri-dark"),
   };
   const p = statePath(overrideDir);
   await mkdir(p.slice(0, p.lastIndexOf("/")), { recursive: true });

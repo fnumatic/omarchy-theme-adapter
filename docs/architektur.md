@@ -126,11 +126,15 @@ Wie Omarchy (`bin/omarchy-theme-set-vscode`): Der Theme-Deskriptor
 Extension-Installation und `workbench.colorTheme` in `settings.json`. Edit JSONC-sicher per
 Regex (kein Reformat, Kommentare bleiben). Umsetzung: `src/render/vscode.ts`.
 
-### 3.7 Icons & Wallpaper
-| Element | Quelle |
-|---|---|
-| Icon-Theme | passendes Dawn-kompatibles Icon-Theme (auszuwählen, offen) |
-| Wallpaper | Rose-Pine-Dawn-Bild/Asset (zu beschaffen, offen) |
+### 3.7 Wallpaper
+Omarchy-Default = erstes der sortierten `backgrounds/` = `1-funky-shapes.webp`
+(alle vier Dateien liegen in `themes/rose-pine/backgrounds/`).
+Umsetzung: `src/render/wallpaper.ts` setzt `picture-uri` + `picture-uri-dark` per gsettings
+(`install wallpaper [NAME]`); URIs sind snapshot-/reset-abgedeckt.
+
+### 3.8 Icons
+Passendes Dawn-kompatibles Icon-Theme (auszuwählen, offen). Omarchy-Referenz:
+`themes/rose-pine/icons.theme` = `Yaru-blue`.
 
 `gsettings set org.gnome.desktop.interface icon-theme ...`
 `gsettings set org.gnome.desktop.background picture-uri ...`

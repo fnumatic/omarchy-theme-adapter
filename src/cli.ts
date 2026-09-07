@@ -40,9 +40,11 @@ Verwendung:
   rosepine-gnome install libreoffice [--dry-run]
                                               LibreOffice folgt dem System-Theme (nur bei beendetem LO)
   rosepine-gnome install vscode [--dry-run]   Rose-Pine-Dawn-Theme in VS Code (Extension + colorTheme)
+  rosepine-gnome install wallpaper [NAME] [--dry-run]
+                                              Rose-Pine-Wallpaper setzen (Default: Omarchy-Default)
   rosepine-gnome apply [--dry-run] [--colors FILE]
                                               System-Light-Schema setzen (MVP)
-  rosepine-gnome reset [--dry-run] [ghostty|gtk3|gtk4|libreoffice|vscode]
+  rosepine-gnome reset [--dry-run] [ghostty|gtk3|gtk4|libreoffice|vscode|wallpaper]
                                               Originalzustand aus Snapshot wiederherstellen (ohne Ziel: alles)
 
 Optionen:
@@ -184,8 +186,23 @@ async function main(): Promise<void> {
         } catch (e) {
           C.die(`install vscode fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`);
         }
+      } else if (args.cmds[1] === "wallpaper") {
+        await snapshotOnce(args.dry);
+        try {
+          const { listWallpapers, installWallpaper } = await import("./render/wallpaper.ts");
+          const name = args.cmds[2];
+          if (name !== undefined) {
+            const available = await listWallpapers();
+            if (!available.includes(name)) {
+              C.die(`Unbekanntes Wallpaper '${name}'. Verfügbar: ${available.join(", ")}`);
+            }
+          }
+          await installWallpaper({ dry: args.dry, name });
+        } catch (e) {
+          C.die(`install wallpaper fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`);
+        }
       } else {
-        C.die(`install: unbekanntes Ziel '${args.cmds[1] ?? ""}' (ghostty|gtk3|gtk4|libreoffice|vscode)`);
+        C.die(`install: unbekanntes Ziel '${args.cmds[1] ?? ""}' (ghostty|gtk3|gtk4|libreoffice|vscode|wallpaper)`);
       }
       break;
 
@@ -208,8 +225,9 @@ async function main(): Promise<void> {
     case "reset": {
       C.log(`Originalzustand wiederherstellen`);
       const t = args.cmds[1];
-      if (t !== undefined && t !== "ghostty" && t !== "gtk3" && t !== "gtk4" && t !== "libreoffice" && t !== "vscode") {
-        C.die(`reset: unbekanntes Ziel '${t}' (ghostty|gtk3|gtk4|libreoffice|vscode)`);
+      const targets = ["ghostty", "gtk3", "gtk4", "libreoffice", "vscode", "wallpaper"];
+      if (t !== undefined && !targets.includes(t)) {
+        C.die(`reset: unbekanntes Ziel '${t}' (${targets.join("|")})`);
       }
       try {
         await resetAll({ dry: args.dry, gs: realGSettings, target: t as ResetTarget | undefined });
