@@ -76,17 +76,21 @@ export function renderShellOverride(c: Colors): string {
   color: ${fg};
 }
 
-/* Aktivitäten-/Workspace-Anzeige */
+/* Aktivitäten-/Workspace-Anzeige.
+   Die aktive Workspace-'Pill' und die inaktiven Punkte sind allesamt
+   '.workspace-dot' (Aktiv: volle Skala/Deckkraft, inaktiv: halbtransparent).
+   Yaru erzwingt am Stylesheet-Ende weiße Dots per '!important' (#f2f2f2) —
+   auf hellem Topbar unsichtbar. '!important' ist im Shell-CSS zulässig (anders
+   als bei GTK) und nötig, um Yarus End-Override zu schlagen. */
 .workspaces-indicator,
 .workspace-dot,
 .activity-button {
   color: ${fg};
 }
-.workspace-dot {
-  background-color: ${accent};
-}
-#panel .panel-button#panelActivities .workspace-dot {
-  background-color: ${accent};
+.workspace-dot,
+#panel .panel-button#panelActivities .workspace-dot,
+#panel:overview .panel-button#panelActivities .workspace-dot {
+  background-color: ${accent} !important;
 }
 
 /* Übersicht & Dash */

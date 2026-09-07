@@ -24,6 +24,7 @@ test("renderShellOverride enthält Rose-Pine-Farben für Kernflächen", () => {
   expect(css).toContain("#575279");
   expect(css).toContain("background-color: #ede7e1");
   expect(css).toContain("background-color: #56949f");
+  expect(css).toContain("background-color: #56949f !important");
 });
 
 test("renderShellTheme hängt Override an eine vollständige Basis an (valid)", () => {
