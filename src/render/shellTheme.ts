@@ -155,6 +155,20 @@ export function renderShellOverride(c: Colors): string {
 .message-secondary {
   color: ${fgMuted};
 }
+
+/* Scharfe Ecken für aufgeklappte Panels (Popups, QuickSettings, OSD, …).
+   Yaru rundet diese Container (20px/999px); konsistent zur scharfen Fenster-
+   Gestaltung wird die Eckenrundung aufgehoben. */
+.popup-menu-content,
+.candidate-popup-content,
+.quick-settings,
+.osd-window,
+.calendar,
+.message-list,
+.world-clocks-button,
+.background-menu {
+  border-radius: 0;
+}
 `;
 }
 
