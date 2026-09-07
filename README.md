@@ -14,7 +14,7 @@ steuert `prefer-light`/`prefer-dark`, `icons.theme` das Icon-Theme.
 
 ## Nutzung
 ```bash
-bun install                        # @types/bun (Dev)
+bun install                        # Dev-Abhängigkeiten (@types/bun, css-tree)
 ./bin/themeswitch themes                          # verfügbare Omarchy-Themes
 ./bin/themeswitch set rose-pine --dry-run         # Vorschau für ein Theme
 ./bin/themeswitch set catppuccin-latte            # Theme vollständig anwenden
