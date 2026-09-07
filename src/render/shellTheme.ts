@@ -92,6 +92,13 @@ export function renderShellOverride(c: Colors): string {
 #panel:overview .panel-button#panelActivities .workspace-dot {
   background-color: ${accent} !important;
 }
+/* Hover darf keinen zweiten andersfarbigen Pill-Hintergrund hinter die
+   Workspace-Pill legen. */
+#panel .panel-button#panelActivities:hover,
+#panel .panel-button#panelActivities:focus {
+  background-color: transparent;
+  box-shadow: none;
+}
 
 /* Übersicht & Dash */
 #overview,
