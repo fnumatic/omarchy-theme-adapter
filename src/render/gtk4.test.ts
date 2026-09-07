@@ -35,6 +35,7 @@ test("renderGtk4 enthält kompakte Headerbar-Regeln (spezifisch)", () => {
   expect(css).toContain("min-height: 24px");
   expect(css).toContain(".tab-bar");
   expect(css).toContain("windowcontrols");
+  expect(css).toContain("border-radius: 0");
 });
 
 test("installGtk4 --dry-run schreibt nichts", async () => {

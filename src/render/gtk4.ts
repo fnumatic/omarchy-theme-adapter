@@ -92,6 +92,13 @@ window .tab-box tab {
   padding-top: 0;
   padding-bottom: 0;
 }
+/* Scharfe Fensterecken (Wunsch: keine/möglichst geringe Rundung).
+   Wirkt für GTK4/CSD-Fenster (bestätigt per Test); mutter-Clip darüber bleibt. */
+window.csd,
+window {
+  border-radius: 0;
+}
+
 windowcontrols button {
   min-height: 18px;
   min-width: 18px;
