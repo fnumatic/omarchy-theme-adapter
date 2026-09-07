@@ -85,7 +85,9 @@ Deep-Override optional als `~/.config/gtk-3.0/gtk.css`.
 > Ptyxis/GNOME-Terminal-Profil verworfen: auf diesem System ist **Ghostty** das aktive
 > Terminal und Ptyxis produktiv ungenutzt.
 
-Ghostty themen via **Theme-Datei** `~/.config/ghostty/themes/<name>.conf` + `theme = <name>` in der config.
+Ghostty themen via **Theme-Datei** `~/.config/ghostty/themes/rose-pine-dawn.conf` + `theme = rose-pine-dawn.conf` in der config.
+**Wichtig:** Ghostty listet User-Themes MIT Endung (`rose-pine-dawn.conf (user)`); die `theme`-Referenz
+muss exakt dem Dateinamen entsprechen, sonst meldet Ghostty „theme not found".
 Mapping exakt aus Omarchy `default/themed/ghostty.conf.tpl` (Option B):
 
 | Ghostty-Key | Quelle |
@@ -98,7 +100,10 @@ Mapping exakt aus Omarchy `default/themed/ghostty.conf.tpl` (Option B):
 | `palette 0..15` | `background, red, green, yellow, blue, magenta, cyan, foreground, muted, bright_red, bright_green, bright_yellow, bright_blue, bright_magenta, bright_cyan, bright_foreground` |
 
 Umsetzung: `src/render/ghostty.ts` rendert das Theme; CLI `rosepine-gnome install ghostty`
-schreibt `~/.config/ghostty/themes/rose-pine-dawn.conf` und setzt die `theme`-Zeile (Config-Backup automatisch).
+schreibt `~/.config/ghostty/themes/rose-pine-dawn.conf` und setzt die `theme`-Zeile auf exakt
+`theme = rose-pine-dawn.conf` (Config-Backup automatisch). Vor dem ersten Eingriff sichert
+`src/state.ts` den Originalzustand nach `~/.local/state/rosepine-gnome/state.json`;
+`rosepine-gnome reset [--dry-run]` stellt ihn wieder her (keine geratenen Defaults).
 Render-Adresse/Indexreihenfolge folgt 1:1 dem Omarchy-Template, damit die Farben identisch zur
 Omarchy-Optik sind. **Interpreter: TypeScript via Bun.**
 

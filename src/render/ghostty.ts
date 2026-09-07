@@ -3,7 +3,10 @@
 import type { Colors } from "../colors.ts";
 import { mkdir, writeFile, readFile } from "node:fs/promises";
 
-export const GHOSTTY_THEME_NAME = "rose-pine-dawn";
+/** Dateiname des User-Themes (Ghostty listet User-Themes MIT Endung, z. B. `rose-pine-dawn.conf (user)`). */
+export const GHOSTTY_THEME_FILE = "rose-pine-dawn.conf";
+/** Theme-ID, die in `theme = …` stehen muss — identisch zum Dateinamen. */
+export const GHOSTTY_THEME_NAME = GHOSTTY_THEME_FILE;
 
 /**
  * Rendert ein gültiges Ghostty-Theme (.conf) aus der geparsten colors.toml.
@@ -74,7 +77,7 @@ export async function installGhostty(
   const xdg = process.env.XDG_CONFIG_HOME || `${process.env.HOME}/.config`;
   const configDir = opts.configDir ?? `${xdg}/ghostty`;
   const themesDir = `${configDir}/themes`;
-  const themeFile = `${themesDir}/${GHOSTTY_THEME_NAME}.conf`;
+  const themeFile = `${themesDir}/${GHOSTTY_THEME_FILE}`;
   const configFile = `${configDir}/config`;
 
   const result: InstallResult = { themeFile, configFile };

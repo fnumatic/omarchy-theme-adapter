@@ -12,6 +12,9 @@ import {
   renderGtk3,
   GTK3_THEME_NAME,
 } from "./render/gtk3.ts";
+import { realGSettings } from "./gsettings.ts";
+import { ensureSnapshot } from "./state.ts";
+import { resetAll } from "./reset.ts";
 import { join } from "node:path";
 
 const ROOT = import.meta.dir; // …/src
@@ -30,6 +33,7 @@ Verwendung:
                                               GTK3-Theme + gsettings gtk-theme
   rosepine-gnome apply [--dry-run] [--colors FILE]
                                               System-Light-Schema setzen (MVP)
+  rosepine-gnome reset [--dry-run]            Originalzustand aus Snapshot wiederherstellen
 
 Optionen:
   --colors FILE   alternatives colors.toml (Standard: themes/rose-pine/colors.toml)
@@ -117,6 +121,12 @@ async function main(): Promise<void> {
 
     case "install":
       if (args.cmds[1] === "ghostty") {
+        if (!args.dry) {
+          const { created } = await ensureSnapshot(realGSettings);
+          if (created) console.log("   ✓ Originalzustand gesichert (Snapshot)");
+        } else {
+          console.log("  dry-run: würde ggf. Snapshot sichern, keine Änderung");
+        }
         await withColors(args, async (c) => {
           try {
             await installGhostty(renderGhostty(c), { dry: args.dry });
@@ -125,6 +135,12 @@ async function main(): Promise<void> {
           }
         });
       } else if (args.cmds[1] === "gtk3") {
+        if (!args.dry) {
+          const { created } = await ensureSnapshot(realGSettings);
+          if (created) console.log("   ✓ Originalzustand gesichert (Snapshot)");
+        } else {
+          console.log("  dry-run: würde ggf. Snapshot sichern, keine Änderung");
+        }
         await withColors(args, async (c) => {
           try {
             await installGtk3(renderGtk3(c), { dry: args.dry });
@@ -139,10 +155,27 @@ async function main(): Promise<void> {
 
     case "apply": {
       C.log(`Anwenden von Rose Pine Dawn`);
-      const out = Bun.spawnSync(["gsettings", "set", "org.gnome.desktop.interface", "color-scheme", "prefer-light"]);
-      if (out.exitCode !== 0) C.warn(`gsettings-color-scheme fehlgeschlagen (${out.exitCode})`);
+      if (args.dry) {
+        console.log("  dry-run: gsettings set org.gnome.desktop.interface color-scheme prefer-light");
+        console.log(`   − Icon-Theme/Wallpaper: offen (PROJECT.md §13); Ghostty: rosepine-gnome install ghostty`);
+        break;
+      }
+      const { created } = await ensureSnapshot(realGSettings);
+      if (created) console.log("   ✓ Originalzustand gesichert (Snapshot)");
+      const code = await realGSettings.set("org.gnome.desktop.interface", "color-scheme", "prefer-light");
+      if (code !== 0) C.warn(`gsettings-color-scheme fehlgeschlagen (${code})`);
       else console.log("   ✓ color-scheme: prefer-light");
       console.log(`   − Icon-Theme/Wallpaper: offen (PROJECT.md §13); Ghostty: rosepine-gnome install ghostty`);
+      break;
+    }
+
+    case "reset": {
+      C.log(`Originalzustand wiederherstellen`);
+      try {
+        await resetAll({ dry: args.dry, gs: realGSettings });
+      } catch (e) {
+        C.die(String(e instanceof Error ? e.message : e));
+      }
       break;
     }
 

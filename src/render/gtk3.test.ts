@@ -3,6 +3,7 @@ import { mkdtemp, readFile, access } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { parseColors } from "../colors.ts";
+import { fakeGSettings } from "../gsettings.ts";
 import {
   renderGtk3,
   renderIndexTheme,
@@ -36,16 +37,19 @@ test("renderIndexTheme setzt Name und GtkTheme", () => {
   expect(t).toContain("Type=X-GNOME-Metatheme");
 });
 
-test("installGtk3 --dry-run schreibt nichts", async () => {
+test("installGtk3 --dry-run schreibt nichts und setzt kein gsettings", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg3-dry-"));
-  await installGtk3(renderGtk3(base), { dry: true, themesDir: dir });
+  const gs = fakeGSettings();
+  await installGtk3(renderGtk3(base), { dry: true, themesDir: dir, gs });
   const exists = await access(join(dir, GTK3_THEME_NAME)).then(() => true).catch(() => false);
   expect(exists).toBe(false);
+  expect(gs.sets).toHaveLength(0);
 });
 
 test("installGtk3 schreibt gtk.css und index.theme", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg3-inst-"));
-  const res = await installGtk3(renderGtk3(base), { dry: false, themesDir: dir });
+  const gs = fakeGSettings();
+  const res = await installGtk3(renderGtk3(base), { dry: false, themesDir: dir, gs });
   expect(res.cssFile).toContain("gtk-3.0/gtk.css");
 
   const css = await readFile(res.cssFile, "utf8");
@@ -53,4 +57,10 @@ test("installGtk3 schreibt gtk.css und index.theme", async () => {
 
   const index = await readFile(res.indexFile, "utf8");
   expect(index).toContain("GtkTheme=RosePineDawn");
+
+  expect(gs.sets).toContainEqual([
+    "org.gnome.desktop.interface",
+    "gtk-theme",
+    "RosePineDawn",
+  ]);
 });

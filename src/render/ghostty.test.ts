@@ -1,6 +1,11 @@
 import { test, expect, beforeEach } from "bun:test";
 import { parseColors, type Colors } from "../colors.ts";
-import { renderGhostty, installGhostty, GHOSTTY_THEME_NAME } from "./ghostty.ts";
+import {
+  renderGhostty,
+  installGhostty,
+  GHOSTTY_THEME_NAME,
+  GHOSTTY_THEME_FILE,
+} from "./ghostty.ts";
 import { mkdtemp, readFile, mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -70,8 +75,9 @@ test("installGhostty schreibt Theme und setzt theme-Zeile (mit Backup)", async (
 
   const res = await installGhostty(renderGhostty(base), { dry: false, configDir: dir });
 
-  // Theme geschrieben
-  const themeText = await readFile(join(dir, "themes", `${GHOSTTY_THEME_NAME}.conf`), "utf8");
+  // Theme-Datei und theme-Referenz sind identisch (Ghostty listet User-Themes MIT Endung)
+  expect(res.themeFile.endsWith(`/${GHOSTTY_THEME_FILE}`)).toBe(true);
+  const themeText = await readFile(join(dir, "themes", GHOSTTY_THEME_FILE), "utf8");
   expect(themeText).toContain("palette = 13=#907aa9");
 
   // Config: theme ersetzt

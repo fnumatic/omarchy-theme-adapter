@@ -17,8 +17,10 @@ bun install                        # @types/bun (Dev)
 ./bin/rosepine-gnome parse
 ./bin/rosepine-gnome render ghostty
 ./bin/rosepine-gnome install ghostty --dry-run   # Vorschau
-./bin/rosepine-gnome install ghostty             # anwenden (mit Config-Backup)
-./bin/rosepine-gnome apply --dry-run             # System-Light-Schema (Vorschau)
+./bin/rosepine-gnome install ghostty             # anwenden (mit Config-Backup + Snapshot)
+./bin/rosepine-gnome apply --dry-run             # System-Light-Schema (Vorschau, ändert nichts)
+./bin/rosepine-gnome reset --dry-run             # Vorschau der Wiederherstellung
+./bin/rosepine-gnome reset                       # Originalzustand aus Snapshot wiederherstellen
 ```
 
 ## Quellen & Korrektur

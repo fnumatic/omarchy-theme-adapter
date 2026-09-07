@@ -1,6 +1,7 @@
 // render/gtk3.ts — GTK3-Theme aus colors.toml rendern + installieren (Option B).
 // Mapping siehe docs/architektur.md §3.2.
 import type { Colors } from "../colors.ts";
+import { realGSettings, type GSettingsRunner } from "../gsettings.ts";
 
 /** Name des GTK-Themes (Verzeichnis unter ~/.themes). */
 export const GTK3_THEME_NAME = "RosePineDawn";
@@ -58,22 +59,16 @@ export interface InstallGtk3Options {
   dry: boolean;
   /** Oberverzeichnis für Themes (Default: ~/.themes) */
   themesDir?: string;
+  gs?: GSettingsRunner;
 }
 
-/** Setzt gsettings gtk-theme über BN. Gibt exitCode zurück (oder -1 bei dry). */
-function setGtkTheme(name: string, dry: boolean): number {
+/** Setzt gtk-theme. Gibt exitCode zurück (oder -1 bei dry). */
+async function setGtkTheme(gs: GSettingsRunner, name: string, dry: boolean): Promise<number> {
   if (dry) {
     console.log(`  dry-run: gsettings set org.gnome.desktop.interface gtk-theme '${name}'`);
     return -1;
   }
-  const out = Bun.spawnSync([
-    "gsettings",
-    "set",
-    "org.gnome.desktop.interface",
-    "gtk-theme",
-    name,
-  ]);
-  return out.exitCode ?? -1;
+  return gs.set("org.gnome.desktop.interface", "gtk-theme", name);
 }
 
 /**
@@ -88,10 +83,11 @@ export async function installGtk3(
   const cssFile = `${themesDir}/${GTK3_THEME_NAME}/gtk-3.0/gtk.css`;
   const indexFile = `${themesDir}/${GTK3_THEME_NAME}/index.theme`;
 
+  const gs = opts.gs ?? realGSettings;
   if (opts.dry) {
     console.log(`  dry-run: schreibe ${cssFile}`);
     console.log(`  dry-run: schreibe ${indexFile}`);
-    setGtkTheme(GTK3_THEME_NAME, true);
+    await setGtkTheme(gs, GTK3_THEME_NAME, true);
     return { cssFile, indexFile };
   }
 
@@ -101,7 +97,7 @@ export async function installGtk3(
   await writeFile(indexFile, renderIndexTheme());
   console.log(`   ✓ GTK3-Theme geschrieben: ${cssFile}`);
 
-  const code = setGtkTheme(GTK3_THEME_NAME, false);
+  const code = await setGtkTheme(gs, GTK3_THEME_NAME, false);
   if (code !== 0) console.warn(`   [!] gsettings gtk-theme fehlgeschlagen (${code})`);
   else console.log(`   ✓ gtk-theme gesetzt: ${GTK3_THEME_NAME}`);
   return { cssFile, indexFile };

@@ -158,8 +158,11 @@ rosepinetheme/
 │       ├── colors.toml         # verifizierte Quellpalette (Referenz)
 │       └── sources.txt         # Herkunft/Lizenz/Kommitsh der Palette
 ├── src/
-│   ├── cli.ts                # CLI-Einstieg (Bun)
+│   ├── cli.ts                # CLI-Einstieg (Bun): parse/render/install/apply/reset
 │   ├── colors.ts             # colors.toml-Parser + Normalisierung (TS)
+│   ├── gsettings.ts          # testbarer gsettings-Wrapper (real + fake)
+│   ├── state.ts              # Snapshot des Originalzustands (nur einmal)
+│   ├── reset.ts              # Wiederherstellung aus Snapshot
 │   └── render/
 │       ├── ghostty.ts        # Ghostty-Theme rendern/installieren (TS)
 │       └── gtk3.ts           # GTK3 gtk.css + index.theme rendern/installieren (TS)
