@@ -97,7 +97,7 @@ export async function installGhostty(
     cfgText = await readFile(configFile, "utf8");
   }
 
-  const themeRe = /^[ \t]*theme[ \t]*=/mu;
+  const themeRe = /^[ \t]*theme[ \t]*=.*$/mu;
   if (themeRe.test(cfgText)) {
     const stamp = new Date().toISOString().replace(/[-:T]/gu, "").slice(0, 14);
     const backupFile = `${configFile}.bak-${stamp}`;
