@@ -43,16 +43,19 @@ treeview, list, row { background-color: ${bg}; color: ${fg}; }
 label { color: ${fg}; }
 
 /* Kompakte Headerbars/Menüleisten (Wunsch: flachere Leisten) */
-headerbar, .header-bar {
-  min-height: 32px;
+headerbar, .header-bar, .titlebar {
+  min-height: 30px;
   padding-top: 0;
   padding-bottom: 0;
 }
 headerbar button, headerbar entry,
-.header-bar button, .header-bar entry {
-  min-height: 28px;
-  margin-top: 2px;
-  margin-bottom: 2px;
+.header-bar button, .header-bar entry,
+.titlebar button, .titlebar entry {
+  min-height: 24px;
+  margin-top: 1px;
+  margin-bottom: 1px;
+  padding-top: 1px;
+  padding-bottom: 1px;
 }
 menubar, menuitem { padding-top: 2px; padding-bottom: 2px; }
 `;

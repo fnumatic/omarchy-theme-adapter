@@ -29,10 +29,11 @@ test("renderGtk4 enthält zentrale libadwaita-Farbnamen", () => {
   expect(css).toContain(MARKER);
 });
 
-test("renderGtk4 enthält kompakte Headerbar-Regeln", () => {
+test("renderGtk4 enthält kompakte Headerbar-Regeln (spezifisch)", () => {
   const css = renderGtk4(base);
-  expect(css).toContain("headerbar {");
-  expect(css).toContain("min-height: 32px");
+  expect(css).toContain("window headerbar");
+  expect(css).toContain("min-height: 30px");
+  expect(css).toContain("windowcontrols");
 });
 
 test("installGtk4 --dry-run schreibt nichts", async () => {
