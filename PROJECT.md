@@ -78,7 +78,8 @@ Omarchy-`colors.toml` und übersetzt es in die GNOME-eigenen Schichten:
 1. **GNOME Shell** → generiertes `gnome-shell-theme.css`
 2. **GTK3** → generiertes `gtk.css` (gtk-theme unter `~/.themes`)
 3. **GTK4 / libadwaita** → generiertes CSS bzw. via `libadwaita`-Recolor
-4. **GNOME Terminal** → `dconf`/Profiltre-Farben
+4. **Ghostty (Terminal)** → Theme-Datei `~/.config/ghostty/themes/rose-pine-dawn.conf` + `theme`-Key
+   (Mapping nach Omarchy `ghostty.conf.tpl`) — **entschieden 2026-09-07**; Ptyxis verworfen
 5. **GNOME Icon-Theme** → ausgewähltes passendes Icon-Theme
 6. **Light Mode** → `gsettings color-scheme = prefer-light`
 7. **Wallpaper** → Rose-Pine-Dawn-Hintergrund setzen
@@ -233,6 +234,7 @@ rosepinetheme/
 | Frage | Status |
 |---|---|
 | Farb-Mapping `colors.toml` → GNOME-Shell-Token | zu erarbeiten in `docs/architektur.md` |
+| Terminal-Hebel | **erledigt** — Ghostty-Theme installiert (`rose-pine-dawn`), Ptyxis verworfen (unproduktiv) |
 | GTK4/libadwaita-Ansatz (generierte CSS vs. `GTK_THEME`-Fallback) | zu evaluieren in Umsetzung |
 | Icon-Theme-Variante (welches passende Dawn-Icon-Theme) | zu wählen |
 | Wallpaper-Quelle (Rose-Pine-Dawn-Assets) | zu beschaffen |

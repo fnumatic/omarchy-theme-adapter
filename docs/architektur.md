@@ -80,15 +80,26 @@ Umsetzung: GTK3-Theme unter `~/.themes/<name>/gtk-3.0/gtk.css`; Deep-Override op
   Der MVP liefert ein generiertes `libadwaita.css`-Fragment; Vollgenauigkeit wird separat
   verbucht (Risiko, siehe PROJECT.md §10).
 
-### 3.4 GNOME Terminal
-| Profil-Feld | Quelle |
-|---|---|
-| foreground-color | `foreground` |
-| background-color | `background` |
-| bold-color | `bright_foreground` |
-| palette (16) | `red..magenta` → Zellen 0–7, `bright_*` → Zellen 8–15 (orange in Zelle 3 ersetzt/green? Siehe §5) |
+### 3.4 Terminal: Ghostty (gewähltes Ziel, 2026-09-07)
+> Ptyxis/GNOME-Terminal-Profil verworfen: auf diesem System ist **Ghostty** das aktive
+> Terminal und Ptyxis produktiv ungenutzt.
 
-Umsetzung: `dconf write /org/gnome/terminal/legacy/profiles:/:<uuid>/...`
+Ghostty themen via **Theme-Datei** `~/.config/ghostty/themes/<name>.conf` + `theme = <name>` in der config.
+Mapping exakt aus Omarchy `default/themed/ghostty.conf.tpl` (Option B):
+
+| Ghostty-Key | Quelle |
+|---|---|
+| `background` | `background` |
+| `foreground` | `foreground` |
+| `cursor-color` | `bright_foreground` |
+| `selection-background` | `selection` |
+| `selection-foreground` | `foreground` |
+| `palette 0..15` | `background, red, green, yellow, blue, magenta, cyan, foreground, muted, bright_red, bright_green, bright_yellow, bright_blue, bright_magenta, bright_cyan, bright_foreground` |
+
+Umsetzung: `src/render-ghostty.sh` rendert das Theme; CLI `rosepine-gnome install ghostty`
+schreibt `~/.config/ghostty/themes/rose-pine-dawn.conf` und setzt die `theme`-Zeile (Config-Backup automatisch).
+Render-Adresse/Indexreihenfolge folgt 1:1 dem Omarchy-Template, damit die Farben identisch zur
+Omarchy-Optik sind.
 
 ### 3.5 Icons & Wallpaper
 | Element | Quelle |

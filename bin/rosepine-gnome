@@ -1,13 +1,11 @@
 #!/usr/bin/env bash
 # rosepine-gnome — Rose Pine Dawn als GNOME-Theme via Omarchy-color.toml (Option B).
-# MVP: light-mode, Terminal-Farben; Render-Adapter für GTK/Shell folgen.
+# Stand: Parser + Ghostty-Terminal-Adapter; GTK/Shell-Adapter folgen.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$ROOT/src/lib-colors.sh"
-
-THEME_ID="rospine-gnome"
-TERM_PROFILE_NAME="Rose Pine Dawn"
+source "$ROOT/src/render-ghostty.sh"
 
 usage() {
   cat <<'EOF'
@@ -15,8 +13,12 @@ rosepine-gnome — Rose Pine Dawn als GNOME-Theme (aus Omarchy colors.toml)
 
 Verwendung:
   rosepine-gnome parse [--colors FILE]        colors.toml normalisiert ausgeben
+  rosepine-gnome render ghostty [--colors FILE]
+                                              Ghostty-Theme (.conf) auf stdout rendern
+  rosepine-gnome install ghostty [--dry-run] [--colors FILE]
+                                              Ghostty-Theme installieren + config setzen
   rosepine-gnome apply [--dry-run] [--colors FILE]
-                                              Light-Mode + Terminal-Farben anwenden
+                                              System-Light-Schema setzen (MVP)
 
 Optionen:
   --colors FILE   alternatives colors.toml (Standard: themes/rose-pine/colors.toml)
@@ -31,21 +33,18 @@ die()  { printf '\033[1;31m[x]\033[0m %s\n' "$*" >&2; exit 1; }
 
 DRY=0
 COLORS_FILE=""
-cmd_set=""
+CMDS=()
 
-# --- Argumente ---
+# --- Kommando & Argumente ---
 [[ $# -eq 0 ]] && { usage; exit 0; }
-case "$1" in
-  -h|--help) usage; exit 0 ;;
-  parse) cmd_set="parse"; shift ;;
-  apply)  cmd_set="apply"; shift ;;
-  *) die "Unbekanntes Kommando: $1" ;;
-esac
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    -h|--help) usage; exit 0 ;;
     --dry-run) DRY=1 ;;
     --colors)  COLORS_FILE="$2"; shift ;;
-    *) die "Unbekannte Option: $1" ;;
+    --) shift ;;
+    -*) die "Unbekannte Option: $1" ;;
+    *)  CMDS+=("$1") ;;
   esac
   shift
 done
@@ -53,57 +52,46 @@ done
 if [[ -z "$COLORS_FILE" ]]; then
   COLORS_FILE="$ROOT/themes/rose-pine/colors.toml"
 fi
-colors_parse "$COLORS_FILE" || die "colors.toml konnte nicht geparst werden."
+colors_parse "$COLORS_FILE" || die "colors.toml konnte nicht geparst werden: $COLORS_FILE"
 
-run() { # run: führt Kommando aus bzw. zeigt es bei --dry-run
-  if [[ "$DRY" -eq 1 ]]; then
-    printf '  dry-run: %s\n' "$*"
-  else
-    "$@"
-  fi
+run() { # führt Kommando aus bzw. zeigt es bei --dry-run
+  if [[ "$DRY" -eq 1 ]]; then printf '  dry-run: %s\n' "$*"; else "$@"; fi
 }
-
-if [[ "$cmd_set" == "parse" ]]; then
-  colors_semantic
-  exit 0
-fi
-
-# -------------------------------------------------------------------------------
-# apply — MVP
-# -------------------------------------------------------------------------------
-log "Anwenden von Rose Pine Dawn (${_C_mode:-light})"
 
 have() { command -v "$1" >/dev/null 2>&1; }
 
-# 1) Helles Farbschema
-schema="org.gnome.desktop.interface"
-if have gsettings; then
-  run gsettings set "$schema" color-scheme prefer-light
-  printf '   ✓ color-scheme: prefer-light\n'
-else
-  warn "gsettings nicht gefunden — Light-Schema übersprungen."
-fi
-
-# 2) GNOME Terminal: aktives Profil färben
-if have dconf && have gsettings; then
-  stable="$(gsettings get org.gnome.Terminal.ProfilesList default 2>/dev/null || true)"
-  stable="${stable//\'/}"
-  if [[ -n "$stable" && "$stable" != "null" ]]; then
-    base="/org/gnome/terminal/legacy/profiles:/:$stable/"
-    ANSI=$(colors_semantic | sed -n 's/^ANSI_/ANSI_PALETTE_/p' | awk -F= 'BEGIN{s="["} NR>1{s=s", "} {s=s"\x27"$2"\x27"} END{print s"]"}')
-    run dconf write "${base}foreground-color"  "'${_C_foreground}'"
-    run dconf write "${base}background-color"  "'${_C_background}'"
-    run dconf write "${base}bold-color"        "'${_C_bright_foreground:-$_C_foreground}'"
-    run dconf write "${base}use-theme-colors"  "false"
-    run dconf write "${base}palette"           "$ANSI"
-    printf '   ✓ Terminal-Profil %s (foreground/background/palette)\n' "$stable"
-  else
-    warn "Kein Standard-Terminalprofil gefunden — Terminal übersprungen."
-  fi
-else
-  warn "dconf/gsettings fehlen — Terminal übersprungen."
-fi
-
-# 3) Icon-/Wallpaper/Light-Rest: offen (siehe PROJECT.md §13)
-printf '   − Icon-Theme/Wallpaper: offen (PROJECT.md §13)\n'
-exit 0
+case "${CMDS[0]:-}" in
+  parse)
+    colors_semantic
+    exit 0
+    ;;
+  render)
+    case "${CMDS[1]:-}" in
+      ghostty) render_ghostty ;;
+      *) die "render: unbekanntes Ziel '${CMDS[1]:-}' (ghostty)" ;;
+    esac
+    exit 0
+    ;;
+  install)
+    case "${CMDS[1]:-}" in
+      ghostty) install_ghostty ;;
+      *) die "install: unbekanntes Ziel '${CMDS[1]:-}' (ghostty)" ;;
+    esac
+    exit 0
+    ;;
+  apply)
+    log "Anwenden von Rose Pine Dawn (${_C_mode:-light})"
+    schema="org.gnome.desktop.interface"
+    if have gsettings; then
+      run gsettings set "$schema" color-scheme prefer-light
+      printf '   ✓ color-scheme: prefer-light\n'
+    else
+      warn "gsettings nicht gefunden — light-schema übersprungen."
+    fi
+    printf '   − Icon-Theme/Wallpaper: offen (PROJECT.md §13); Ghostty: rosepine-gnome install ghostty\n'
+    exit 0
+    ;;
+  *)
+    die "Unbekanntes Kommando: ${CMDS[0]:-} (siehe --help)"
+    ;;
+esac
