@@ -120,7 +120,13 @@ LO-Schema sind ein möglicher Folgeschritt.
 (bekanntes „muddled Automatic"-Problem). Daher kein Standardweg; `reset libreoffice` stellt das
 feste Schema wieder her. Omarchy selbst themt LibreOffice gar nicht (kein LO-Pfad im Tree).
 
-### 3.6 Icons & Wallpaper
+### 3.6 VS Code
+Wie Omarchy (`bin/omarchy-theme-set-vscode`): Der Theme-Deskriptor
+(`themes/rose-pine/vscode.json` = Name + Extension `mvllow.rose-pine`) wird umgesetzt durch
+Extension-Installation und `workbench.colorTheme` in `settings.json`. Edit JSONC-sicher per
+Regex (kein Reformat, Kommentare bleiben). Umsetzung: `src/render/vscode.ts`.
+
+### 3.7 Icons & Wallpaper
 | Element | Quelle |
 |---|---|
 | Icon-Theme | passendes Dawn-kompatibles Icon-Theme (auszuwählen, offen) |

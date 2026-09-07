@@ -13,6 +13,8 @@ export interface Snapshot {
   gtk4CssText: string | null;
   libreofficeConfigExisted: boolean | null;
   libreofficeConfigText: string | null;
+  vscodeSettingsExisted: boolean | null;
+  vscodeSettingsText: string | null;
 }
 
 export function statePath(overrideDir?: string): string {
@@ -44,6 +46,10 @@ function libreofficeConfigPath(): string {
   return `${process.env.HOME}/.config/libreoffice/4/user/registrymodifications.xcu`;
 }
 
+function vscodeSettingsPath(): string {
+  return `${process.env.HOME}/.config/Code/User/settings.json`;
+}
+
 async function readOptional(path: string): Promise<{ existed: boolean; text: string | null }> {
   try {
     return { existed: true, text: await readFile(path, "utf8") };
@@ -67,14 +73,19 @@ export async function ensureSnapshot(
     const raw = existing as unknown as Record<string, unknown>;
     const needsGtk4 = !("gtk4CssText" in raw);
     const needsLO = !("libreofficeConfigText" in raw);
-    if (needsGtk4 || needsLO) {
+    const needsVscode = !("vscodeSettingsText" in raw);
+    if (needsGtk4 || needsLO || needsVscode) {
       const g = needsGtk4 ? await readOptional(gtk4CssPath()) : null;
       const lo = needsLO ? await readOptional(libreofficeConfigPath()) : null;
+      const vs = needsVscode ? await readOptional(vscodeSettingsPath()) : null;
       const migrated: Snapshot = {
         ...existing,
         ...(needsGtk4 ? { gtk4CssExisted: g!.existed, gtk4CssText: g!.text } : {}),
         ...(needsLO
           ? { libreofficeConfigExisted: lo!.existed, libreofficeConfigText: lo!.text }
+          : {}),
+        ...(needsVscode
+          ? { vscodeSettingsExisted: vs!.existed, vscodeSettingsText: vs!.text }
           : {}),
       };
       const p = statePath(overrideDir);
@@ -89,6 +100,7 @@ export async function ensureSnapshot(
   const ghostty = await readOptional(ghosttyConfigPath());
   const gtk4 = await readOptional(gtk4CssPath());
   const lo = await readOptional(libreofficeConfigPath());
+  const vs = await readOptional(vscodeSettingsPath());
 
   const snap: Snapshot = {
     version: 1,
@@ -101,6 +113,8 @@ export async function ensureSnapshot(
     gtk4CssText: gtk4.text,
     libreofficeConfigExisted: lo.existed,
     libreofficeConfigText: lo.text,
+    vscodeSettingsExisted: vs.existed,
+    vscodeSettingsText: vs.text,
   };
   const p = statePath(overrideDir);
   await mkdir(p.slice(0, p.lastIndexOf("/")), { recursive: true });

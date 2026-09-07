@@ -5,7 +5,7 @@ import type { GSettingsRunner } from "./gsettings.ts";
 import { GTK3_THEME_NAME } from "./render/gtk3.ts";
 import { MARKER as GTK4_MARKER } from "./render/gtk4.ts";
 
-export type ResetTarget = "ghostty" | "gtk3" | "gtk4" | "libreoffice";
+export type ResetTarget = "ghostty" | "gtk3" | "gtk4" | "libreoffice" | "vscode";
 
 export interface ResetOptions {
   dry: boolean;
@@ -15,9 +15,15 @@ export interface ResetOptions {
   configHome?: string;
   /** LibreOffice-Config (Default: ~/.config/libreoffice/…) — für Tests überschreibbar */
   libreofficeConfigFile?: string;
+  /** VS-Code-settings (Default: Code) — für Tests überschreibbar */
+  vscodeSettingsFile?: string;
   /** Ohne Angabe: alles wiederherstellen */
   target?: ResetTarget;
   gs: GSettingsRunner;
+}
+
+function vscodeSettingsFile(opts: ResetOptions): string {
+  return opts.vscodeSettingsFile ?? `${process.env.HOME}/.config/Code/User/settings.json`;
 }
 
 async function writeEnsured(path: string, text: string): Promise<void> {
@@ -159,6 +165,21 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
     console.log(`   ✓ LibreOffice-Config wiederhergestellt: ${loFile}`);
   } else {
     console.log(`   − keine LibreOffice-Config im Snapshot, nichts zu tun`);
+  }
+  }
+
+  if (want("vscode")) {
+  // VS-Code-settings (nur colorTheme wurde von uns gesetzt → ganze Datei aus Snapshot)
+  const vsFile = vscodeSettingsFile(opts);
+  if (snap.vscodeSettingsText === undefined || snap.vscodeSettingsExisted === undefined) {
+    console.log(`   − VS Code: kein Original im Snapshot (alter Snapshot), übersprungen`);
+  } else if (opts.dry) {
+    console.log(`  dry-run: stelle ${vsFile} aus Snapshot wieder her`);
+  } else if (snap.vscodeSettingsExisted && snap.vscodeSettingsText !== null) {
+    await writeEnsured(vsFile, snap.vscodeSettingsText);
+    console.log(`   ✓ VS-Code-settings wiederhergestellt: ${vsFile}`);
+  } else {
+    console.log(`   − keine VS-Code-settings im Snapshot, nichts zu tun`);
   }
   }
 

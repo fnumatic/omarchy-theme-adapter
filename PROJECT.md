@@ -168,6 +168,7 @@ rosepinetheme/
 │       ├── gtk3.ts           # GTK3 gtk.css + index.theme rendern/installieren (TS)
 │       └── gtk4.ts           # libadwaita-Overlay (gtk-4.0/gtk.css) rendern/installieren (TS)
 │       └── libreoffice.ts    # LO folgt dem System-Theme (Automatic, mit Backup) (TS)
+│       └── vscode.ts         # VS-Code-Theme (Extension + colorTheme, JSONC-sicher) (TS)
 ├── bin/
 │   └── rosepine-gnome        # Wrapper → bun src/cli.ts
 └── docs/

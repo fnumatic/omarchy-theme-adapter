@@ -14,6 +14,7 @@ import {
 } from "./render/gtk3.ts";
 import { installGtk4, renderGtk4 } from "./render/gtk4.ts";
 import { installLibreOffice } from "./render/libreoffice.ts";
+import { installVscode, defaultCodeTarget, type VscodeDescriptor } from "./render/vscode.ts";
 import { realGSettings } from "./gsettings.ts";
 import { ensureSnapshot } from "./state.ts";
 import { resetAll, type ResetTarget } from "./reset.ts";
@@ -38,9 +39,10 @@ Verwendung:
                                               libadwaita-Overlay nach ~/.config/gtk-4.0/gtk.css
   rosepine-gnome install libreoffice [--dry-run]
                                               LibreOffice folgt dem System-Theme (nur bei beendetem LO)
+  rosepine-gnome install vscode [--dry-run]   Rose-Pine-Dawn-Theme in VS Code (Extension + colorTheme)
   rosepine-gnome apply [--dry-run] [--colors FILE]
                                               System-Light-Schema setzen (MVP)
-  rosepine-gnome reset [--dry-run] [ghostty|gtk3|gtk4|libreoffice]
+  rosepine-gnome reset [--dry-run] [ghostty|gtk3|gtk4|libreoffice|vscode]
                                               Originalzustand aus Snapshot wiederherstellen (ohne Ziel: alles)
 
 Optionen:
@@ -173,8 +175,17 @@ async function main(): Promise<void> {
         } catch (e) {
           C.die(`install libreoffice fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`);
         }
+      } else if (args.cmds[1] === "vscode") {
+        await snapshotOnce(args.dry);
+        try {
+          const raw = await Bun.file(join(ROOT, "..", "themes", "rose-pine", "vscode.json")).text();
+          const descriptor = JSON.parse(raw) as VscodeDescriptor;
+          await installVscode({ dry: args.dry, descriptor, targets: [defaultCodeTarget()] });
+        } catch (e) {
+          C.die(`install vscode fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`);
+        }
       } else {
-        C.die(`install: unbekanntes Ziel '${args.cmds[1] ?? ""}' (ghostty|gtk3|gtk4|libreoffice)`);
+        C.die(`install: unbekanntes Ziel '${args.cmds[1] ?? ""}' (ghostty|gtk3|gtk4|libreoffice|vscode)`);
       }
       break;
 
@@ -197,8 +208,8 @@ async function main(): Promise<void> {
     case "reset": {
       C.log(`Originalzustand wiederherstellen`);
       const t = args.cmds[1];
-      if (t !== undefined && t !== "ghostty" && t !== "gtk3" && t !== "gtk4" && t !== "libreoffice") {
-        C.die(`reset: unbekanntes Ziel '${t}' (ghostty|gtk3|gtk4|libreoffice)`);
+      if (t !== undefined && t !== "ghostty" && t !== "gtk3" && t !== "gtk4" && t !== "libreoffice" && t !== "vscode") {
+        C.die(`reset: unbekanntes Ziel '${t}' (ghostty|gtk3|gtk4|libreoffice|vscode)`);
       }
       try {
         await resetAll({ dry: args.dry, gs: realGSettings, target: t as ResetTarget | undefined });
