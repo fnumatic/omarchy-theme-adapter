@@ -109,7 +109,15 @@ schreibt `~/.config/ghostty/themes/rose-pine-dawn.conf` und setzt die `theme`-Ze
 Render-Adresse/Indexreihenfolge folgt 1:1 dem Omarchy-Template, damit die Farben identisch zur
 Omarchy-Optik sind. **Interpreter: TypeScript via Bun.**
 
-### 3.5 Icons & Wallpaper
+### 3.5 LibreOffice
+LibreOffice zeichnet Symbolleisten & Co. über eigene Anwendungsfarben, nicht über GTK.
+Stand das Profil auf einem festen Schema (`CurrentColorScheme=LibreOffice`), ignorierte es
+das System-Theme. Umsetzung: `src/render/libreoffice.ts` setzt `CurrentColorScheme=Automatic`
+in `registrymodifications.xcu` (mit Backup) — **nur bei beendetem LibreOffice**
+(LO schreibt die Config beim Beenden zurück). Vollständige Dawn-Anwendungsfarben als eigenes
+LO-Schema sind ein möglicher Folgeschritt.
+
+### 3.6 Icons & Wallpaper
 | Element | Quelle |
 |---|---|
 | Icon-Theme | passendes Dawn-kompatibles Icon-Theme (auszuwählen, offen) |

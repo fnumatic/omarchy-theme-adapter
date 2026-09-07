@@ -13,6 +13,7 @@ import {
   GTK3_THEME_NAME,
 } from "./render/gtk3.ts";
 import { installGtk4, renderGtk4 } from "./render/gtk4.ts";
+import { installLibreOffice } from "./render/libreoffice.ts";
 import { realGSettings } from "./gsettings.ts";
 import { ensureSnapshot } from "./state.ts";
 import { resetAll } from "./reset.ts";
@@ -35,6 +36,8 @@ Verwendung:
                                               GTK3-Theme + gsettings gtk-theme
   rosepine-gnome install gtk4 [--dry-run] [--colors FILE]
                                               libadwaita-Overlay nach ~/.config/gtk-4.0/gtk.css
+  rosepine-gnome install libreoffice [--dry-run]
+                                              LibreOffice folgt dem System-Theme (nur bei beendetem LO)
   rosepine-gnome apply [--dry-run] [--colors FILE]
                                               System-Light-Schema setzen (MVP)
   rosepine-gnome reset [--dry-run]            Originalzustand aus Snapshot wiederherstellen
@@ -107,6 +110,15 @@ if (args.cmds.length === 0) {
   process.exit(0);
 }
 
+async function snapshotOnce(dry: boolean): Promise<void> {
+  if (dry) {
+    console.log("  dry-run: würde ggf. Snapshot sichern, keine Änderung");
+    return;
+  }
+  const { created } = await ensureSnapshot(realGSettings);
+  if (created) console.log("   ✓ Originalzustand gesichert (Snapshot)");
+}
+
 async function main(): Promise<void> {
   switch (args.cmds[0]) {
     case "parse":
@@ -127,12 +139,7 @@ async function main(): Promise<void> {
 
     case "install":
       if (args.cmds[1] === "ghostty") {
-        if (!args.dry) {
-          const { created } = await ensureSnapshot(realGSettings);
-          if (created) console.log("   ✓ Originalzustand gesichert (Snapshot)");
-        } else {
-          console.log("  dry-run: würde ggf. Snapshot sichern, keine Änderung");
-        }
+        await snapshotOnce(args.dry);
         await withColors(args, async (c) => {
           try {
             await installGhostty(renderGhostty(c), { dry: args.dry });
@@ -141,12 +148,7 @@ async function main(): Promise<void> {
           }
         });
       } else if (args.cmds[1] === "gtk3") {
-        if (!args.dry) {
-          const { created } = await ensureSnapshot(realGSettings);
-          if (created) console.log("   ✓ Originalzustand gesichert (Snapshot)");
-        } else {
-          console.log("  dry-run: würde ggf. Snapshot sichern, keine Änderung");
-        }
+        await snapshotOnce(args.dry);
         await withColors(args, async (c) => {
           try {
             await installGtk3(renderGtk3(c), { dry: args.dry });
@@ -155,12 +157,7 @@ async function main(): Promise<void> {
           }
         });
       } else if (args.cmds[1] === "gtk4") {
-        if (!args.dry) {
-          const { created } = await ensureSnapshot(realGSettings);
-          if (created) console.log("   ✓ Originalzustand gesichert (Snapshot)");
-        } else {
-          console.log("  dry-run: würde ggf. Snapshot sichern, keine Änderung");
-        }
+        await snapshotOnce(args.dry);
         await withColors(args, async (c) => {
           try {
             await installGtk4(renderGtk4(c), { dry: args.dry });
@@ -168,8 +165,15 @@ async function main(): Promise<void> {
             C.die(`install gtk4 fehlgeschlagen: ${String(e)}`);
           }
         });
+      } else if (args.cmds[1] === "libreoffice") {
+        await snapshotOnce(args.dry);
+        try {
+          await installLibreOffice({ dry: args.dry });
+        } catch (e) {
+          C.die(`install libreoffice fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`);
+        }
       } else {
-        C.die(`install: unbekanntes Ziel '${args.cmds[1] ?? ""}' (ghostty|gtk3|gtk4)`);
+        C.die(`install: unbekanntes Ziel '${args.cmds[1] ?? ""}' (ghostty|gtk3|gtk4|libreoffice)`);
       }
       break;
 

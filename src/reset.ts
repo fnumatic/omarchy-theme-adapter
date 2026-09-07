@@ -11,6 +11,8 @@ export interface ResetOptions {
   themesDir?: string;
   /** Basis-Config-Verzeichnis (Default: $XDG_CONFIG_HOME|~/.config) — für Tests überschreibbar */
   configHome?: string;
+  /** LibreOffice-Config (Default: ~/.config/libreoffice/…) — für Tests überschreibbar */
+  libreofficeConfigFile?: string;
   gs: GSettingsRunner;
 }
 
@@ -33,6 +35,13 @@ function ghosttyThemeFile(opts: ResetOptions): string {
 
 function gtk4CssFile(opts: ResetOptions): string {
   return `${configHomeOf(opts)}/gtk-4.0/gtk.css`;
+}
+
+function libreofficeConfigFile(opts: ResetOptions): string {
+  return (
+    opts.libreofficeConfigFile ??
+    `${process.env.HOME}/.config/libreoffice/4/user/registrymodifications.xcu`
+  );
 }
 
 export async function resetAll(opts: ResetOptions): Promise<void> {
@@ -113,6 +122,19 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
     } catch {
       console.log(`   − keine gtk-4.0/gtk.css vorhanden, nichts zu tun`);
     }
+  }
+
+  // LibreOffice-Config (Anwendungsfarben-Schema)
+  const loFile = libreofficeConfigFile(opts);
+  if (snap.libreofficeConfigText === undefined || snap.libreofficeConfigExisted === undefined) {
+    console.log(`   − LibreOffice: kein Original im Snapshot (alter Snapshot), übersprungen`);
+  } else if (opts.dry) {
+    console.log(`  dry-run: stelle ${loFile} aus Snapshot wieder her`);
+  } else if (snap.libreofficeConfigExisted && snap.libreofficeConfigText !== null) {
+    await writeEnsured(loFile, snap.libreofficeConfigText);
+    console.log(`   ✓ LibreOffice-Config wiederhergestellt: ${loFile}`);
+  } else {
+    console.log(`   − keine LibreOffice-Config im Snapshot, nichts zu tun`);
   }
 
   // gsettings zurücksetzen (nur was im Snapshot stand)

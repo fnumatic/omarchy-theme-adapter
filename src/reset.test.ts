@@ -146,3 +146,37 @@ test("reset stellt Snapshot-Werte wieder her", async () => {
   expect(gtkGone).toBe(true);
   await rm(home, { recursive: true, force: true });
 });
+
+test("reset stellt LibreOffice-Config aus Snapshot wieder her", async () => {
+  const home = await mkdtemp(join(tmpdir(), "rpg-home-lo-"));
+  const stateDir = join(home, "state");
+  const loFile = join(home, "registrymodifications.xcu");
+  const ORIGINAL = '<item oor:path="/org.openoffice.Office.UI/ColorScheme"><prop oor:name="CurrentColorScheme" oor:op="fuse"><value>LibreOffice</value></prop></item>';
+  await writeFile(loFile, ORIGINAL);
+
+  // Snapshot von Hand anlegen (LO-Pfad ist HOME-fixiert → state.json direkt schreiben)
+  await mkdir(join(stateDir, "rosepine-gnome"), { recursive: true });
+  await writeFile(
+    join(stateDir, "rosepine-gnome", "state.json"),
+    JSON.stringify({
+      version: 1,
+      createdAt: new Date().toISOString(),
+      ghosttyConfigExisted: false,
+      ghosttyConfigText: null,
+      gtkTheme: null,
+      colorScheme: null,
+      gtk4CssExisted: false,
+      gtk4CssText: null,
+      libreofficeConfigExisted: true,
+      libreofficeConfigText: ORIGINAL,
+    }),
+  );
+
+  await writeFile(loFile, ORIGINAL.replace("LibreOffice</value>", "Automatic</value>"));
+
+  const gs = fakeGSettings();
+  await resetAll({ dry: false, gs, stateDir, libreofficeConfigFile: loFile });
+
+  expect(await readFile(loFile, "utf8")).toBe(ORIGINAL);
+  await rm(home, { recursive: true, force: true });
+});

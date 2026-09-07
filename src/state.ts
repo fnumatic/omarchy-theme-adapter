@@ -11,6 +11,8 @@ export interface Snapshot {
   colorScheme: string | null;
   gtk4CssExisted: boolean | null;
   gtk4CssText: string | null;
+  libreofficeConfigExisted: boolean | null;
+  libreofficeConfigText: string | null;
 }
 
 export function statePath(overrideDir?: string): string {
@@ -38,6 +40,10 @@ function gtk4CssPath(): string {
   return `${xdg}/gtk-4.0/gtk.css`;
 }
 
+function libreofficeConfigPath(): string {
+  return `${process.env.HOME}/.config/libreoffice/4/user/registrymodifications.xcu`;
+}
+
 async function readOptional(path: string): Promise<{ existed: boolean; text: string | null }> {
   try {
     return { existed: true, text: await readFile(path, "utf8") };
@@ -57,20 +63,24 @@ export async function ensureSnapshot(
 ): Promise<{ created: boolean; snapshot: Snapshot }> {
   const existing = await loadSnapshot(overrideDir);
   if (existing) {
-    // Migration alter Snapshots (ohne gtk4-Felder): Schlüssel-Existenz prüfen,
-    // nicht Typ-Narrowing — Snapshot deklariert die Felder bereits.
+    // Migration alter Snapshots (ohne neuere Felder)
     const raw = existing as unknown as Record<string, unknown>;
-    if (!("gtk4CssText" in raw)) {
-      const g = await readOptional(gtk4CssPath());
+    const needsGtk4 = !("gtk4CssText" in raw);
+    const needsLO = !("libreofficeConfigText" in raw);
+    if (needsGtk4 || needsLO) {
+      const g = needsGtk4 ? await readOptional(gtk4CssPath()) : null;
+      const lo = needsLO ? await readOptional(libreofficeConfigPath()) : null;
       const migrated: Snapshot = {
         ...existing,
-        gtk4CssExisted: g.existed,
-        gtk4CssText: g.text,
+        ...(needsGtk4 ? { gtk4CssExisted: g!.existed, gtk4CssText: g!.text } : {}),
+        ...(needsLO
+          ? { libreofficeConfigExisted: lo!.existed, libreofficeConfigText: lo!.text }
+          : {}),
       };
       const p = statePath(overrideDir);
       await mkdir(p.slice(0, p.lastIndexOf("/")), { recursive: true });
       await writeFile(p, JSON.stringify(migrated, null, 2) + "\n");
-      console.log("   ✓ Snapshot um gtk-4.0-Overlay erweitert (Migration)");
+      console.log("   ✓ Snapshot erweitert (Migration)");
       return { created: false, snapshot: migrated };
     }
     return { created: false, snapshot: existing };
@@ -78,6 +88,7 @@ export async function ensureSnapshot(
 
   const ghostty = await readOptional(ghosttyConfigPath());
   const gtk4 = await readOptional(gtk4CssPath());
+  const lo = await readOptional(libreofficeConfigPath());
 
   const snap: Snapshot = {
     version: 1,
@@ -88,6 +99,8 @@ export async function ensureSnapshot(
     colorScheme: await gs.get("org.gnome.desktop.interface", "color-scheme"),
     gtk4CssExisted: gtk4.existed,
     gtk4CssText: gtk4.text,
+    libreofficeConfigExisted: lo.existed,
+    libreofficeConfigText: lo.text,
   };
   const p = statePath(overrideDir);
   await mkdir(p.slice(0, p.lastIndexOf("/")), { recursive: true });
