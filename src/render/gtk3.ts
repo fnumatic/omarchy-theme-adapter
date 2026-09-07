@@ -41,6 +41,20 @@ button { color: ${fg}; }
 entry { color: ${fg}; background-color: ${base}; }
 treeview, list, row { background-color: ${bg}; color: ${fg}; }
 label { color: ${fg}; }
+
+/* Kompakte Headerbars/Menüleisten (Wunsch: flachere Leisten) */
+headerbar, .header-bar {
+  min-height: 32px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+headerbar button, headerbar entry,
+.header-bar button, .header-bar entry {
+  min-height: 28px;
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+menubar, menuitem { padding-top: 2px; padding-bottom: 2px; }
 `;
 }
 

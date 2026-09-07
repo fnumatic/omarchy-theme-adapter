@@ -37,6 +37,11 @@ test("renderIndexTheme setzt Name und GtkTheme", () => {
   expect(t).toContain("Type=X-GNOME-Metatheme");
 });
 
+test("renderGtk3 enthält kompakte Headerbar-Regeln", () => {
+  const css = renderGtk3(base);
+  expect(css).toContain("min-height: 32px");
+});
+
 test("installGtk3 --dry-run schreibt nichts und setzt kein gsettings", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg3-dry-"));
   const gs = fakeGSettings();

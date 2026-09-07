@@ -63,6 +63,23 @@ export function renderGtk4(c: Colors): string {
 @define-color insensitive_fg_color ${fgDisabled};
 @define-color theme_selected_bg_color ${selection};
 @define-color theme_selected_fg_color ${fg};
+*/
+
+/* Kompakte Headerbars (Wunsch: flachere Menüleisten) */
+headerbar {
+  min-height: 32px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+headerbar button,
+headerbar entry {
+  min-height: 28px;
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+headerbar tabs tab {
+  min-height: 28px;
+}
 `;
 }
 

@@ -46,6 +46,7 @@ test("reset entfernt nur den rosepine-Block aus gtk.css und erhält Fremdinhalt"
   const home = await mkdtemp(join(tmpdir(), "rpg-home3-"));
   const stateDir = join(home, "state");
   const cfgDir = join(home, "cfg");
+  process.env.XDG_CONFIG_HOME = cfgDir;
 
   const snapGs = fakeGSettings({});
   await ensureSnapshot(snapGs, stateDir); // sichert: keine gtk.css (existed=false)

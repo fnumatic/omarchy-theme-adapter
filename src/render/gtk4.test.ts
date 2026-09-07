@@ -29,6 +29,12 @@ test("renderGtk4 enthält zentrale libadwaita-Farbnamen", () => {
   expect(css).toContain(MARKER);
 });
 
+test("renderGtk4 enthält kompakte Headerbar-Regeln", () => {
+  const css = renderGtk4(base);
+  expect(css).toContain("headerbar {");
+  expect(css).toContain("min-height: 32px");
+});
+
 test("installGtk4 --dry-run schreibt nichts", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg4-dry-"));
   const gtk4Dir = join(dir, "gtk-4.0");
