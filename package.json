@@ -1,10 +1,10 @@
 {
-  "name": "rosepine-gnome",
+  "name": "themeswitch",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "bin": {
-    "rosepine-gnome": "./src/cli.ts"
+    "themeswitch": "./src/cli.ts"
   },
   "scripts": {
     "cli": "bun src/cli.ts",
