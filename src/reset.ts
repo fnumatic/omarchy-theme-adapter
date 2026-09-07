@@ -1,24 +1,38 @@
 // reset.ts — stellt den im Snapshot gesicherten Originalzustand wieder her.
-import { readFile, rm, writeFile } from "node:fs/promises";
+import { readFile, rm, writeFile, mkdir } from "node:fs/promises";
 import { loadSnapshot } from "./state.ts";
 import type { GSettingsRunner } from "./gsettings.ts";
 import { GTK3_THEME_NAME } from "./render/gtk3.ts";
+import { MARKER as GTK4_MARKER } from "./render/gtk4.ts";
 
 export interface ResetOptions {
   dry: boolean;
   stateDir?: string;
   themesDir?: string;
+  /** Basis-Config-Verzeichnis (Default: $XDG_CONFIG_HOME|~/.config) — für Tests überschreibbar */
+  configHome?: string;
   gs: GSettingsRunner;
 }
 
-function ghosttyConfigPath(): string {
-  const xdg = process.env.XDG_CONFIG_HOME || `${process.env.HOME}/.config`;
-  return `${xdg}/ghostty/config`;
+async function writeEnsured(path: string, text: string): Promise<void> {
+  await mkdir(path.slice(0, path.lastIndexOf("/")), { recursive: true });
+  await writeFile(path, text);
 }
 
-function ghosttyThemeFile(): string {
-  const xdg = process.env.XDG_CONFIG_HOME || `${process.env.HOME}/.config`;
-  return `${xdg}/ghostty/themes/rose-pine-dawn.conf`;
+function configHomeOf(opts: ResetOptions): string {
+  return opts.configHome ?? process.env.XDG_CONFIG_HOME ?? `${process.env.HOME}/.config`;
+}
+
+function ghosttyConfigPath(opts: ResetOptions): string {
+  return `${configHomeOf(opts)}/ghostty/config`;
+}
+
+function ghosttyThemeFile(opts: ResetOptions): string {
+  return `${configHomeOf(opts)}/ghostty/themes/rose-pine-dawn.conf`;
+}
+
+function gtk4CssFile(opts: ResetOptions): string {
+  return `${configHomeOf(opts)}/gtk-4.0/gtk.css`;
 }
 
 export async function resetAll(opts: ResetOptions): Promise<void> {
@@ -31,11 +45,11 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
   }
 
   // Ghostty-Config
-  const cfg = ghosttyConfigPath();
+  const cfg = ghosttyConfigPath(opts);
   if (opts.dry) {
     console.log(`  dry-run: stelle ${cfg} aus Snapshot wieder her`);
   } else if (snap.ghosttyConfigExisted && snap.ghosttyConfigText !== null) {
-    await writeFile(cfg, snap.ghosttyConfigText);
+    await writeEnsured(cfg, snap.ghosttyConfigText);
     console.log(`   ✓ Ghostty-Config wiederhergestellt: ${cfg}`);
   } else {
     // Es gab vorher keine Config: nur unsere theme-Zeile entfernen,
@@ -53,7 +67,7 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
   }
 
   // Generiertes Ghostty-Theme löschen (nur unseres)
-  const themeFile = ghosttyThemeFile();
+  const themeFile = ghosttyThemeFile(opts);
   if (opts.dry) {
     console.log(`  dry-run: lösche ${themeFile}`);
   } else {
@@ -69,6 +83,36 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
   } else {
     await rm(gtkDir, { recursive: true, force: true });
     console.log(`   ✓ GTK3-Theme gelöscht: ${gtkDir}`);
+  }
+
+  // libadwaita-Overlay (gtk-4.0/gtk.css)
+  const cssFile = gtk4CssFile(opts);
+  if (snap.gtk4CssText === undefined || snap.gtk4CssExisted === undefined) {
+    console.log(`   − gtk-4.0-Overlay: kein Original im Snapshot (alter Snapshot), übersprungen`);
+  } else if (opts.dry) {
+    console.log(`  dry-run: stelle ${cssFile} aus Snapshot wieder her`);
+  } else if (snap.gtk4CssExisted && snap.gtk4CssText !== null) {
+    await writeEnsured(cssFile, snap.gtk4CssText);
+    console.log(`   ✓ gtk-4.0-Overlay wiederhergestellt: ${cssFile}`);
+  } else {
+    // Es gab vorher keine gtk.css: nur unseren Block entfernen, fremde Inhalte nie löschen.
+    try {
+      const text = await readFile(cssFile, "utf8");
+      if (!text.includes(GTK4_MARKER)) {
+        console.log(`   − ${cssFile} enthält keinen rosepine-Block, unangetastet`);
+      } else {
+        const head = text.slice(0, text.indexOf("/* " + GTK4_MARKER)).replace(/\s+$/u, "");
+        if (head) {
+          await writeFile(cssFile, head + "\n");
+          console.log(`   ✓ rosepine-Block aus ${cssFile} entfernt (Rest erhalten)`);
+        } else {
+          await rm(cssFile, { force: true });
+          console.log(`   ✓ ${cssFile} gelöscht (nur rosepine-Block enthalten)`);
+        }
+      }
+    } catch {
+      console.log(`   − keine gtk-4.0/gtk.css vorhanden, nichts zu tun`);
+    }
   }
 
   // gsettings zurücksetzen (nur was im Snapshot stand)

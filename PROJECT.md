@@ -165,7 +165,8 @@ rosepinetheme/
 │   ├── reset.ts              # Wiederherstellung aus Snapshot
 │   └── render/
 │       ├── ghostty.ts        # Ghostty-Theme rendern/installieren (TS)
-│       └── gtk3.ts           # GTK3 gtk.css + index.theme rendern/installieren (TS)
+│       ├── gtk3.ts           # GTK3 gtk.css + index.theme rendern/installieren (TS)
+│       └── gtk4.ts           # libadwaita-Overlay (gtk-4.0/gtk.css) rendern/installieren (TS)
 ├── bin/
 │   └── rosepine-gnome        # Wrapper → bun src/cli.ts
 └── docs/

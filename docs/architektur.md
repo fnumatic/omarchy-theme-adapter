@@ -74,12 +74,14 @@ Umsetzung: `src/render/gtk3.ts` erzeugt das GTK3-Theme unter `~/.themes/RosePine
 Deep-Override optional als `~/.config/gtk-3.0/gtk.css`.
 
 ### 3.3 GTK4 / libadwaita
-- libadwaita ignoriert `gtk-theme` weitgehend; wichtigster Hebel ist eine **Adwaita-Recolor**
-  bzw. ein generiertes CSS mit den libadwaita-Variablen (`--window_bg_color`, `--accent_bg_color`,
-  `--sidebar_bg_color` …) im **User-Theme** oder via `GTK_THEME=<theme:light>`.
-- **Bekannte Grenze/Owner:** Omarchy-familiär gibt es das bekannte GTK4-Thema-Problem.
-  Der MVP liefert ein generiertes `libadwaita.css`-Fragment; Vollgenauigkeit wird separat
-  verbucht (Risiko, siehe PROJECT.md §10).
+- libadwaita ignoriert `gtk-theme` weitgehend; der Adapter nutzt den offiziellen Overlay-Mechanismus:
+  **`~/.config/gtk-4.0/gtk.css`** wird von libadwaita automatisch geladen. Dort werden die öffentlichen
+  libadwaita-Farbnamen gesetzt (`window_bg_color`, `headerbar_bg_color`, `accent_bg_color`,
+  `card_bg_color`, `view_bg_color`, …) — das färbt libadwaita-Apps inkl. Ghostty-Fensterrahmen.
+- Umsetzung: `src/render/gtk4.ts` rendert das Overlay; `install gtk4` schreibt/erweitert
+  `~/.config/gtk-4.0/gtk.css`. **Fremde gtk.css werden nie überschrieben** (Abbruch mit Hinweis);
+  eigene Blöcke werden idempotent aktualisiert (Marker). Betroffene Apps müssen neu gestartet werden.
+- **Bekannte Grenze:** kein Voll-Theme wie bei GTK3, sondern ein Recolor-Overlay auf Adwaita-Basis.
 
 ### 3.4 Terminal: Ghostty (gewähltes Ziel, 2026-09-07)
 > Ptyxis/GNOME-Terminal-Profil verworfen: auf diesem System ist **Ghostty** das aktive

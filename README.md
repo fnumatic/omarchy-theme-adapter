@@ -19,6 +19,8 @@ bun install                        # @types/bun (Dev)
 ./bin/rosepine-gnome install ghostty --dry-run   # Vorschau
 ./bin/rosepine-gnome install ghostty             # anwenden (mit Config-Backup + Snapshot)
 ./bin/rosepine-gnome apply --dry-run             # System-Light-Schema (Vorschau, ändert nichts)
+./bin/rosepine-gnome install gtk4 --dry-run             # Vorschau libadwaita-Overlay
+./bin/rosepine-gnome install gtk4                       # libadwaita-Overlay (Fensterrahmen) anwenden
 ./bin/rosepine-gnome reset --dry-run             # Vorschau der Wiederherstellung
 ./bin/rosepine-gnome reset                       # Originalzustand aus Snapshot wiederherstellen
 ```

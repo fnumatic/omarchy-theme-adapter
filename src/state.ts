@@ -9,6 +9,8 @@ export interface Snapshot {
   ghosttyConfigText: string | null;
   gtkTheme: string | null;
   colorScheme: string | null;
+  gtk4CssExisted: boolean | null;
+  gtk4CssText: string | null;
 }
 
 export function statePath(overrideDir?: string): string {
@@ -31,33 +33,61 @@ function ghosttyConfigPath(): string {
   return `${xdg}/ghostty/config`;
 }
 
+function gtk4CssPath(): string {
+  const xdg = process.env.XDG_CONFIG_HOME || `${process.env.HOME}/.config`;
+  return `${xdg}/gtk-4.0/gtk.css`;
+}
+
+async function readOptional(path: string): Promise<{ existed: boolean; text: string | null }> {
+  try {
+    return { existed: true, text: await readFile(path, "utf8") };
+  } catch {
+    return { existed: false, text: null };
+  }
+}
+
 /**
  * Erfasst den Originalzustand — aber nur, wenn noch kein Snapshot existiert.
- * Gibt zurück, ob ein neuer Snapshot geschrieben wurde.
+ * Fehlen in einem alten Snapshot neuere Felder (Migration), werden sie aus dem
+ * aktuellen System nacherfasst. Gibt zurück, ob neu geschrieben wurde.
  */
 export async function ensureSnapshot(
   gs: GSettingsRunner,
   overrideDir?: string,
 ): Promise<{ created: boolean; snapshot: Snapshot }> {
   const existing = await loadSnapshot(overrideDir);
-  if (existing) return { created: false, snapshot: existing };
-
-  let ghosttyConfigText: string | null = null;
-  let ghosttyConfigExisted = false;
-  try {
-    ghosttyConfigText = await readFile(ghosttyConfigPath(), "utf8");
-    ghosttyConfigExisted = true;
-  } catch {
-    ghosttyConfigExisted = false;
+  if (existing) {
+    // Migration alter Snapshots (ohne gtk4-Felder): Schlüssel-Existenz prüfen,
+    // nicht Typ-Narrowing — Snapshot deklariert die Felder bereits.
+    const raw = existing as unknown as Record<string, unknown>;
+    if (!("gtk4CssText" in raw)) {
+      const g = await readOptional(gtk4CssPath());
+      const migrated: Snapshot = {
+        ...existing,
+        gtk4CssExisted: g.existed,
+        gtk4CssText: g.text,
+      };
+      const p = statePath(overrideDir);
+      await mkdir(p.slice(0, p.lastIndexOf("/")), { recursive: true });
+      await writeFile(p, JSON.stringify(migrated, null, 2) + "\n");
+      console.log("   ✓ Snapshot um gtk-4.0-Overlay erweitert (Migration)");
+      return { created: false, snapshot: migrated };
+    }
+    return { created: false, snapshot: existing };
   }
+
+  const ghostty = await readOptional(ghosttyConfigPath());
+  const gtk4 = await readOptional(gtk4CssPath());
 
   const snap: Snapshot = {
     version: 1,
     createdAt: new Date().toISOString(),
-    ghosttyConfigExisted,
-    ghosttyConfigText,
+    ghosttyConfigExisted: ghostty.existed,
+    ghosttyConfigText: ghostty.text,
     gtkTheme: await gs.get("org.gnome.desktop.interface", "gtk-theme"),
     colorScheme: await gs.get("org.gnome.desktop.interface", "color-scheme"),
+    gtk4CssExisted: gtk4.existed,
+    gtk4CssText: gtk4.text,
   };
   const p = statePath(overrideDir);
   await mkdir(p.slice(0, p.lastIndexOf("/")), { recursive: true });

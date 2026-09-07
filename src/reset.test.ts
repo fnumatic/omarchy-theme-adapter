@@ -42,6 +42,29 @@ test("reset ohne Snapshot wirft kontrollierten Fehler", async () => {
   expect(msg).toContain("Kein Snapshot");
 });
 
+test("reset entfernt nur den rosepine-Block aus gtk.css und erhält Fremdinhalt", async () => {
+  const home = await mkdtemp(join(tmpdir(), "rpg-home3-"));
+  const stateDir = join(home, "state");
+  const cfgDir = join(home, "cfg");
+
+  const snapGs = fakeGSettings({});
+  await ensureSnapshot(snapGs, stateDir); // sichert: keine gtk.css (existed=false)
+
+  // Fremdinhalt + unser Block (wie nach installGtk4 mit append)
+  const cssPath = join(cfgDir, "gtk-4.0", "gtk.css");
+  await mkdir(join(cfgDir, "gtk-4.0"), { recursive: true });
+  const { renderGtk4 } = await import("./render/gtk4.ts");
+  const { parseColors } = await import("./colors.ts");
+  const css = renderGtk4(parseColors('background = "#faf4ed"\nforeground = "#575279"\n'));
+  await writeFile(cssPath, "/* fremd */\n\n" + css);
+
+  const gs = fakeGSettings();
+  await resetAll({ dry: false, gs, stateDir, configHome: cfgDir, themesDir: join(home, "themes") });
+
+  expect(await readFile(cssPath, "utf8")).toBe("/* fremd */\n");
+  await rm(home, { recursive: true, force: true });
+});
+
 test("reset --dry-run verändert nichts", async () => {
   const home = await mkdtemp(join(tmpdir(), "rpg-home-"));
   const stateDir = join(home, "state");

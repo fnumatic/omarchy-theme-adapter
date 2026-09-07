@@ -12,6 +12,7 @@ import {
   renderGtk3,
   GTK3_THEME_NAME,
 } from "./render/gtk3.ts";
+import { installGtk4, renderGtk4 } from "./render/gtk4.ts";
 import { realGSettings } from "./gsettings.ts";
 import { ensureSnapshot } from "./state.ts";
 import { resetAll } from "./reset.ts";
@@ -27,10 +28,13 @@ Verwendung:
   rosepine-gnome render ghostty [--colors FILE]
                                               Ghostty-Theme (.conf) auf stdout
   rosepine-gnome render gtk3 [--colors FILE]  GTK3 gtk.css auf stdout
+  rosepine-gnome render gtk4 [--colors FILE]  libadwaita-Overlay (gtk-4.0/gtk.css) auf stdout
   rosepine-gnome install ghostty [--dry-run] [--colors FILE]
                                               Ghostty-Theme installieren + config setzen
   rosepine-gnome install gtk3 [--dry-run] [--colors FILE]
                                               GTK3-Theme + gsettings gtk-theme
+  rosepine-gnome install gtk4 [--dry-run] [--colors FILE]
+                                              libadwaita-Overlay nach ~/.config/gtk-4.0/gtk.css
   rosepine-gnome apply [--dry-run] [--colors FILE]
                                               System-Light-Schema setzen (MVP)
   rosepine-gnome reset [--dry-run]            Originalzustand aus Snapshot wiederherstellen
@@ -114,8 +118,10 @@ async function main(): Promise<void> {
         await withColors(args, (c) => console.log(renderGhostty(c)));
       } else if (args.cmds[1] === "gtk3") {
         await withColors(args, (c) => console.log(renderGtk3(c)));
+      } else if (args.cmds[1] === "gtk4") {
+        await withColors(args, (c) => console.log(renderGtk4(c)));
       } else {
-        C.die(`render: unbekanntes Ziel '${args.cmds[1] ?? ""}' (ghostty|gtk3)`);
+        C.die(`render: unbekanntes Ziel '${args.cmds[1] ?? ""}' (ghostty|gtk3|gtk4)`);
       }
       break;
 
@@ -148,8 +154,22 @@ async function main(): Promise<void> {
             C.die(`install gtk3 fehlgeschlagen: ${String(e)}`);
           }
         });
+      } else if (args.cmds[1] === "gtk4") {
+        if (!args.dry) {
+          const { created } = await ensureSnapshot(realGSettings);
+          if (created) console.log("   ✓ Originalzustand gesichert (Snapshot)");
+        } else {
+          console.log("  dry-run: würde ggf. Snapshot sichern, keine Änderung");
+        }
+        await withColors(args, async (c) => {
+          try {
+            await installGtk4(renderGtk4(c), { dry: args.dry });
+          } catch (e) {
+            C.die(`install gtk4 fehlgeschlagen: ${String(e)}`);
+          }
+        });
       } else {
-        C.die(`install: unbekanntes Ziel '${args.cmds[1] ?? ""}' (ghostty|gtk3)`);
+        C.die(`install: unbekanntes Ziel '${args.cmds[1] ?? ""}' (ghostty|gtk3|gtk4)`);
       }
       break;
 
