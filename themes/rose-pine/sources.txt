@@ -1,0 +1,8 @@
+# Quelle: Rose Pine (Dawn) — Omarchy Stock-Theme `colors.toml`
+
+- **Repository:** https://github.com/omacom/omarchy (neues Primär-Repo, ehem. Zugriff via `basecamp/omarchy`)
+- **Branch:** `quattro`
+- **Pfad:** `themes/rose-pine/colors.toml`
+- **Lizenz des Repos:** MIT
+- **Stand (Kommitsh):** siehe beim Import notieren — siehe git log dieses Repos.
+- **Bemerkung:** `mode = "light"`; Stock-Theme ist die helle *Dawn*-Variante. Fetcht am 2026-09-07 per raw.githubusercontent.com. Bei einem Upstream-Update hier bewusst erneut prüfen.
