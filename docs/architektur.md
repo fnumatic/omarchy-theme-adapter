@@ -116,6 +116,9 @@ das System-Theme. Umsetzung: `src/render/libreoffice.ts` setzt `CurrentColorSche
 in `registrymodifications.xcu` (mit Backup) — **nur bei beendetem LibreOffice**
 (LO schreibt die Config beim Beenden zurück). Vollständige Dawn-Anwendungsfarben als eigenes
 LO-Schema sind ein möglicher Folgeschritt.
+**Warnung (verifiziert 2026-09-07):** Automatic + minimales GTK-Theme ergibt schwarzen Writer
+(bekanntes „muddled Automatic"-Problem). Daher kein Standardweg; `reset libreoffice` stellt das
+feste Schema wieder her. Omarchy selbst themt LibreOffice gar nicht (kein LO-Pfad im Tree).
 
 ### 3.6 Icons & Wallpaper
 | Element | Quelle |

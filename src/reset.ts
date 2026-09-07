@@ -5,6 +5,8 @@ import type { GSettingsRunner } from "./gsettings.ts";
 import { GTK3_THEME_NAME } from "./render/gtk3.ts";
 import { MARKER as GTK4_MARKER } from "./render/gtk4.ts";
 
+export type ResetTarget = "ghostty" | "gtk3" | "gtk4" | "libreoffice";
+
 export interface ResetOptions {
   dry: boolean;
   stateDir?: string;
@@ -13,6 +15,8 @@ export interface ResetOptions {
   configHome?: string;
   /** LibreOffice-Config (Default: ~/.config/libreoffice/…) — für Tests überschreibbar */
   libreofficeConfigFile?: string;
+  /** Ohne Angabe: alles wiederherstellen */
+  target?: ResetTarget;
   gs: GSettingsRunner;
 }
 
@@ -52,7 +56,9 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
         "Es wurde kein Originalzustand erfasst (install/apply wurden noch nie ausgeführt).",
     );
   }
+  const want = (t: ResetTarget): boolean => !opts.target || opts.target === t;
 
+  if (want("ghostty")) {
   // Ghostty-Config
   const cfg = ghosttyConfigPath(opts);
   if (opts.dry) {
@@ -83,7 +89,9 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
     await rm(themeFile, { force: true });
     console.log(`   ✓ Ghostty-Theme gelöscht: ${themeFile}`);
   }
+  }
 
+  if (want("gtk3")) {
   // Generiertes GTK3-Theme löschen (nur unseres)
   const themesDir = opts.themesDir ?? `${process.env.HOME}/.themes`;
   const gtkDir = `${themesDir}/${GTK3_THEME_NAME}`;
@@ -94,6 +102,20 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
     console.log(`   ✓ GTK3-Theme gelöscht: ${gtkDir}`);
   }
 
+  // gsettings gtk-theme zurücksetzen (nur was im Snapshot stand)
+  if (snap.gtkTheme !== null) {
+    if (opts.dry) {
+      console.log(`  dry-run: gsettings gtk-theme → ${snap.gtkTheme}`);
+    } else {
+      await opts.gs.set("org.gnome.desktop.interface", "gtk-theme", snap.gtkTheme.replace(/^'|'$/gu, ""));
+      console.log(`   ✓ gtk-theme wiederhergestellt: ${snap.gtkTheme}`);
+    }
+  } else {
+    console.log(`   − gtk-theme: kein Original im Snapshot, übersprungen`);
+  }
+  }
+
+  if (want("gtk4")) {
   // libadwaita-Overlay (gtk-4.0/gtk.css)
   const cssFile = gtk4CssFile(opts);
   if (snap.gtk4CssText === undefined || snap.gtk4CssExisted === undefined) {
@@ -123,7 +145,9 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
       console.log(`   − keine gtk-4.0/gtk.css vorhanden, nichts zu tun`);
     }
   }
+  }
 
+  if (want("libreoffice")) {
   // LibreOffice-Config (Anwendungsfarben-Schema)
   const loFile = libreofficeConfigFile(opts);
   if (snap.libreofficeConfigText === undefined || snap.libreofficeConfigExisted === undefined) {
@@ -136,18 +160,9 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
   } else {
     console.log(`   − keine LibreOffice-Config im Snapshot, nichts zu tun`);
   }
-
-  // gsettings zurücksetzen (nur was im Snapshot stand)
-  if (snap.gtkTheme !== null) {
-    if (opts.dry) {
-      console.log(`  dry-run: gsettings gtk-theme → ${snap.gtkTheme}`);
-    } else {
-      await opts.gs.set("org.gnome.desktop.interface", "gtk-theme", snap.gtkTheme.replace(/^'|'$/gu, ""));
-      console.log(`   ✓ gtk-theme wiederhergestellt: ${snap.gtkTheme}`);
-    }
-  } else {
-    console.log(`   − gtk-theme: kein Original im Snapshot, übersprungen`);
   }
+
+  if (!opts.target) {
   if (snap.colorScheme !== null) {
     if (opts.dry) {
       console.log(`  dry-run: gsettings color-scheme → ${snap.colorScheme}`);
@@ -157,6 +172,7 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
     }
   } else {
     console.log(`   − color-scheme: kein Original im Snapshot, übersprungen`);
+  }
   }
 }
 

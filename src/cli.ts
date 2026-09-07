@@ -16,7 +16,7 @@ import { installGtk4, renderGtk4 } from "./render/gtk4.ts";
 import { installLibreOffice } from "./render/libreoffice.ts";
 import { realGSettings } from "./gsettings.ts";
 import { ensureSnapshot } from "./state.ts";
-import { resetAll } from "./reset.ts";
+import { resetAll, type ResetTarget } from "./reset.ts";
 import { join } from "node:path";
 
 const ROOT = import.meta.dir; // …/src
@@ -40,7 +40,8 @@ Verwendung:
                                               LibreOffice folgt dem System-Theme (nur bei beendetem LO)
   rosepine-gnome apply [--dry-run] [--colors FILE]
                                               System-Light-Schema setzen (MVP)
-  rosepine-gnome reset [--dry-run]            Originalzustand aus Snapshot wiederherstellen
+  rosepine-gnome reset [--dry-run] [ghostty|gtk3|gtk4|libreoffice]
+                                              Originalzustand aus Snapshot wiederherstellen (ohne Ziel: alles)
 
 Optionen:
   --colors FILE   alternatives colors.toml (Standard: themes/rose-pine/colors.toml)
@@ -195,8 +196,12 @@ async function main(): Promise<void> {
 
     case "reset": {
       C.log(`Originalzustand wiederherstellen`);
+      const t = args.cmds[1];
+      if (t !== undefined && t !== "ghostty" && t !== "gtk3" && t !== "gtk4" && t !== "libreoffice") {
+        C.die(`reset: unbekanntes Ziel '${t}' (ghostty|gtk3|gtk4|libreoffice)`);
+      }
       try {
-        await resetAll({ dry: args.dry, gs: realGSettings });
+        await resetAll({ dry: args.dry, gs: realGSettings, target: t as ResetTarget | undefined });
       } catch (e) {
         C.die(String(e instanceof Error ? e.message : e));
       }

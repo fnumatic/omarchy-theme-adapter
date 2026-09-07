@@ -180,3 +180,36 @@ test("reset stellt LibreOffice-Config aus Snapshot wieder her", async () => {
   expect(await readFile(loFile, "utf8")).toBe(ORIGINAL);
   await rm(home, { recursive: true, force: true });
 });
+
+test("reset mit Ziel berührt nur dieses Ziel", async () => {
+  const home = await mkdtemp(join(tmpdir(), "rpg-home-t-"));
+  const stateDir = join(home, "state");
+  const loFile = join(home, "registrymodifications.xcu");
+  const ORIGINAL = "<value>LibreOffice</value>";
+  await writeFile(loFile, ORIGINAL);
+  await mkdir(join(stateDir, "rosepine-gnome"), { recursive: true });
+  await writeFile(
+    join(stateDir, "rosepine-gnome", "state.json"),
+    JSON.stringify({
+      version: 1,
+      createdAt: new Date().toISOString(),
+      ghosttyConfigExisted: false,
+      ghosttyConfigText: null,
+      gtkTheme: "'RosePineDawn'",
+      colorScheme: "'default'",
+      gtk4CssExisted: false,
+      gtk4CssText: null,
+      libreofficeConfigExisted: true,
+      libreofficeConfigText: ORIGINAL,
+    }),
+  );
+  await writeFile(loFile, "<value>Automatic</value>");
+
+  const gs = fakeGSettings();
+  await resetAll({ dry: false, gs, stateDir, libreofficeConfigFile: loFile, target: "libreoffice" });
+
+  expect(await readFile(loFile, "utf8")).toBe(ORIGINAL);
+  // gtk-theme wurde NICHT angerührt (gehört zu Ziel gtk3)
+  expect(gs.sets).toHaveLength(0);
+  await rm(home, { recursive: true, force: true });
+});
