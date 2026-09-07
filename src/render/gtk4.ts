@@ -67,25 +67,31 @@ export function renderGtk4(c: Colors): string {
 
 /* Kompakte Headerbars (Wunsch: flachere Menüleisten).
    Hinweis: libadwaita setzt eigene, teils spezifischere Regeln — daher window-Präfix
-   für höhere Spezifität und Verkleinerung der Inhalte (Buttons treiben die Höhe). */
+   für höhere Spezifität und !important gegen libadwaita-Vorgaben. */
 window headerbar,
-window .header-bar {
-  min-height: 30px;
+window .header-bar,
+window menubar,
+window .titlebar {
+  min-height: 28px;
   padding-top: 0;
   padding-bottom: 0;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 window headerbar button,
 window headerbar entry,
-window headerbar menubutton {
-  min-height: 24px;
+window headerbar menubutton,
+window headerbar .titlebutton {
+  min-height: 20px;
+  min-width: 20px;
   margin-top: 1px;
   margin-bottom: 1px;
-  padding-top: 1px;
-  padding-bottom: 1px;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 windowcontrols button {
-  min-height: 24px;
-  min-width: 24px;
+  min-height: 18px;
+  min-width: 18px;
   margin: 0;
   padding: 0;
 }

@@ -32,7 +32,7 @@ test("renderGtk4 enthält zentrale libadwaita-Farbnamen", () => {
 test("renderGtk4 enthält kompakte Headerbar-Regeln (spezifisch)", () => {
   const css = renderGtk4(base);
   expect(css).toContain("window headerbar");
-  expect(css).toContain("min-height: 30px");
+  expect(css).toContain("min-height: 28px");
   expect(css).toContain("windowcontrols");
 });
 

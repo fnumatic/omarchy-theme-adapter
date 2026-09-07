@@ -39,7 +39,7 @@ test("renderIndexTheme setzt Name und GtkTheme", () => {
 
 test("renderGtk3 enthält kompakte Headerbar-Regeln", () => {
   const css = renderGtk3(base);
-  expect(css).toContain("min-height: 30px");
+  expect(css).toContain("min-height: 28px");
 });
 
 test("installGtk3 --dry-run schreibt nichts und setzt kein gsettings", async () => {
