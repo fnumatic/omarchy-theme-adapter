@@ -64,7 +64,7 @@ test("installGtk4 verweigert fremde gtk.css statt zu überschreiben", async () =
   } catch (e) {
     msg = String(e instanceof Error ? e.message : e);
   }
-  expect(msg).toContain("nicht von rosepine-gnome");
+  expect(msg).toContain("nicht von themeswitch");
   expect(await readFile(join(gtk4Dir, "gtk.css"), "utf8")).toBe("/* fremder Inhalt */\n");
 });
 

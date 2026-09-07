@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 // cli.ts — Omarchy-Theme als GNOME-Theme via colors.toml (Option B).
-// TypeScript/Bun: rosepine-gnome parse|render|install|set|reset
+// TypeScript/Bun: themeswitch parse|render|install|set|reset
 // Mit `set <theme>` wird jedes Omarchy-Theme (themes/<id>/colors.toml inkl.
 // optionaler vscode.json/icons.theme/backgrounds) on-the-fly auf GNOME, Ghostty,
 // GTK, VS Code und PaperWM angewendet.
@@ -20,21 +20,21 @@ const ROOT = import.meta.dir; // …/src
 const DEFAULT_COLORS = join(ROOT, "..", "themes", "rose-pine", "colors.toml");
 const DEFAULT_THEME = "rose-pine";
 
-const usage = `rosepine-gnome — Omarchy-Themes als GNOME-Theme (aus colors.toml, Option B)
+const usage = `themeswitch — Omarchy-Themes als GNOME-Theme (aus colors.toml, Option B)
 
 Verwendung:
-  rosepine-gnome set <theme> [--dry-run]      Theme vollständig anwenden (Ghostty,
+  themeswitch set <theme> [--dry-run]      Theme vollständig anwenden (Ghostty,
                                               GTK3, GTK4, VS Code, Wallpaper, PaperWM,
                                               Farbschema + Icon-Theme), on-the-fly
-  rosepine-gnome themes                        Verfügbare Omarchy-Themes auflisten
-  rosepine-gnome parse [--colors FILE]        colors.toml normalisiert ausgeben
-  rosepine-gnome render ghostty|gtk3|gtk4 [--colors FILE]
+  themeswitch themes                        Verfügbare Omarchy-Themes auflisten
+  themeswitch parse [--colors FILE]        colors.toml normalisiert ausgeben
+  themeswitch render ghostty|gtk3|gtk4 [--colors FILE]
                                               einzelnes Ziel auf stdout rendern
-  rosepine-gnome install <ziel> [--theme <id>|--dry-run]
+  themeswitch install <ziel> [--theme <id>|--dry-run]
                                               Ghostty|GTK3|GTK4|LibreOffice|VS-Code|Wallpaper|Shell
-  rosepine-gnome apply [--dry-run] [--theme <id>]
+  themeswitch apply [--dry-run] [--theme <id>]
                                               Farbschema + Icon-Theme setzen (System-Grundlage)
-  rosepine-gnome reset [--dry-run|--theme <id>] [ziel]
+  themeswitch reset [--dry-run|--theme <id>] [ziel]
                                               Originalzustand aus Snapshot wiederherstellen
 
 Ziele (install/reset): ghostty|gtk3|gtk4|libreoffice|vscode|wallpaper|shell

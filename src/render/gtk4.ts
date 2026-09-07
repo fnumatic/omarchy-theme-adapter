@@ -130,7 +130,7 @@ export async function installGtk4(
 
   if (existing && !existing.includes(MARKER)) {
     throw new Error(
-      `${cssFile} existiert und stammt nicht von rosepine-gnome — Abbruch statt Überschreiben. ` +
+      `${cssFile} existiert und stammt nicht von themeswitch — Abbruch statt Überschreiben. ` +
         `Bitte manuell sichern/zusammenführen.`,
     );
   }

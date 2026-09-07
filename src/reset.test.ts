@@ -65,10 +65,10 @@ test("reset setzt bei ursprünglich leerer Ghostty-Config einen hellen Ghostty-S
   const home = await mkdtemp(join(tmpdir(), "rpg-ghostty-default-"));
   const stateDir = join(home, "state");
   const cfgDir = join(home, "cfg");
-  await mkdir(join(stateDir, "rosepine-gnome"), { recursive: true });
+  await mkdir(join(stateDir, "themeswitch"), { recursive: true });
   await mkdir(join(cfgDir, "ghostty"), { recursive: true });
   await writeFile(
-    join(stateDir, "rosepine-gnome", "state.json"),
+    join(stateDir, "themeswitch", "state.json"),
     JSON.stringify({
       version: 1, createdAt: "test", ghosttyConfigExisted: false, ghosttyConfigText: null,
       gtkTheme: null, colorScheme: null,
@@ -194,9 +194,9 @@ test("reset stellt LibreOffice-Config aus Snapshot wieder her", async () => {
   await writeFile(loFile, ORIGINAL);
 
   // Snapshot von Hand anlegen (LO-Pfad ist HOME-fixiert → state.json direkt schreiben)
-  await mkdir(join(stateDir, "rosepine-gnome"), { recursive: true });
+  await mkdir(join(stateDir, "themeswitch"), { recursive: true });
   await writeFile(
-    join(stateDir, "rosepine-gnome", "state.json"),
+    join(stateDir, "themeswitch", "state.json"),
     JSON.stringify({
       version: 1,
       createdAt: new Date().toISOString(),
@@ -226,9 +226,9 @@ test("reset mit Ziel berührt nur dieses Ziel", async () => {
   const loFile = join(home, "registrymodifications.xcu");
   const ORIGINAL = "<value>LibreOffice</value>";
   await writeFile(loFile, ORIGINAL);
-  await mkdir(join(stateDir, "rosepine-gnome"), { recursive: true });
+  await mkdir(join(stateDir, "themeswitch"), { recursive: true });
   await writeFile(
-    join(stateDir, "rosepine-gnome", "state.json"),
+    join(stateDir, "themeswitch", "state.json"),
     JSON.stringify({
       version: 1,
       createdAt: new Date().toISOString(),

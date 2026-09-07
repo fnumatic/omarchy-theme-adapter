@@ -32,7 +32,7 @@ export interface AppliedTheme {
 export function statePath(overrideDir?: string): string {
   const base =
     overrideDir ?? process.env.XDG_STATE_HOME ?? `${process.env.HOME}/.local/state`;
-  return `${base}/rosepine-gnome/state.json`;
+  return `${base}/themeswitch/state.json`;
 }
 
 /** Schreibt das zuletzt angewandte Theme in den Snapshot (für Reset-Cleanup). */

@@ -8,10 +8,10 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import type { Colors } from "../colors.ts";
 
-export const MARKER = "rosepine-gnome: PaperWM-Topbar (aus Omarchy colors.toml)";
-export const END_MARKER = "rosepine-gnome: Ende PaperWM-Topbar";
+export const MARKER = "themeswitch: PaperWM-Topbar (aus Omarchy colors.toml)";
+export const END_MARKER = "themeswitch: Ende PaperWM-Topbar";
 /** Markierung für die von uns ergänzte Kommentar-Schließung (bei unbalancierter Datei). */
-export const CLOSER_HINT = "rosepine-gnome: schliesst offenen Datei-Kommentar";
+export const CLOSER_HINT = "themeswitch: schliesst offenen Datei-Kommentar";
 /** Deckkraft der Top-Bar (0.95 = 95 % deckend, 5 % transparent). */
 export const TOPBAR_ALPHA = 0.95;
 
@@ -23,7 +23,7 @@ export function userCssPath(): string {
 export function hasOpenComment(text: string): boolean {
   const stripped = text
     .split("\n")
-    .filter((l) => !l.includes("rosepine-gnome"))
+    .filter((l) => !l.includes("themeswitch"))
     .join("\n");
   return (stripped.match(/\/\*/gu) ?? []).length > (stripped.match(/\*\//gu) ?? []).length;
 }

@@ -72,7 +72,7 @@ Aus `themes/rose-pine/colors.toml` (`omacom/omarchy@quattro`):
 
 ## 4. Lösungsüberblick
 
-Ein Werkzeug `rosepine-gnome set` (bzw. `omarchy-gnome-theme set rose-pine`) liest ein
+Ein Werkzeug `themeswitch set` (bzw. `omarchy-gnome-theme set rose-pine`) liest ein
 Omarchy-`colors.toml` und übersetzt es in die GNOME-eigenen Schichten:
 
 1. **GNOME Shell** → generiertes `gnome-shell-theme.css`
@@ -94,7 +94,7 @@ Render-Backends (Shell/GTK3/GTK4/Terminal) → Anwendung via `gsettings`/`dconf`
 
 Wenn das Projekt abgeschlossen ist:
 
-- [ ] `rosepine-gnome set rose-pine` wendet Rose Pine Dawn konsistent auf das GNOME-System an.
+- [ ] `themeswitch set rose-pine` wendet Rose Pine Dawn konsistent auf das GNOME-System an.
 - [ ] GNOME Shell verwendet die Dawn-Palette.
 - [ ] GTK3- und GTK4/libadwaita-Apps verwenden die Dawn-Palette.
 - [ ] GNOME Terminal nutzt die Dawn-Farben (bzw. Profil).
@@ -125,7 +125,7 @@ Wenn das Projekt abgeschlossen ist:
 
 ## 7. Akzeptanzkriterien
 
-### Feature: GNOME-Adapter `rosepine-gnome`
+### Feature: GNOME-Adapter `themeswitch`
 - [ ] Liesst ein Omarchy-`colors.toml` korrekt (inkl. `mode`, Fore-/Backgrounds, ANSI-Sets).
 - [ ] Generiert gültiges GNOME-Shell-CSS aus der Palette.
 - [ ] Generiert gültiges GTK3-CSS aus der Palette.
@@ -139,7 +139,7 @@ Wenn das Projekt abgeschlossen ist:
 - [ ] Icon-Theme-Einstellung ist gesetzt.
 
 ### Feature: CLI/Robustheit
-- [ ] `rosepine-gnome set rose-pine` idempotent (mehrfach laufen → gleiches Ergebnis).
+- [ ] `themeswitch set rose-pine` idempotent (mehrfach laufen → gleiches Ergebnis).
 - [ ] `--dry-run` zeigt, was geändert würde, ohne zu ändern.
 - [ ] Fehler bei fehlenden Programmen (z. B. `gsettings`) werden klar gemeldet.
 - [ ] Doku (README) vollständig.
@@ -172,7 +172,7 @@ rosepinetheme/
 │       └── wallpaper.ts      # Wallpaper setzen (Omarchy-Default 1-funky-shapes) (TS)
 │       └── shell.ts          # PaperWM-Topbar in Dawn (user.css-Block) (TS)
 ├── bin/
-│   └── rosepine-gnome        # Wrapper → bun src/cli.ts
+│   └── themeswitch        # Wrapper → bun src/cli.ts
 └── docs/
     └── architektur.md          # Farb-Semanik & Mapping-Tabellen
 ```

@@ -1,9 +1,11 @@
-# rosepinetheme
+# themeswitch
 
-Rose Pine Dawn als Erscheinungsbild eines Ubuntu-26.04-GNOME-Systems nachbauen —
-aus dem Omarchy-`colors.toml` (Option B: eigener GNOME-Adapter, **ohne** Omarchy/Hyprland).
+Wende jedes **Omarchy-Theme** als Erscheinungsbild eines Ubuntu-GNOME-Systems an —
+aus dessen `colors.toml` (Option B: eigener GNOME-Adapter, **ohne** Omarchy/Hyprland).
+Ghostty-, GTK3-, GTK4- und PaperWM-Artefakte werden on-the-fly erzeugt; `mode`
+steuert `prefer-light`/`prefer-dark`, `icons.theme` das Icon-Theme.
 
-> **Status:** Umsetzung läuft. **Interpreter:** TypeScript + [Bun](https://bun.sh) (`bun run` bzw. `./bin/rosepine-gnome`).
+> **Status:** funktionsfähig. **Interpreter:** TypeScript + [Bun](https://bun.sh) (`./bin/themeswitch`).
 > Siehe [PROJECT.md](./PROJECT.md) für das Projektkonzept und [docs/architektur.md](./docs/architektur.md).
 
 ## Voraussetzungen
@@ -13,26 +15,17 @@ aus dem Omarchy-`colors.toml` (Option B: eigener GNOME-Adapter, **ohne** Omarchy
 ## Nutzung
 ```bash
 bun install                        # @types/bun (Dev)
-./bin/rosepine-gnome --help
-./bin/rosepine-gnome parse
-./bin/rosepine-gnome render ghostty
-./bin/rosepine-gnome install ghostty --dry-run   # Vorschau
-./bin/rosepine-gnome install ghostty             # anwenden (mit Config-Backup + Snapshot)
-./bin/rosepine-gnome apply --dry-run             # System-Light-Schema (Vorschau, ändert nichts)
-./bin/rosepine-gnome install gtk4 --dry-run             # Vorschau libadwaita-Overlay
-./bin/rosepine-gnome install gtk4                       # libadwaita-Overlay (Fensterrahmen) anwenden
-./bin/rosepine-gnome install libreoffice [--dry-run]  # LO folgt dem System-Theme (nur bei beendetem LO)
-./bin/rosepine-gnome install vscode [--dry-run]   # Rose-Pine-Dawn-Theme in VS Code (Extension + colorTheme)
-./bin/rosepine-gnome install wallpaper [NAME] [--dry-run]
-                                              Rose-Pine-Wallpaper setzen (Default: Omarchy-Default)
-./bin/rosepine-gnome install shell [--dry-run]    # PaperWM-Topbar in Dawn (user.css-Block)
-./bin/rosepine-gnome reset --dry-run             # Vorschau der Wiederherstellung
-./bin/rosepine-gnome reset                       # Originalzustand aus Snapshot wiederherstellen
+./bin/themeswitch themes                          # verfügbare Omarchy-Themes
+./bin/themeswitch set rose-pine --dry-run         # Vorschau für ein Theme
+./bin/themeswitch set catppuccin-latte            # Theme vollständig anwenden
+./bin/themeswitch set tokyo-night                 # … auch dunkle Themes (mode=dark)
+./bin/themeswitch reset --dry-run                 # Vorschau der Wiederherstellung
+./bin/themeswitch reset                           # Originalzustand aus Snapshot wiederherstellen
 ```
 
 ## Quellen & Korrektur
 - Omarchy: [`omacom/omarchy`](https://github.com/omacom/omarchy) @ `quattro` (nicht `basecamp/omarchy`).
-- Quellpalette: [`themes/rose-pine/colors.toml`](./themes/rose-pine/colors.toml)
+- Themes unter [`themes/<id>/`](./themes): je `colors.toml` (Pflicht) + optionale `vscode.json`, `icons.theme`, `backgrounds/`.
 - Brain-Notiz: `~/dokumente/brain/brain/Atlas/Dots/Things/Rose Pine Dawn auf Ubuntu GNOME.md`
 
 ## Lizenz

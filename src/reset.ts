@@ -181,15 +181,15 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
     try {
       const text = await readFile(cssFile, "utf8");
       if (!text.includes(GTK4_MARKER)) {
-        console.log(`   − ${cssFile} enthält keinen rosepine-Block, unangetastet`);
+        console.log(`   − ${cssFile} enthält keinen themeswitch-Block, unangetastet`);
       } else {
         const head = text.slice(0, text.indexOf("/* " + GTK4_MARKER)).replace(/\s+$/u, "");
         if (head) {
           await writeFile(cssFile, head + "\n");
-          console.log(`   ✓ rosepine-Block aus ${cssFile} entfernt (Rest erhalten)`);
+          console.log(`   ✓ themeswitch-Block aus ${cssFile} entfernt (Rest erhalten)`);
         } else {
           await rm(cssFile, { force: true });
-          console.log(`   ✓ ${cssFile} gelöscht (nur rosepine-Block enthalten)`);
+          console.log(`   ✓ ${cssFile} gelöscht (nur themeswitch-Block enthalten)`);
         }
       }
     } catch {
@@ -261,7 +261,7 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
     try {
       const text = await readFile(pwFile, "utf8");
       if (!text.includes(SHELL_MARKER)) {
-        console.log(`   − ${pwFile} enthält keinen rosepine-Block, unangetastet`);
+        console.log(`   − ${pwFile} enthält keinen themeswitch-Block, unangetastet`);
       } else {
         const start = text.indexOf(`/* ${SHELL_MARKER}`);
         const endToken = `/* ${SHELL_END_MARKER} */`;
@@ -277,7 +277,7 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
         const next = (head ? head + "\n\n" : "") + (tail ? tail + "\n" : "");
         if (next) await writeFile(pwFile, next);
         else await rm(pwFile, { force: true });
-        console.log(`   ✓ rosepine-Block aus ${pwFile} entfernt (Rest erhalten)`);
+        console.log(`   ✓ themeswitch-Block aus ${pwFile} entfernt (Rest erhalten)`);
       }
     } catch (e) {
       if (e instanceof Error && e.message.includes("beschädigt")) throw e;
