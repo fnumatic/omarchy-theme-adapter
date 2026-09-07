@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fakeGSettings } from "./gsettings.ts";
 import { ensureSnapshot, loadSnapshot } from "./state.ts";
-import { resetAll } from "./reset.ts";
+import { resetAll, restoreGtkTheme, UBUNTU_DEFAULT_GTK_THEME } from "./reset.ts";
 
 const ORIG_XDG_CONFIG = process.env.XDG_CONFIG_HOME;
 afterEach(() => {
@@ -40,6 +40,15 @@ test("reset ohne Snapshot wirft kontrollierten Fehler", async () => {
     msg = String(e instanceof Error ? e.message : e);
   }
   expect(msg).toContain("Kein Snapshot");
+});
+
+test("reset migriert vergifteten RosePineDawn-Snapshot auf Yaru", () => {
+  expect(restoreGtkTheme("'RosePineDawn'")).toEqual({
+    theme: UBUNTU_DEFAULT_GTK_THEME,
+    migrated: true,
+  });
+  expect(restoreGtkTheme("'Adwaita'")).toEqual({ theme: "Adwaita", migrated: false });
+  expect(restoreGtkTheme(null)).toEqual({ theme: null, migrated: false });
 });
 
 test("reset entfernt nur den rosepine-Block aus gtk.css und erhält Fremdinhalt", async () => {

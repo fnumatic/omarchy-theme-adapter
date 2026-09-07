@@ -4,7 +4,17 @@ import { loadSnapshot } from "./state.ts";
 import type { GSettingsRunner } from "./gsettings.ts";
 import { GTK3_THEME_NAME } from "./render/gtk3.ts";
 import { MARKER as GTK4_MARKER } from "./render/gtk4.ts";
-import { MARKER as SHELL_MARKER, END_MARKER as SHELL_END_MARKER } from "./render/shell.ts";
+import { MARKER as SHELL_MARKER, END_MARKER as SHELL_END_MARKER, CLOSER_HINT as SHELL_CLOSER_HINT } from "./render/shell.ts";
+
+/** Ubuntu-Standard, falls ein früher Snapshot bereits unser GTK-Theme enthielt. */
+export const UBUNTU_DEFAULT_GTK_THEME = "Yaru";
+
+/** Ein Snapshot darf nie den vom Tool erzeugten Theme-Namen als Original zurückspielen. */
+export function restoreGtkTheme(snapshotTheme: string | null): { theme: string | null; migrated: boolean } {
+  const theme = snapshotTheme?.replace(/^'|'$/gu, "") ?? null;
+  if (theme === GTK3_THEME_NAME) return { theme: UBUNTU_DEFAULT_GTK_THEME, migrated: true };
+  return { theme, migrated: false };
+}
 
 export type ResetTarget = "ghostty" | "gtk3" | "gtk4" | "libreoffice" | "vscode" | "wallpaper" | "shell";
 
@@ -115,13 +125,19 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
     console.log(`   ✓ GTK3-Theme gelöscht: ${gtkDir}`);
   }
 
-  // gsettings gtk-theme zurücksetzen (nur was im Snapshot stand)
-  if (snap.gtkTheme !== null) {
+  // gsettings gtk-theme zurücksetzen. Frühere Snapshots konnten bereits
+  // RosePineDawn enthalten; diesen bekannten vergifteten Wert migrieren.
+  const gtkRestore = restoreGtkTheme(snap.gtkTheme);
+  if (gtkRestore.theme !== null) {
     if (opts.dry) {
-      console.log(`  dry-run: gsettings gtk-theme → ${snap.gtkTheme}`);
+      console.log(`  dry-run: gsettings gtk-theme → ${gtkRestore.theme}`);
     } else {
-      await opts.gs.set("org.gnome.desktop.interface", "gtk-theme", snap.gtkTheme.replace(/^'|'$/gu, ""));
-      console.log(`   ✓ gtk-theme wiederhergestellt: ${snap.gtkTheme}`);
+      await opts.gs.set("org.gnome.desktop.interface", "gtk-theme", gtkRestore.theme);
+      console.log(
+        gtkRestore.migrated
+          ? `   ✓ gtk-theme wiederhergestellt: ${gtkRestore.theme} (fehlerhaften alten Snapshot migriert)`
+          : `   ✓ gtk-theme wiederhergestellt: ${gtkRestore.theme}`,
+      );
     }
   } else {
     console.log(`   − gtk-theme: kein Original im Snapshot, übersprungen`);
@@ -229,7 +245,12 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
         const endToken = `/* ${SHELL_END_MARKER} */`;
         const end = text.indexOf(endToken, start);
         if (end === -1) throw new Error(`Block beschädigt in ${pwFile}, bitte manuell prüfen.`);
-        const head = text.slice(0, start).replace(/\s+$/u, "");
+        let head = text.slice(0, start).replace(/\s+$/u, "");
+        // Von uns ergänzte Kommentar-Schließung ebenfalls entfernen.
+        const closerIdx = head.lastIndexOf(SHELL_CLOSER_HINT);
+        if (closerIdx !== -1 && !head.slice(closerIdx).includes("\n\n")) {
+          head = head.slice(0, head.lastIndexOf("\n", closerIdx)).replace(/\s+$/u, "");
+        }
         const tail = text.slice(end + endToken.length).replace(/^\s+/u, "");
         const next = (head ? head + "\n\n" : "") + (tail ? tail + "\n" : "");
         if (next) await writeFile(pwFile, next);
@@ -256,4 +277,3 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
   }
   }
 }
-

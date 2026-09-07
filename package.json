@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@types/bun": "^1"
+    "@types/bun": "^1",
+    "css-tree": "^3.2.1"
   }
 }
