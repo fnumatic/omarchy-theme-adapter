@@ -13,8 +13,12 @@ async function twoImages(): Promise<string> {
   return dir;
 }
 
-test("DEFAULT_WALLPAPER ist Omarchy-Default (erstes der sortierten Liste)", () => {
-  expect(DEFAULT_WALLPAPER).toBe("1-funky-shapes.webp");
+test("DEFAULT_WALLPAPER leer → Default wird aus sortierter Liste gewählt", async () => {
+  expect(DEFAULT_WALLPAPER).toBe("");
+  const dir = await twoImages();
+  const gs = fakeGSettings();
+  const res = await installWallpaper({ dry: false, backgrounds: dir, gs });
+  expect(res.file.endsWith("1-a.webp")).toBe(true);
 });
 
 test("listWallpapers listet nur Bilder, sortiert", async () => {

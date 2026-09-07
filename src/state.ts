@@ -19,12 +19,34 @@ export interface Snapshot {
   wallpaperPictureUriDark: string | null;
   paperwmUserCssExisted: boolean | null;
   paperwmUserCssText: string | null;
+  /** Zuletzt angewandtes Theme + generierte Artefakte (für Reset-Cleanup). */
+  appliedTheme: AppliedTheme | null;
+}
+
+export interface AppliedTheme {
+  id: string;
+  ghosttyThemeFile: string;
+  gtkThemeName: string;
 }
 
 export function statePath(overrideDir?: string): string {
   const base =
     overrideDir ?? process.env.XDG_STATE_HOME ?? `${process.env.HOME}/.local/state`;
   return `${base}/rosepine-gnome/state.json`;
+}
+
+/** Schreibt das zuletzt angewandte Theme in den Snapshot (für Reset-Cleanup). */
+export async function setAppliedTheme(
+  applied: AppliedTheme,
+  gs: GSettingsRunner,
+  overrideDir?: string,
+): Promise<void> {
+  const snap = await loadSnapshot(overrideDir);
+  if (!snap) return;
+  const p = statePath(overrideDir);
+  const updated: Snapshot = { ...snap, appliedTheme: applied };
+  await mkdir(p.slice(0, p.lastIndexOf("/")), { recursive: true });
+  await writeFile(p, JSON.stringify(updated, null, 2) + "\n");
 }
 
 export async function loadSnapshot(overrideDir?: string): Promise<Snapshot | null> {
@@ -107,6 +129,7 @@ export async function ensureSnapshot(
         ...(needsPaperwm
           ? { paperwmUserCssExisted: pw!.existed, paperwmUserCssText: pw!.text }
           : {}),
+        appliedTheme: existing.appliedTheme ?? null,
       };
       const p = statePath(overrideDir);
       await mkdir(p.slice(0, p.lastIndexOf("/")), { recursive: true });
@@ -140,6 +163,7 @@ export async function ensureSnapshot(
     wallpaperPictureUriDark: await gs.get("org.gnome.desktop.background", "picture-uri-dark"),
     paperwmUserCssExisted: pw.existed,
     paperwmUserCssText: pw.text,
+    appliedTheme: null,
   };
   const p = statePath(overrideDir);
   await mkdir(p.slice(0, p.lastIndexOf("/")), { recursive: true });

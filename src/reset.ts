@@ -126,7 +126,7 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
   }
 
   // Generiertes Ghostty-Theme löschen (nur unseres)
-  const themeFile = ghosttyThemeFile(opts);
+  const themeFile = snap.appliedTheme?.ghosttyThemeFile ?? ghosttyThemeFile(opts);
   if (opts.dry) {
     console.log(`  dry-run: lösche ${themeFile}`);
   } else {
@@ -138,7 +138,8 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
   if (want("gtk3")) {
   // Generiertes GTK3-Theme löschen (nur unseres)
   const themesDir = opts.themesDir ?? `${process.env.HOME}/.themes`;
-  const gtkDir = `${themesDir}/${GTK3_THEME_NAME}`;
+  const gtkName = snap.appliedTheme?.gtkThemeName ?? GTK3_THEME_NAME;
+  const gtkDir = `${themesDir}/${gtkName}`;
   if (opts.dry) {
     console.log(`  dry-run: lösche ${gtkDir}`);
   } else {

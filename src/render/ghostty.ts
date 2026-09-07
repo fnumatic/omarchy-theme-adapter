@@ -49,6 +49,8 @@ export interface InstallOptions {
   dry: boolean;
   /** Ghostty-Config-Verzeichnis (Default: $XDG_CONFIG_HOME|~/.config + /ghostty) */
   configDir?: string;
+  /** Theme-Dateiname/-ID (Default: GHOSTTY_THEME_NAME) — für andere Omarchy-Themes */
+  themeName?: string;
 }
 
 export interface InstallResult {
@@ -77,7 +79,8 @@ export async function installGhostty(
   const xdg = process.env.XDG_CONFIG_HOME || `${process.env.HOME}/.config`;
   const configDir = opts.configDir ?? `${xdg}/ghostty`;
   const themesDir = `${configDir}/themes`;
-  const themeFile = `${themesDir}/${GHOSTTY_THEME_FILE}`;
+  const themeName = opts.themeName ?? GHOSTTY_THEME_NAME;
+  const themeFile = `${themesDir}/${themeName}`;
   const configFile = `${configDir}/config`;
 
   const result: InstallResult = { themeFile, configFile };
@@ -85,7 +88,7 @@ export async function installGhostty(
   if (opts.dry) {
     console.log(`  dry-run: mkdir -p ${themesDir}`);
     console.log(`  dry-run: schreibe ${themeFile}`);
-    console.log(`  dry-run: theme-Zeile → "theme = ${GHOSTTY_THEME_NAME}" in ${configFile}`);
+    console.log(`  dry-run: theme-Zeile → "theme = ${themeName}" in ${configFile}`);
     return result;
   }
 
@@ -110,10 +113,10 @@ export async function installGhostty(
 
   let next: string;
   if (themeRe.test(cfgText)) {
-    next = cfgText.replace(themeRe, `theme = ${GHOSTTY_THEME_NAME}`);
+    next = cfgText.replace(themeRe, `theme = ${themeName}`);
   } else {
     const base = cfgText.replace(/\s+$/u, "");
-    next = (base ? base + "\n" : "") + `theme = ${GHOSTTY_THEME_NAME}\n`;
+    next = (base ? base + "\n" : "") + `theme = ${themeName}\n`;
   }
 
   await writeFile(configFile, next);

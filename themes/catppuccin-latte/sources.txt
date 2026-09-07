@@ -1,0 +1,4 @@
+# Catppuccin Latte (Omarchy-Quelle)
+Quelle: omacom/omarchy @ Branch quattro — themes/catppuccin-latte/
+Bemerkung: Beispiel für ein zweites Omarchy-Theme (hell). Fetcht am 2026-09-07
+per raw.githubusercontent.com. Bei einem Upstream-Update hier erneut prüfen.

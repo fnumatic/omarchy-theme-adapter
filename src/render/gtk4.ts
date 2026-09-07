@@ -5,7 +5,7 @@
 import type { Colors } from "../colors.ts";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 
-export const MARKER = "Generiert aus Omarchy colors.toml (Option B) — Rose Pine Dawn";
+export const MARKER = "Generiert aus Omarchy colors.toml (Option B)";
 
 const v = (c: Colors, k: string, fb = "#000000"): string => c[k] ?? fb;
 

@@ -11,3 +11,7 @@
 
 Omarchy wählt beim Theme-Wechsel das erste der sortierten `backgrounds/` (`bin/omarchy-theme-set`):
 Default = **`1-funky-shapes.webp`**. Alle vier Dateien liegen unter `backgrounds/` (Stand 2026-09-07).
+Das Projekt ist jetzt generisch: `rosepine-gnome set <theme>` wendet jedes
+Omarchy-Theme (themes/<id>/colors.toml + optionale vscode.json/icons.theme/
+backgrounds) on-the-fly an. Weitere Themes: raw.githubusercontent.com/
+omacom/omarchy/quattro/themes/<name>/ … nach themes/<name>/ kopieren.

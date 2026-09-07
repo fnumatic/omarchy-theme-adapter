@@ -8,8 +8,10 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import type { Colors } from "../colors.ts";
 
-export const MARKER = "rosepine-gnome: PaperWM-Topbar (Rose Pine Dawn, aus Omarchy colors.toml)";
+export const MARKER = "rosepine-gnome: PaperWM-Topbar (aus Omarchy colors.toml)";
 export const END_MARKER = "rosepine-gnome: Ende PaperWM-Topbar";
+/** Markierung für die von uns ergänzte Kommentar-Schließung (bei unbalancierter Datei). */
+export const CLOSER_HINT = "rosepine-gnome: schliesst offenen Datei-Kommentar";
 /** Deckkraft der Top-Bar (0.95 = 95 % deckend, 5 % transparent). */
 export const TOPBAR_ALPHA = 0.95;
 
@@ -17,6 +19,14 @@ export function userCssPath(): string {
   return `${process.env.HOME}/.config/paperwm/user.css`;
 }
 
+/** Zählt, ob CSS-Text mit offenem Kommentar endet (opens > closes). */
+export function hasOpenComment(text: string): boolean {
+  const stripped = text
+    .split("\n")
+    .filter((l) => !l.includes("rosepine-gnome"))
+    .join("\n");
+  return (stripped.match(/\/\*/gu) ?? []).length > (stripped.match(/\*\//gu) ?? []).length;
+}
 /** #rrggbb → rgba(r, g, b, a). Wirft bei ungültigem Hex. */
 export function hexToRgba(hex: string, alpha: number): string {
   const m = /^#([0-9a-fA-F]{6})$/.exec(hex.trim());
@@ -92,7 +102,11 @@ export async function installShellPaperwm(
     next = (head ? head + "\n\n" : "") + block.trimEnd() + "\n" + (tail ? "\n" + tail : "");
     if (!next.endsWith("\n")) next += "\n";
   } else {
-    next = (existing.replace(/\s+$/u, "") + (existing.trim() ? "\n\n" : "")) + block.trimEnd() + "\n";
+    const base = existing.replace(/\s+$/u, "");
+    // Unbalancierte Datei (offener Kommentar) würde unseren Block verschlucken:
+    // Kommentar vor unserem Block schließen, Rest unverändert lassen.
+    const closer = base && hasOpenComment(base) ? `\n*/ /* ${CLOSER_HINT} */\n` : "";
+    next = (base ? base + "\n" : "") + closer + (closer || base ? "\n" : "") + block.trimEnd() + "\n";
   }
 
   await writeFile(cssFile, next);

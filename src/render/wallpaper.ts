@@ -7,11 +7,11 @@ import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { realGSettings, type GSettingsRunner } from "../gsettings.ts";
 
-/** Omarchy-Default: erstes der sortierten backgrounds. */
-export const DEFAULT_WALLPAPER = "1-funky-shapes.webp";
+/** Omarchy-Default-Regel: erstes der sortierten backgrounds (dynamisch). */
+export const DEFAULT_WALLPAPER = "";
 
 export function backgroundsDir(): string {
-  // src/render → ../../themes/rose-pine/backgrounds
+  // src/render → ../../themes/rose-pine/backgrounds (Default-Theme)
   return join(new URL(".", import.meta.url).pathname, "..", "..", "themes", "rose-pine", "backgrounds");
 }
 
@@ -35,7 +35,7 @@ export async function installWallpaper(
 ): Promise<{ file: string; uri: string }> {
   const dir = opts.backgrounds ?? backgroundsDir();
   const available = await listWallpapers(dir).catch(() => [] as string[]);
-  const name = opts.name ?? DEFAULT_WALLPAPER;
+  const name = opts.name ?? available[0] ?? DEFAULT_WALLPAPER;
   if (!available.includes(name)) {
     throw new Error(
       `Wallpaper '${name}' nicht in ${dir} gefunden. Verfügbar: ${available.join(", ") || "(keine)"}`,
