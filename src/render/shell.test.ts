@@ -33,7 +33,7 @@ test("hexToRgba verweigert ungültiges Hex", () => {
 test("renderShellPaperwm färbt PaperWM-Topbar in Dawn", () => {
   const css = renderShellPaperwm(base);
   expect(css).toContain(".topbar-transparent-background");
-  expect(css).toContain("rgba(250, 244, 237, 0.85)");
+  expect(css).toContain("rgba(250, 244, 237, 0.95)");
   expect(css).toContain("color: #575279");
   expect(css).toContain(MARKER);
   expect(css).toContain(END_MARKER);
@@ -55,7 +55,7 @@ test("installShellPaperwm erhält Fremdinhalt und ist idempotent", async () => {
   await installShellPaperwm(renderShellPaperwm(base), { dry: false, cssFile });
   let text = await readFile(cssFile, "utf8");
   expect(text).toContain("meine Notizen");
-  expect(text).toContain("rgba(250, 244, 237, 0.85)");
+  expect(text).toContain("rgba(250, 244, 237, 0.95)");
 
   await installShellPaperwm(renderShellPaperwm(base), { dry: false, cssFile });
   text = await readFile(cssFile, "utf8");

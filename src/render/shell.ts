@@ -10,6 +10,8 @@ import type { Colors } from "../colors.ts";
 
 export const MARKER = "rosepine-gnome: PaperWM-Topbar (Rose Pine Dawn, aus Omarchy colors.toml)";
 export const END_MARKER = "rosepine-gnome: Ende PaperWM-Topbar";
+/** Deckkraft der Top-Bar (0.95 = 95 % deckend, 5 % transparent). */
+export const TOPBAR_ALPHA = 0.95;
 
 export function userCssPath(): string {
   return `${process.env.HOME}/.config/paperwm/user.css`;
@@ -30,7 +32,7 @@ export function renderShellPaperwm(c: Colors): string {
   const surface = c.dark_background ?? bg;
   return `/* ${MARKER} */
 .topbar-transparent-background {
-    background-color: ${hexToRgba(bg, 0.85)};
+    background-color: ${hexToRgba(bg, TOPBAR_ALPHA)};
     box-shadow: none;
 }
 .topbar-transparent-background StLabel,
