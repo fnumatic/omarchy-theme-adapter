@@ -157,46 +157,57 @@ export function renderShellOverride(c: Colors): string {
   color: ${fgMuted};
 }
 
-/* Quick Settings: Yaru verwendet hierfür den systemweiten -st-accent-color
-   (Ubuntu-Orange). Aktive Umschalter, ihr Split-Button und der Trenner werden
-   explizit auf den Omarchy-Akzent gesetzt. */
+/* Quick Settings nach dem WhiteSur-Muster: Inaktiv ist die Basisregel
+   (mit '!important', sonst schlägt Yaru durch); ':checked' liegt darüber.
+   Kein ':not()' — das unterstützt St-Theme-CSS nicht zuverlässig.
+   Aktiv = Omarchy-Akzent mit hellem Text; inaktiv = Theme-Surface. */
+.quick-toggle,
+.quick-toggle-has-menu .quick-toggle {
+  background-color: ${raised} !important;
+  color: ${fg};
+  box-shadow: none;
+}
+.quick-toggle StIcon,
+.quick-toggle StLabel,
+.quick-toggle-has-menu .quick-toggle StIcon,
+.quick-toggle-has-menu .quick-toggle StLabel {
+  color: ${fg};
+}
 .quick-toggle:checked,
 .quick-toggle:checked:hover,
 .quick-toggle:checked:focus,
 .quick-toggle:checked:active,
-.quick-toggle-has-menu .quick-toggle-menu-button:checked,
-.quick-toggle-has-menu .quick-toggle-menu-button:checked:hover,
-.quick-toggle-has-menu .quick-toggle-menu-button:checked:focus,
-.quick-toggle-has-menu .quick-toggle-menu-button:checked:active {
-  background-color: ${accent};
+.quick-toggle-has-menu .quick-toggle:checked {
+  background-color: ${accent} !important;
   color: ${bg};
   box-shadow: none;
 }
 .quick-toggle:checked StIcon,
 .quick-toggle:checked StLabel,
-.quick-toggle-has-menu .quick-toggle-menu-button:checked StIcon,
-.quick-toggle-has-menu .quick-toggle-menu-button:checked StLabel {
-  color: ${bg};
+.quick-toggle-has-menu .quick-toggle:checked StIcon,
+.quick-toggle-has-menu .quick-toggle:checked StLabel {
+  color: ${bg} !important;
 }
-.quick-toggle-has-menu:checked .quick-toggle-separator {
-  background-color: ${bg};
-}
-/* Inaktive Kacheln müssen sich sichtbar von der Panelfläche abheben. Yaru
-   mischt dafür harte Grauwerte ein; wir verwenden die Theme-Surface und die
-   gedämpfte Vordergrundfarbe für den separaten Menü-Pfeil. */
-.quick-toggle:not(:checked),
-.quick-toggle-has-menu:not(:checked) .quick-toggle,
-.quick-toggle-has-menu:not(:checked) .quick-toggle-menu-button {
-  background-color: ${raised};
-  color: ${fg};
-  box-shadow: none;
-}
-.quick-toggle-has-menu:not(:checked) .quick-toggle-menu-button StIcon,
-.quick-toggle-has-menu:not(:checked) .quick-toggle-menu-button StLabel {
+.quick-toggle-has-menu .quick-toggle-menu-button {
+  background-color: ${raised} !important;
   color: ${fgMuted};
 }
-.quick-toggle-has-menu:not(:checked) .quick-toggle-separator {
-  background-color: ${muted};
+.quick-toggle-has-menu .quick-toggle-menu-button:checked,
+.quick-toggle-has-menu .quick-toggle-menu-button:checked:hover,
+.quick-toggle-has-menu .quick-toggle-menu-button:checked:focus,
+.quick-toggle-has-menu .quick-toggle-menu-button:checked:active {
+  background-color: ${accent} !important;
+  color: ${bg};
+}
+.quick-toggle-has-menu .quick-toggle-menu-button:checked StIcon,
+.quick-toggle-has-menu .quick-toggle-menu-button:checked StLabel {
+  color: ${bg} !important;
+}
+.quick-toggle-has-menu .quick-toggle-separator {
+  background-color: ${muted} !important;
+}
+.quick-toggle-has-menu:checked .quick-toggle-separator {
+  background-color: ${bg} !important;
 }
 /* Framework Fan Control hat keine eigene Kachel-CSS und fällt bei Fehlern auf
    ein helles symbolisches Icon zurück. Theme-Foreground erzwingt Kontrast. */
