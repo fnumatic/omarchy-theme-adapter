@@ -168,17 +168,24 @@ export function renderShellOverride(c: Colors): string {
 .quick-toggle-has-menu .quick-toggle-menu-button:checked:focus,
 .quick-toggle-has-menu .quick-toggle-menu-button:checked:active {
   background-color: ${accent};
-  color: ${fg};
+  color: ${bg};
   box-shadow: none;
 }
 .quick-toggle:checked StIcon,
 .quick-toggle:checked StLabel,
 .quick-toggle-has-menu .quick-toggle-menu-button:checked StIcon,
 .quick-toggle-has-menu .quick-toggle-menu-button:checked StLabel {
-  color: ${fg};
+  color: ${bg};
 }
 .quick-toggle-has-menu:checked .quick-toggle-separator {
-  background-color: ${fg};
+  background-color: ${bg};
+}
+/* Framework Fan Control hat keine eigene Kachel-CSS und fällt bei Fehlern auf
+   ein helles symbolisches Icon zurück. Theme-Foreground erzwingt Kontrast. */
+.fw-fctrl-popup-menu,
+.fw-fctrl-popup-menu StIcon,
+.fw-fctrl-popup-menu StLabel {
+  color: ${fg};
 }
 
 /* Scharfe Ecken für aufgeklappte Panels (Popups, QuickSettings, OSD, …).

@@ -27,6 +27,7 @@ test("renderShellOverride enthält Rose-Pine-Farben für Kernflächen", () => {
   expect(css).toContain("background-color: #56949f !important");
   expect(css).toContain(".quick-toggle:checked");
   expect(css).toContain("background-color: #56949f;");
+  expect(css).toContain(".fw-fctrl-popup-menu");
 });
 
 test("renderShellTheme hängt Override an eine vollständige Basis an (valid)", () => {
