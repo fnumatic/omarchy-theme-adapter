@@ -208,6 +208,17 @@ export function renderShellOverride(p: Palette): string {
 .quick-toggle-has-menu:checked .quick-toggle-separator {
   background-color: ${bg} !important;
 }
+/* Lautstärkeregler: Yaru färbt die aktive Füllung über '-st-accent-color'
+   (systemweit Orange). Eigene Barlevel-Farben setzen den Theme-Akzent. */
+.slider {
+  color: ${fg};
+  -barlevel-background-color: ${muted};
+  -barlevel-active-background-color: ${accent};
+}
+.quick-slider .slider-bin:focus {
+  box-shadow: none;
+  background-color: ${raised};
+}
 /* Framework Fan Control hat keine eigene Kachel-CSS und fällt bei Fehlern auf
    ein helles symbolisches Icon zurück. Theme-Foreground erzwingt Kontrast. */
 .fw-fctrl-popup-menu,
