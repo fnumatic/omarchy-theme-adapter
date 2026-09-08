@@ -1,5 +1,6 @@
 import { test, expect, beforeEach } from "bun:test";
 import { parseColors, type Colors } from "../colors.ts";
+import { resolvePalette, type Palette } from "../palette.ts";
 import {
   renderGhostty,
   installGhostty,
@@ -11,6 +12,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 let base: Colors;
+let pal: Palette;
 
 beforeEach(() => {
   base = parseColors(
@@ -33,10 +35,11 @@ bright_blue = "#56949f"
 bright_magenta = "#907aa9"
 bright_cyan = "#d7827e"`,
   );
+  pal = resolvePalette(base);
 });
 
 test("renderGhostty enthält Basis- und selection-Zeilen", () => {
-  const out = renderGhostty(base);
+  const out = renderGhostty(pal);
   expect(out).toContain("background = #faf4ed");
   expect(out).toContain("foreground = #575279");
   expect(out).toContain("cursor-color = #575279");
@@ -44,7 +47,7 @@ test("renderGhostty enthält Basis- und selection-Zeilen", () => {
 });
 
 test("renderGhostty: Palette 0..15 in Omarchy-Reihenfolge", () => {
-  const out = renderGhostty(base);
+  const out = renderGhostty(pal);
   expect(out).toContain("palette = 0=#faf4ed"); // background
   expect(out).toContain("palette = 1=#b4637a"); // red
   expect(out).toContain("palette = 2=#286983"); // green
@@ -56,12 +59,12 @@ test("renderGhostty: Palette 0..15 in Omarchy-Reihenfolge", () => {
 });
 
 test("renderGhostty endet mit newline", () => {
-  expect(renderGhostty(base).endsWith("\n")).toBe(true);
+  expect(renderGhostty(pal).endsWith("\n")).toBe(true);
 });
 
 test("installGhostty --dry-run ändert nichts auf der Platte", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg-dry-"));
-  const res = await installGhostty(renderGhostty(base), { dry: true, configDir: dir });
+  const res = await installGhostty(renderGhostty(pal), { dry: true, configDir: dir });
   expect(res.themeFile).toContain(GHOSTTY_THEME_NAME);
   const existing = await readFile(join(dir, "config")).catch(() => null);
   expect(existing).toBeNull();
@@ -73,7 +76,7 @@ test("installGhostty schreibt Theme und setzt theme-Zeile (mit Backup)", async (
   const cfgPath = join(dir, "config");
   await writeFile(cfgPath, 'background = "#111"\ntheme = light:GitHub Light Default, dark: GitHub Dark\n');
 
-  const res = await installGhostty(renderGhostty(base), { dry: false, configDir: dir });
+  const res = await installGhostty(renderGhostty(pal), { dry: false, configDir: dir });
 
   // Theme-Datei und theme-Referenz sind identisch (Ghostty listet User-Themes MIT Endung)
   expect(res.themeFile.endsWith(`/${GHOSTTY_THEME_FILE}`)).toBe(true);

@@ -95,7 +95,8 @@ test("reset entfernt nur den rosepine-Block aus gtk.css und erhält Fremdinhalt"
   await mkdir(join(cfgDir, "gtk-4.0"), { recursive: true });
   const { renderGtk4 } = await import("./render/gtk4.ts");
   const { parseColors } = await import("./colors.ts");
-  const css = renderGtk4(parseColors('background = "#faf4ed"\nforeground = "#575279"\n'));
+  const { resolvePalette } = await import("./palette.ts");
+  const css = renderGtk4(resolvePalette(parseColors('background = "#faf4ed"\nforeground = "#575279"\n')));
   await writeFile(cssPath, "/* fremd */\n\n" + css);
 
   const gs = fakeGSettings();

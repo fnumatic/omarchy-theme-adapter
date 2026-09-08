@@ -5,6 +5,7 @@
 // optionaler vscode.json/icons.theme/backgrounds) on-the-fly auf GNOME, Ghostty,
 // GTK, VS Code und PaperWM angewendet.
 import { parseColors, normalize, semanticLines, type Colors } from "./colors.ts";
+import { resolvePalette, type Palette } from "./palette.ts";
 import { installGhostty, renderGhostty } from "./render/ghostty.ts";
 import { installGtk3, renderGtk3 } from "./render/gtk3.ts";
 import { installGtk4, renderGtk4 } from "./render/gtk4.ts";
@@ -107,6 +108,11 @@ async function withColors(args: Args, fn: (c: Colors) => void): Promise<void> {
   fn(colors);
 }
 
+/** Wie withColors, löst aber zusätzlich die deklarative Rollen-Palette auf. */
+async function withPalette(args: Args, fn: (p: Palette) => void): Promise<void> {
+  await withColors(args, (c) => fn(resolvePalette(c)));
+}
+
 async function withTheme(args: Args, fn: (t: Theme) => Promise<void>): Promise<void> {
   let theme: Theme | null = null;
   try {
@@ -138,25 +144,25 @@ async function applyTheme(theme: Theme, dry: boolean): Promise<void> {
   await snapshotOnce(dry);
   C.log(`${theme.displayName} (${theme.mode}) anwenden`);
 
-  const c = theme.colors;
+  const p = theme.palette;
 
   // Ghostty
   try {
-    await installGhostty(renderGhostty(c), { dry, themeName: theme.ghosttyThemeName });
+    await installGhostty(renderGhostty(p), { dry, themeName: theme.ghosttyThemeName });
   } catch (e) {
     C.die(`Ghostty fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`);
   }
 
   // GTK3
   try {
-    await installGtk3(renderGtk3(c), { dry, name: theme.gtkThemeName });
+    await installGtk3(renderGtk3(p), { dry, name: theme.gtkThemeName });
   } catch (e) {
     C.die(`GTK3 fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`);
   }
 
   // GTK4-Overlay
   try {
-    await installGtk4(renderGtk4(c), { dry });
+    await installGtk4(renderGtk4(p), { dry });
   } catch (e) {
     C.die(`GTK4 fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`);
   }
@@ -187,7 +193,7 @@ async function applyTheme(theme: Theme, dry: boolean): Promise<void> {
   // PaperWM-Topbar
   try {
     const { installShellPaperwm, renderShellPaperwm } = await import("./render/shell.ts");
-    await installShellPaperwm(renderShellPaperwm(c), { dry });
+    await installShellPaperwm(renderShellPaperwm(p), { dry });
   } catch (e) {
     C.die(`Shell fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`);
   }
@@ -202,7 +208,7 @@ async function applyTheme(theme: Theme, dry: boolean): Promise<void> {
       shellThemeName,
     } = await import("./render/shellTheme.ts");
     const base = await readSystemShellBase();
-    const css = renderShellTheme(base, renderShellOverride(c));
+    const css = renderShellTheme(base, renderShellOverride(p));
     await installShellTheme(shellThemeName(theme.gtkThemeName), css, { dry });
   } catch (e) {
     C.warn(`GNOME-Shell-Theme: ${String(e instanceof Error ? e.message : e)}`);
@@ -239,21 +245,21 @@ async function installOne(args: Args): Promise<void> {
     case "ghostty":
       await withTheme(args, async (t) => {
         await snapshotOnce(args.dry);
-        await installGhostty(renderGhostty(t.colors), { dry: args.dry, themeName: t.ghosttyThemeName })
+        await installGhostty(renderGhostty(t.palette), { dry: args.dry, themeName: t.ghosttyThemeName })
           .catch((e) => C.die(`install ghostty fehlgeschlagen: ${String(e)}`));
       });
       break;
     case "gtk3":
       await withTheme(args, async (t) => {
         await snapshotOnce(args.dry);
-        await installGtk3(renderGtk3(t.colors), { dry: args.dry, name: t.gtkThemeName })
+        await installGtk3(renderGtk3(t.palette), { dry: args.dry, name: t.gtkThemeName })
           .catch((e) => C.die(`install gtk3 fehlgeschlagen: ${String(e)}`));
       });
       break;
     case "gtk4":
       await withTheme(args, async (t) => {
         await snapshotOnce(args.dry);
-        await installGtk4(renderGtk4(t.colors), { dry: args.dry })
+        await installGtk4(renderGtk4(t.palette), { dry: args.dry })
           .catch((e) => C.die(`install gtk4 fehlgeschlagen: ${String(e)}`));
       });
       break;
@@ -304,7 +310,7 @@ async function installOne(args: Args): Promise<void> {
         const base = await readSystemShellBase().catch((e) =>
           C.die(`GNOME-Shell-Theme fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`),
         );
-        const css = renderShellTheme(base, renderShellOverride(t.colors));
+        const css = renderShellTheme(base, renderShellOverride(t.palette));
         await installShellTheme(shellThemeName(t.gtkThemeName), css, { dry: args.dry })
           .catch((e) => C.die(`install shell-theme fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`));
       });
@@ -313,7 +319,7 @@ async function installOne(args: Args): Promise<void> {
       await withTheme(args, async (t) => {
         await snapshotOnce(args.dry);
         const { installShellPaperwm, renderShellPaperwm } = await import("./render/shell.ts");
-        await installShellPaperwm(renderShellPaperwm(t.colors), { dry: args.dry })
+        await installShellPaperwm(renderShellPaperwm(t.palette), { dry: args.dry })
           .catch((e) => C.die(`install shell fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`));
       });
       break;
@@ -339,9 +345,9 @@ async function main(): Promise<void> {
       break;
 
     case "render":
-      if (args.cmds[1] === "ghostty") await withColors(args, (c) => console.log(renderGhostty(c)));
-      else if (args.cmds[1] === "gtk3") await withColors(args, (c) => console.log(renderGtk3(c)));
-      else if (args.cmds[1] === "gtk4") await withColors(args, (c) => console.log(renderGtk4(c)));
+      if (args.cmds[1] === "ghostty") await withPalette(args, (p) => console.log(renderGhostty(p)));
+      else if (args.cmds[1] === "gtk3") await withPalette(args, (p) => console.log(renderGtk3(p)));
+      else if (args.cmds[1] === "gtk4") await withPalette(args, (p) => console.log(renderGtk4(p)));
       else C.die(`render: unbekanntes Ziel '${args.cmds[1] ?? ""}' (ghostty|gtk3|gtk4)`);
       break;
 

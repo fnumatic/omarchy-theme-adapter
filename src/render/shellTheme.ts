@@ -7,7 +7,7 @@
 // hängen einen Rose-Pine-Override-Block an, der die sichtbaren Oberflächen
 // (Panel, Uhr, Icons, Übersicht, Dash, Popover/QuickSettings, OSD) rekoloziert.
 import { readFile, writeFile, mkdir } from "node:fs/promises";
-import type { Colors } from "../colors.ts";
+import type { Palette } from "../palette.ts";
 import { realGSettingsWithSchemaDir, type GSettingsRunner } from "../gsettings.ts";
 import { assertValidCss } from "../cssutil.ts";
 
@@ -24,8 +24,6 @@ export function userThemeSchemaDir(): string {
 export const USER_THEME_UUID = "user-theme@gnome-shell-extensions.gcampax.github.com";
 export const USER_THEME_SCHEMA = "org.gnome.shell.extensions.user-theme";
 
-const v = (c: Colors, k: string, fb = "#000000"): string => c[k] ?? fb;
-
 /** Shell-Theme-Name (z. B. "RosePine" → "RosePineShell"). */
 export function shellThemeName(gtkThemeName: string): string {
   return `${gtkThemeName}Shell`;
@@ -34,16 +32,17 @@ export function shellThemeName(gtkThemeName: string): string {
 /**
  * Rose-Pine-Override-Block für die sichtbaren Shell-Oberflächen.
  * Selektoren sind Yaru-kompatibel und bewusst hochspezifisch (flat CSS).
+ * Farben kommen ausschließlich aus der deklarativen Rollen-Palette.
  */
-export function renderShellOverride(c: Colors): string {
-  const bg = v(c, "background");
-  const surface = v(c, "dark_background", bg);
-  const raised = v(c, "lighter_background", bg);
-  const fg = v(c, "foreground");
-  const fgMuted = v(c, "dark_foreground", fg);
-  const muted = v(c, "muted", fgMuted);
-  const accent = v(c, "accent");
-  const selection = v(c, "selection", surface);
+export function renderShellOverride(p: Palette): string {
+  const bg = p.base;
+  const surface = p.surface;
+  const raised = p.overlay;
+  const fg = p.text;
+  const fgMuted = p.muted;
+  const accent = p.accent;
+  const selection = p.highlight_med;
+  const muted = p.highlight_high;
 
   return `/* themeswitch: GNOME-Shell-Override (aus Omarchy colors.toml) */
 /* Flacher Hugo: Yaru-Basis bleibt, teils gesetzt auf Theme-Farben. */

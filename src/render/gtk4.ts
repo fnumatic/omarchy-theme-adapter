@@ -2,26 +2,24 @@
 // libadwaita lädt ~/.config/gtk-4.0/gtk.css automatisch als Overlay; die dort
 // definierten öffentlichen Farbnamen (window_bg_color, accent_bg_color, …)
 // färben libadwaita-Apps inkl. Ghostty-Fensterrahmen. Mapping: docs/architektur.md §3.3.
-import type { Colors } from "../colors.ts";
+import type { Palette } from "../palette.ts";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 
 export const MARKER = "Generiert aus Omarchy colors.toml (Option B)";
 
-const v = (c: Colors, k: string, fb = "#000000"): string => c[k] ?? fb;
-
-/** Erzeugt ein libadwaita-Overlay (`gtk-4.0/gtk.css`) aus der colors.toml. */
-export function renderGtk4(c: Colors): string {
-  const bg = v(c, "background");
-  const surface = v(c, "dark_background", bg);
-  const raised = v(c, "lighter_background", bg);
-  const fg = v(c, "foreground");
-  const fgDisabled = v(c, "dark_foreground", fg);
-  const muted = v(c, "muted", fg);
-  const selection = v(c, "selection");
-  const accent = v(c, "accent");
-  const red = v(c, "red");
-  const green = v(c, "green");
-  const yellow = v(c, "yellow");
+/** Erzeugt ein libadwaita-Overlay (`gtk-4.0/gtk.css`) aus der Rollen-Palette. */
+export function renderGtk4(p: Palette): string {
+  const bg = p.base;
+  const surface = p.surface;
+  const raised = p.overlay;
+  const fg = p.text;
+  const fgDisabled = p.muted;
+  const muted = p.highlight_high;
+  const selection = p.highlight_med;
+  const accent = p.accent;
+  const red = p.love;
+  const green = p.pine;
+  const yellow = p.gold;
 
   return `/* ${MARKER} */
 /* Mapping: docs/architektur.md §3.3 */

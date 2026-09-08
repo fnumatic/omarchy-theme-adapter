@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { assertValidCss } from "../cssutil.ts";
 import { fakeGSettings } from "../gsettings.ts";
 import { parseColors } from "../colors.ts";
+import { resolvePalette } from "../palette.ts";
 import {
   renderShellOverride,
   renderShellTheme,
@@ -16,9 +17,10 @@ import {
 const base = parseColors(
   'background = "#faf4ed"\ndark_background = "#ede7e1"\nlighter_background = "#f2e9e1"\nforeground = "#575279"\ndark_foreground = "#9893a5"\naccent = "#56949f"\nselection = "#dfdad9"\n',
 );
+const pal = resolvePalette(base);
 
 test("renderShellOverride enthält Rose-Pine-Farben für Kernflächen", () => {
-  const css = renderShellOverride(base);
+  const css = renderShellOverride(pal);
   expect(css).toContain("#panel");
   expect(css).toContain("background-color: transparent");
   expect(css).toContain("#575279");
@@ -33,7 +35,7 @@ test("renderShellOverride enthält Rose-Pine-Farben für Kernflächen", () => {
 });
 
 test("renderShellTheme hängt Override an eine vollständige Basis an (valid)", () => {
-  const full = renderShellTheme("/* basis */\nstage { color: #222; }", renderShellOverride(base));
+  const full = renderShellTheme("/* basis */\nstage { color: #222; }", renderShellOverride(pal));
   expect(full.startsWith("/* basis */")).toBe(true);
   assertValidCss(full, "shell-theme");
 });
@@ -41,7 +43,7 @@ test("renderShellTheme hängt Override an eine vollständige Basis an (valid)", 
 test("assertValidCss akzeptiert das gerenderte Theme (praktische Strukturprüfung)", () => {
   // css-tree ist strukturell tolerant; es darf zumindest das erzeugte Theme nie ablehnen,
   // und der definitive Maßstab ist GNOME Shell (Journal) beim Laden.
-  assertValidCss(renderShellTheme("stage {}\n", renderShellOverride(base)), "shell-theme");
+  assertValidCss(renderShellTheme("stage {}\n", renderShellOverride(pal)), "shell-theme");
 });
 
 test("installShellTheme schreibt Datei, validiert CSS und setzt User-Themes (mock)", async () => {
@@ -50,7 +52,7 @@ test("installShellTheme schreibt Datei, validiert CSS und setzt User-Themes (moc
   const gs = fakeGSettings({});
   let didReload = false;
 
-  const baseFull = renderShellTheme("stage {}\n", renderShellOverride(base));
+  const baseFull = renderShellTheme("stage {}\n", renderShellOverride(pal));
   const res = await installShellTheme("RosePineShell", baseFull, {
     dry: false,
     themesDir,

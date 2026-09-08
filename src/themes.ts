@@ -10,7 +10,8 @@
 // kein vorgerendertes Asset mitgeführt.
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { parseColors, type Colors } from "./colors.ts";
+import type { Colors } from "./colors.ts";
+import { mergeThemeColors, resolvePalette, type Palette } from "./palette.ts";
 import type { VscodeDescriptor } from "./render/vscode.ts";
 
 /** Root-Verzeichnis der Theme-Quellen (…/themes). */
@@ -27,7 +28,10 @@ export interface Theme {
   displayName: string;
   /** "light" | "dark" laut colors.toml. */
   mode: string;
+  /** Gemergte Roh-Farben (colors.toml gewinnt, extended.toml füllt Lücken). */
   colors: Colors;
+  /** Deklarativ aufgelöste Rollen-Palette (Renderer arbeiten nur hiermit). */
+  palette: Palette;
   /** GTK3-Theme-Name (keine Leerzeichen, z. B. "RosePine"). */
   gtkThemeName: string;
   /** Ghostty-Theme-Dateiname/-ID (z. B. "rose-pine.conf"). */
@@ -94,10 +98,13 @@ export async function loadTheme(id: string, opts: LoadThemeOptions = {}): Promis
       `Theme '${id}' hat kein themes/${id}/colors.toml. Verfügbar: ${(await listThemes(opts.root)).join(", ")}`,
     );
   }
-  const colors = parseColors(colorsText);
+  // extended.toml ist optional und füllt nur Lücken (volle Rose-Pine-Rollen).
+  const extendedText = await readFile(join(dir, "extended.toml"), "utf8").catch(() => null);
+  const colors = mergeThemeColors(colorsText, extendedText);
   if (Object.keys(colors).length === 0) {
     throw new Error(`colors.toml von '${id}' konnte nicht geparst werden: ${join(dir, "colors.toml")}`);
   }
+  const palette = resolvePalette(colors);
 
   const vscode = await readOptional(join(dir, "vscode.json"), (t) =>
     JSON.parse(t) as VscodeDescriptor,
@@ -113,6 +120,7 @@ export async function loadTheme(id: string, opts: LoadThemeOptions = {}): Promis
     displayName: titleWords(id),
     mode: (colors.mode ?? "dark").toLowerCase(),
     colors,
+    palette,
     gtkThemeName: pascal(id),
     ghosttyThemeName: `${id}.conf`,
     vscode,

@@ -6,7 +6,7 @@
 // User-Stylesheet geladen; nach Änderung Extension aus/ein, kein Logout nötig).
 // Wir verwalten nur unseren markierten Block; fremde Inhalte bleiben unangetastet.
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import type { Colors } from "../colors.ts";
+import type { Palette } from "../palette.ts";
 
 export const MARKER = "themeswitch: PaperWM-Topbar (aus Omarchy colors.toml)";
 export const END_MARKER = "themeswitch: Ende PaperWM-Topbar";
@@ -35,11 +35,11 @@ export function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 }
 
-/** Rendert unseren user.css-Block aus der colors.toml. */
-export function renderShellPaperwm(c: Colors): string {
-  const bg = c.background ?? "#000000";
-  const fg = c.foreground ?? "#ffffff";
-  const surface = c.dark_background ?? bg;
+/** Rendert unseren user.css-Block aus der Rollen-Palette. */
+export function renderShellPaperwm(p: Palette): string {
+  const bg = p.base;
+  const fg = p.text;
+  const surface = p.surface;
   return `/* ${MARKER} */
 .topbar-transparent-background {
     background-color: ${hexToRgba(bg, TOPBAR_ALPHA)};

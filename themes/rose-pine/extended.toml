@@ -1,0 +1,35 @@
+# extended.toml — Rose Pine Dawn: volle 15 Rollen des offiziellen Designsystems.
+# Quelle: https://github.com/rose-pine/palette/blob/main/palette.json (+ Spec:
+# https://github.com/rose-pine/palette — Rollen mit Verwendung).
+#
+# Diese Datei füllt nur LÜCKEN. Vorrang hat immer colors.toml:
+#   1. colors.toml (Omarchy-Keys; teils bewusst abweichend, z. B. foreground
+#      #575279 statt offiziellem text #464261, muted #cecacd = highlight_high)
+#   2. extended.toml (diese Datei, offizielle Rollenwerte)
+#   3. ROLE_SOURCES-Fallbackketten in src/palette.ts
+#
+# Die Auflösung ist deklarativ in src/palette.ts (ROLE_SOURCES) geregelt;
+# Renderer arbeiten nur noch mit Rollennamen (Palette), nie mit Roh-Keys.
+
+mode = "light"
+
+# --- Flächen-Rollen (offiziell) ---
+surface = "#fffaf3"
+overlay = "#f2e9e1"
+
+# --- Vordergrund-Rollen (offiziell) ---
+subtle = "#797593"
+
+# --- Akzent-Rollen (offiziell; usage siehe palette-Spec) ---
+love = "#b4637a"
+gold = "#ea9d34"
+rose = "#d7827e"
+pine = "#286983"
+foam = "#56949f"
+iris = "#907aa9"
+
+# --- Highlight-Rollen (offiziell; im Upstream als Alpha-Overlays definiert,
+# hier die etablierten Dawn-Hexwerte; konsistent zu selection/muted) ---
+highlight_low = "#f4ede8"
+highlight_med = "#dfdad9"
+highlight_high = "#cecacd"

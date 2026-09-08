@@ -29,6 +29,19 @@ const KNOWN = new Set([
   "bright_cyan",
   "bright_blue",
   "bright_magenta",
+  // extended.toml: volle Rose-Pine-Rollen (Lückenfüller zu colors.toml)
+  "surface",
+  "overlay",
+  "subtle",
+  "love",
+  "gold",
+  "rose",
+  "pine",
+  "foam",
+  "iris",
+  "highlight_low",
+  "highlight_med",
+  "highlight_high",
 ]);
 
 /** Rohe Schlüssel→Wert-Karte aus einer colors.toml (nur bekannte Schlüssel). */

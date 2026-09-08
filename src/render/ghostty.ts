@@ -1,6 +1,6 @@
 // render/ghostty.ts — Ghostty-Theme aus colors.toml rendern + installieren.
 // Logik (Option B): spiegelt omarchy default/themed/ghostty.conf.tpl.
-import type { Colors } from "../colors.ts";
+import type { Palette } from "../palette.ts";
 import { mkdir, writeFile, readFile } from "node:fs/promises";
 
 /** Dateiname des User-Themes (Ghostty listet User-Themes MIT Endung, z. B. `rose-pine-dawn.conf (user)`). */
@@ -12,35 +12,17 @@ export const GHOSTTY_THEME_NAME = GHOSTTY_THEME_FILE;
  * Rendert ein gültiges Ghostty-Theme (.conf) aus der geparsten colors.toml.
  * Paletten-Index/-Reihenfolge exakt wie im Omarchy-Template.
  */
-export function renderGhostty(c: Colors): string {
+export function renderGhostty(p: Palette): string {
   const lines: string[] = [
-    `background = ${c.background ?? "#000000"}`,
-    `foreground = ${c.foreground ?? "#ffffff"}`,
-    `cursor-color = ${c.bright_foreground ?? c.foreground ?? "#ffffff"}`,
-    `selection-background = ${c.selection ?? c.foreground ?? "#000000"}`,
-    `selection-foreground = ${c.foreground ?? "#ffffff"}`,
+    `background = ${p.base}`,
+    `foreground = ${p.text}`,
+    `cursor-color = ${p.ansi16[15]}`,
+    `selection-background = ${p.highlight_med}`,
+    `selection-foreground = ${p.text}`,
   ];
 
-  const order: Array<[number, string]> = [
-    [0, "background"],
-    [1, "red"],
-    [2, "green"],
-    [3, "yellow"],
-    [4, "blue"],
-    [5, "magenta"],
-    [6, "cyan"],
-    [7, "foreground"],
-    [8, "muted"],
-    [9, "bright_red"],
-    [10, "bright_green"],
-    [11, "bright_yellow"],
-    [12, "bright_blue"],
-    [13, "bright_magenta"],
-    [14, "bright_cyan"],
-    [15, "bright_foreground"],
-  ];
-  for (const [idx, key] of order) {
-    lines.push(`palette = ${idx}=${c[key] ?? "#000000"}`);
+  for (let idx = 0; idx < p.ansi16.length; idx++) {
+    lines.push(`palette = ${idx}=${p.ansi16[idx]}`);
   }
   return lines.join("\n") + "\n";
 }

@@ -6,7 +6,12 @@ Dieses Dokument definiert, wie die Omarchy-Farbsemantik (`colors.toml`) auf die
 GNOME-eigenen Schichten abgebildet wird. Es ist die Referenz für Parser, Render-Backends
 und die Anwendung via `gsettings`/`dconf`.
 
-## 1. Paletten-Schema von Omarchy (rose-pine)
+## 1. Paletten-Schema: Omarchy-Keys + Rose-Pine-Rollen
+
+Jedes Theme unter `themes/<id>/` besteht aus:
+
+- `colors.toml` (Pflicht, Omarchy-Keys — gewinnt immer)
+- `extended.toml` (optional, volle 15 Rose-Pine-Rollen — füllt nur Lücken)
 
 | Kategorie | Keys |
 |---|---|
@@ -18,9 +23,23 @@ und die Anwendung via `gsettings`/`dconf`.
 | Akzent | `accent` |
 | Auswahl | `selection`, `muted` |
 | ANSI | `red yellow orange green cyan blue magenta brown` + `bright_*` |
+| Rollen (extended) | `surface overlay subtle love gold rose pine foam iris highlight_low highlight_med highlight_high` |
 
 > Hinweis: `orange` ist die Øle-Palette-Erweiterung von Omarchy; klassische ANSI kennt
 > kein Orange. Verwendung: als Akzent-/Highlight-Farbe.
+
+### Deklarative Auflösung (`src/palette.ts`)
+
+Renderer arbeiten **nie** mit Roh-Keys, sondern nur mit der `Palette` (15 Rollen +
+`mode`/`accent`/`ansi16`). Genau **eine** Tabelle regelt die Auflösung
+(`ROLE_SOURCES`: Rolle → Kandidaten-Keys, erster Treffer gewinnt):
+
+- Vorrang: `colors.toml` → `extended.toml` → Kette (`mergeThemeColors`, colors.toml gewinnt)
+- Ketten bevorzugen bewusst die Keys, die Renderer bisher nutzten — bestehende
+  Themes behalten ihr Aussehen; offizielle Rollenwerte greifen bei fehlenden Keys.
+- Bekannte bewusste Abweichung (rose-pine): `foreground` #575279 statt offiziellem
+  `text` #464261; Omarchy-`muted` #cecacd = `highlight_high` (nicht Rollen-`muted`).
+- Rollen-Spec: https://github.com/rose-pine/palette (Verwendung je Rolle).
 
 ## 2. Ziel-Normalform (interne Semantik)
 

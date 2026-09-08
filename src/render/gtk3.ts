@@ -1,22 +1,20 @@
 // render/gtk3.ts — GTK3-Theme aus colors.toml rendern + installieren (Option B).
 // Mapping siehe docs/architektur.md §3.2.
-import type { Colors } from "../colors.ts";
+import type { Palette } from "../palette.ts";
 import { realGSettings, type GSettingsRunner } from "../gsettings.ts";
 
 /** Name des GTK-Themes (Verzeichnis unter ~/.themes). */
 export const GTK3_THEME_NAME = "RosePineDawn";
 
-const v = (c: Colors, k: string, fb = "#000000"): string => c[k] ?? fb;
-
-/** Erzeugt ein `gtk-3.0/gtk.css` aus der geparsten colors.toml. */
-export function renderGtk3(c: Colors): string {
-  const bg = v(c, "background");
-  const base = v(c, "dark_background", bg); // @theme_base_color
-  const raised = v(c, "lighter_background", bg);
-  const fg = v(c, "foreground");
-  const fgDisabled = v(c, "dark_foreground", fg);
-  const muted = v(c, "muted", fg);
-  const selection = v(c, "selection");
+/** Erzeugt ein `gtk-3.0/gtk.css` aus der aufgelösten Rollen-Palette. */
+export function renderGtk3(p: Palette): string {
+  const bg = p.base;
+  const base = p.surface;
+  const raised = p.overlay;
+  const fg = p.text;
+  const fgDisabled = p.muted;
+  const muted = p.highlight_high;
+  const selection = p.highlight_med;
 
   return `/* Generiert aus Omarchy colors.toml (Option B) */
 /* Basis: eingebautes GTK3-Adwaita (immer verfügbar) als volle Struktur;
