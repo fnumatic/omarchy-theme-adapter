@@ -156,6 +156,40 @@ Auf diesem System rendert PaperWM die Top-Bar selbst (transparent, Klasse
 einen markierten Dawn-Block (Topbar-Hintergrund + Schrift in Dawn-Farben); Fremdinhalt bleibt
 unangetastet. Snapshot/Reset: `reset shell`.
 
+#### Shell-Theme-Findings (alle verifiziert, Stand 2026-09-08)
+
+Umsetzung: `src/render/shellTheme.ts` — System-Yaru-Basis on-the-fly gelesen
+(`/usr/share/gnome-shell/theme/Yaru/gnome-shell.css`) plus angehängter
+Theme-Override, aktiviert über User-Themes (`install shell-theme`).
+
+- **`!important` ist im Shell-CSS zulässig und nötig.** Yaru nutzt es selbst
+  (z. B. weiße Workspace-Dots, `#f2f2f2 !important`). Die „kein `!important`"-Regel
+  gilt nur für GTK-CSS.
+- **`:not()` meiden.** St-Theme-CSS unterstützt `:not()` nicht zuverlässig — eine
+  Inaktiv-Regel mit `:not(:checked)` wurde komplett verworfen. Muster nach
+  WhiteSur-gtk-theme (`src/sass/gnome-shell/widgets-48-0/_quick-settings.scss`):
+  Inaktiv-Zustand als **Basisregel mit `!important`**, `:checked` liegt darüber —
+  ebenfalls mit `!important`.
+- **Quick Toggles:** Yaru färbt aktive Kacheln über den systemweiten
+  `-st-accent-color` (Ubuntu-Orange). Override setzt aktiv explizit auf
+  `accent` (Foam) mit hellem Text (`background`), inaktiv auf
+  `lighter_background` mit `foreground`; Split-Pfeil gedämpft (`dark_foreground`),
+  Trenner je Zustand (`muted` / `background`).
+- **Workspace-Pill:** Der Activities-Button nutzt intern nur `.workspace-dot`
+  (aktiv = vollskaliertes Dot, inaktiv = halbtransparent). Yaru erzwingt am
+  Stylesheet-Ende weiß per `!important` → Override mit Accent-`!important`
+  schlägt es (Regel liegt danach).
+- **Topbar-Hover transparent:** `#panel .panel-button:hover/:focus/:active/:checked`
+  → `background-color: transparent`, damit kein andersfarbiger Pill-Hintergrund
+  hinter Uhr, Pill oder Icons erscheint.
+- **Aufgeklappte Panels scharf:** `.popup-menu-content`, `.quick-settings`,
+  `.osd-window`, `.calendar`, `.message-list`, `.world-clocks-button`,
+  `.background-menu` → `border-radius: 0` (konsistent zu Omarchy-`rounding = 0`).
+- **Referenzlage:** `rose-pine/gtk` und `omarchy-gtk-theme` (siehe Brain-Notiz
+  „Rose Pine Dawn auf Ubuntu GNOME") liefern **keine** GNOME-Shell-Quick-Settings-
+  Regeln — nur GTK. Belastbare Shell-Vorlage ist WhiteSur (SCSS, siehe oben).
+- **Fan Control bewusst unangetastet** (Extension-Fehlerzustand, kein Theme-Problem).
+
 ### 3.8 Icons
 Passendes Dawn-kompatibles Icon-Theme (auszuwählen, offen). Omarchy-Referenz:
 `themes/rose-pine/icons.theme` = `Yaru-blue`.
