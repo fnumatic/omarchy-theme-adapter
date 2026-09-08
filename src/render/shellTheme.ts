@@ -41,6 +41,7 @@ export function renderShellOverride(c: Colors): string {
   const raised = v(c, "lighter_background", bg);
   const fg = v(c, "foreground");
   const fgMuted = v(c, "dark_foreground", fg);
+  const muted = v(c, "muted", fgMuted);
   const accent = v(c, "accent");
   const selection = v(c, "selection", surface);
 
@@ -179,6 +180,23 @@ export function renderShellOverride(c: Colors): string {
 }
 .quick-toggle-has-menu:checked .quick-toggle-separator {
   background-color: ${bg};
+}
+/* Inaktive Kacheln müssen sich sichtbar von der Panelfläche abheben. Yaru
+   mischt dafür harte Grauwerte ein; wir verwenden die Theme-Surface und die
+   gedämpfte Vordergrundfarbe für den separaten Menü-Pfeil. */
+.quick-toggle:not(:checked),
+.quick-toggle-has-menu:not(:checked) .quick-toggle,
+.quick-toggle-has-menu:not(:checked) .quick-toggle-menu-button {
+  background-color: ${raised};
+  color: ${fg};
+  box-shadow: none;
+}
+.quick-toggle-has-menu:not(:checked) .quick-toggle-menu-button StIcon,
+.quick-toggle-has-menu:not(:checked) .quick-toggle-menu-button StLabel {
+  color: ${fgMuted};
+}
+.quick-toggle-has-menu:not(:checked) .quick-toggle-separator {
+  background-color: ${muted};
 }
 /* Framework Fan Control hat keine eigene Kachel-CSS und fällt bei Fehlern auf
    ein helles symbolisches Icon zurück. Theme-Foreground erzwingt Kontrast. */
