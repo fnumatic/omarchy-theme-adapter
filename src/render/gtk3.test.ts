@@ -24,6 +24,7 @@ selection = "#dfdad9"`,
 
 test("renderGtk3 enthält zentrale @define-color aus dem Mapping", () => {
   const css = renderGtk3(base);
+  expect(css).toContain("@import url(\"resource:///org/gtk/libgtk/theme/Adwaita/gtk-contained.css\")");
   expect(css).toContain("@define-color theme_bg_color #faf4ed");
   expect(css).toContain("@define-color theme_base_color #ede7e1");
   expect(css).toContain("@define-color theme_fg_color #575279");

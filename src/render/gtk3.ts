@@ -19,7 +19,9 @@ export function renderGtk3(c: Colors): string {
   const selection = v(c, "selection");
 
   return `/* Generiert aus Omarchy colors.toml (Option B) */
-/* Mapping: docs/architektur.md §3.2 */
+/* Basis: eingebautes GTK3-Adwaita (immer verfügbar) als volle Struktur;
+   darüber legt dieser Block den Rose-Pine-Recolor + Kompaktierung. */
+@import url("resource:///org/gtk/libgtk/theme/Adwaita/gtk-contained.css");
 @define-color theme_base_color ${base};
 @define-color theme_bg_color ${bg};
 @define-color theme_fg_color ${fg};

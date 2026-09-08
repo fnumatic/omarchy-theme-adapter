@@ -69,8 +69,14 @@ liefert Basistoken; vollständiger Shell-Recolor später.*
 | `@theme_text_color` | `foreground` |
 | `@theme_unfocused_*` | Ableitung aus `-foreground` |
 
-Umsetzung: `src/render/gtk3.ts` erzeugt das GTK3-Theme unter `~/.themes/RosePineDawn/gtk-3.0/gtk.css`
-(plus `index.theme`) und setzt `gsettings gtk-theme = RosePineDawn` (Dry-run unterstützt).
+Umsetzung: `src/render/gtk3.ts` erzeugt das GTK3-Theme unter `~/.themes/<Theme>/gtk-3.0/gtk.css`
+(plus `index.theme`) und setzt `gsettings gtk-theme = <Theme>` (Dry-run unterstützt).
+
+**Struktur:** GTK3 erwartet ein eigenständiges, vollständiges Theme. Ein dünnes Recolor-Overlay
+würde fenster/Strukturelemente durchscheinend und fehlend lassen. Deshalb importiert das Theme als
+Basis das in GTK3 immer eingebaute Adwaita
+(`@import url("resource:///org/gtk/libgtk/theme/Adwaita/gtk-contained.css")`) und legt darüber den
+Rose-Pine-Recolor + Kompaktierung — analog zum Shell-Theme (Yaru-Basis) und zum GTK4-Overlay.
 Deep-Override optional als `~/.config/gtk-3.0/gtk.css`.
 
 ### 3.3 GTK4 / libadwaita
