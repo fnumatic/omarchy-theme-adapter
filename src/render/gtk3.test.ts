@@ -28,6 +28,7 @@ test("renderGtk3 enthält zentrale @define-color aus dem Mapping", () => {
   expect(css).toContain("@define-color theme_base_color #ede7e1");
   expect(css).toContain("@define-color theme_fg_color #575279");
   expect(css).toContain("@define-color theme_selected_bg_color #dfdad9");
+  expect(css).toContain("background-color: #faf4ed"); // opaker Toplevel-Hintergrund
 });
 
 test("renderIndexTheme setzt Name und GtkTheme", () => {

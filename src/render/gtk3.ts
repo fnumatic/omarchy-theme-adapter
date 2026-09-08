@@ -37,6 +37,14 @@ export function renderGtk3(c: Colors): string {
 
 /* Konkrete Blöcke für gängigste Widgets (heller Dawn-Look) */
 .window-frame, .window-frame:backdrop { box-shadow: none; border-width: 0; }
+/* Opaker Toplevel-Hintergrund — ohne ihn zeichnen GTK3-Fenster (z. B. alacarte,
+   menulibre) transparent durchscheinend. */
+window, window.background,
+.background,
+dialog, dialog.background {
+  background-color: ${bg};
+  color: ${fg};
+}
 button { color: ${fg}; }
 entry { color: ${fg}; background-color: ${base}; }
 treeview, list, row { background-color: ${bg}; color: ${fg}; }
