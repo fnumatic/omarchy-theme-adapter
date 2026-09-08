@@ -156,6 +156,31 @@ export function renderShellOverride(c: Colors): string {
   color: ${fgMuted};
 }
 
+/* Quick Settings: Yaru verwendet hierfür den systemweiten -st-accent-color
+   (Ubuntu-Orange). Aktive Umschalter, ihr Split-Button und der Trenner werden
+   explizit auf den Omarchy-Akzent gesetzt. */
+.quick-toggle:checked,
+.quick-toggle:checked:hover,
+.quick-toggle:checked:focus,
+.quick-toggle:checked:active,
+.quick-toggle-has-menu .quick-toggle-menu-button:checked,
+.quick-toggle-has-menu .quick-toggle-menu-button:checked:hover,
+.quick-toggle-has-menu .quick-toggle-menu-button:checked:focus,
+.quick-toggle-has-menu .quick-toggle-menu-button:checked:active {
+  background-color: ${accent};
+  color: ${fg};
+  box-shadow: none;
+}
+.quick-toggle:checked StIcon,
+.quick-toggle:checked StLabel,
+.quick-toggle-has-menu .quick-toggle-menu-button:checked StIcon,
+.quick-toggle-has-menu .quick-toggle-menu-button:checked StLabel {
+  color: ${fg};
+}
+.quick-toggle-has-menu:checked .quick-toggle-separator {
+  background-color: ${fg};
+}
+
 /* Scharfe Ecken für aufgeklappte Panels (Popups, QuickSettings, OSD, …).
    Yaru rundet diese Container (20px/999px); konsistent zur scharfen Fenster-
    Gestaltung wird die Eckenrundung aufgehoben. */
