@@ -5,3 +5,4 @@ __pycache__/
 /tmp/
 /out/
 /node_modules/
+.opencode/
