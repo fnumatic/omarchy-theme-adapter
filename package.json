@@ -2,7 +2,34 @@
   "name": "themeswitch",
   "version": "0.1.0",
   "private": true,
+  "description": "Apply Omarchy themes to an Ubuntu GNOME system (Ghostty, GTK3, GTK4, PaperWM, LibreOffice, VS Code) from their colors.toml.",
   "type": "module",
+  "license": "MIT",
+  "author": "uninow <mail@fnumatic.de>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fnumatic/themeswitch.git"
+  },
+  "homepage": "https://github.com/fnumatic/themeswitch#readme",
+  "bugs": {
+    "url": "https://github.com/fnumatic/themeswitch/issues"
+  },
+  "keywords": [
+    "omarchy",
+    "gnome",
+    "theme",
+    "gtk3",
+    "gtk4",
+    "ghostty",
+    "paperwm",
+    "libreoffice",
+    "vscode",
+    "colors-toml",
+    "ubuntu"
+  ],
+  "engines": {
+    "bun": ">=1"
+  },
   "bin": {
     "themeswitch": "./src/cli.ts"
   },

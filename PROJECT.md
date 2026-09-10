@@ -3,7 +3,6 @@
 **Status:** implemented (v1, functional)
 **Date:** 2026-09-07
 **Target version:** Ubuntu 26.04.1 LTS ("Resolute Raccoon"), GNOME (ubuntu session)
-**Related note:** `~/dokumente/brain/.../Rose Pine Dawn auf Ubuntu GNOME.md`
 
 ---
 
@@ -256,5 +255,4 @@ rosepinetheme/
 ## 14. References
 
 - `omacom/omarchy` @ `quattro`: `themes/rose-pine/colors.toml`, `default/agents/skills/omarchy/theming.md`
-- Brain note: `~/dokumente/brain/brain/Atlas/Dots/Things/Rose Pine Dawn auf Ubuntu GNOME.md`
 - Blueprints: thpm (OldJobobo), themix/Oomox

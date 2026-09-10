@@ -26,7 +26,6 @@ bun install                        # Dev dependencies (@types/bun, css-tree)
 ## Sources & corrections
 - Omarchy: [`omacom/omarchy`](https://github.com/omacom/omarchy) @ `quattro` (not `basecamp/omarchy`).
 - Themes under [`themes/<id>/`](./themes): each with `colors.toml` (required) + optional `vscode.json`, `icons.theme`, `backgrounds/`.
-- Brain note: `~/dokumente/brain/brain/Atlas/Dots/Things/Rose Pine Dawn auf Ubuntu GNOME.md`
 
 ## License
 MIT (inspired by Omarchy).
