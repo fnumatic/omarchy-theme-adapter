@@ -3,11 +3,6 @@
 import type { Palette } from "../palette.ts";
 import { mkdir, writeFile, readFile } from "node:fs/promises";
 
-/** Dateiname des User-Themes (Ghostty listet User-Themes MIT Endung, z. B. `rose-pine-dawn.conf (user)`). */
-export const GHOSTTY_THEME_FILE = "rose-pine-dawn.conf";
-/** Theme-ID, die in `theme = …` stehen muss — identisch zum Dateinamen. */
-export const GHOSTTY_THEME_NAME = GHOSTTY_THEME_FILE;
-
 /**
  * Rendert ein gültiges Ghostty-Theme (.conf) aus der geparsten colors.toml.
  * Paletten-Index/-Reihenfolge exakt wie im Omarchy-Template.
@@ -31,8 +26,8 @@ export interface InstallOptions {
   dry: boolean;
   /** Ghostty-Config-Verzeichnis (Default: $XDG_CONFIG_HOME|~/.config + /ghostty) */
   configDir?: string;
-  /** Theme-Dateiname/-ID (Default: GHOSTTY_THEME_NAME) — für andere Omarchy-Themes */
-  themeName?: string;
+  /** Theme-Dateiname/-ID (z. B. "rose-pine.conf") — aus der Theme-ID abgeleitet. */
+  themeName: string;
 }
 
 export interface InstallResult {
@@ -56,12 +51,12 @@ async function exists(path: string): Promise<boolean> {
 
 export async function installGhostty(
   theme: string,
-  opts: InstallOptions = { dry: false },
+  opts: InstallOptions,
 ): Promise<InstallResult> {
   const xdg = process.env.XDG_CONFIG_HOME || `${process.env.HOME}/.config`;
   const configDir = opts.configDir ?? `${xdg}/ghostty`;
   const themesDir = `${configDir}/themes`;
-  const themeName = opts.themeName ?? GHOSTTY_THEME_NAME;
+  const themeName = opts.themeName;
   const themeFile = `${themesDir}/${themeName}`;
   const configFile = `${configDir}/config`;
 

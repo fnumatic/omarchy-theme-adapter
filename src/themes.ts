@@ -10,13 +10,14 @@
 // kein vorgerendertes Asset mitgeführt.
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { Colors } from "./colors.ts";
 import { mergeThemeColors, resolvePalette, type Palette } from "./palette.ts";
 import type { VscodeDescriptor } from "./render/vscode.ts";
 
 /** Root-Verzeichnis der Theme-Quellen (…/themes). */
 export function themesRoot(): string {
-  return join(new URL(".", import.meta.url).pathname, "..", "themes");
+  return join(fileURLToPath(new URL(".", import.meta.url)), "..", "themes");
 }
 
 export interface Theme {

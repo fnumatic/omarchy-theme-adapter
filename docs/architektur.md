@@ -71,11 +71,9 @@ ANSI_[0..15]         = red..magenta + bright_*
 | Akzent (Fokus/Hervorhebung) | `accent` |
 | Auszeichnung/Selection | `selection` |
 
-Umsetzung: eigenes **GNOME-Shell-Theme-CSS** (`gnome-shell-theme.css`) unter
-`~/.local/share/themes/<name>/gnome-shell/`. GNOME-Shell-Theme selbst liegt in
-`/usr/share/gnome-shell/theme/gnome-shell-theme.gresource`; der verlässliche Weg ist ein
-**User-Theme** (Shell-Extension „User Themes") oder das `GTK_THEME`-Feld. *Status: MVP
-liefert Basistoken; vollständiger Shell-Recolor später.*
+Umsetzung: eigenes **GNOME-Shell-Theme-CSS** unter `~/.themes/<name>Shell/gnome-shell/`
+(Basis Yaru + rekolorierter Override, aktiviert über die Extension „User Themes");
+siehe `src/render/shellTheme.ts` und die Findings in Abschnitt 3.8.
 
 ### 3.2 GTK3
 | GTK3-Token | Quelle |
@@ -138,8 +136,9 @@ Mapping exakt aus Omarchy `default/themed/ghostty.conf.tpl` (Option B):
 | `palette 0..15` | `background, red, green, yellow, blue, magenta, cyan, foreground, muted, bright_red, bright_green, bright_yellow, bright_blue, bright_magenta, bright_cyan, bright_foreground` |
 
 Umsetzung: `src/render/ghostty.ts` rendert das Theme; CLI `themeswitch install ghostty`
-schreibt `~/.config/ghostty/themes/rose-pine-dawn.conf` und setzt die `theme`-Zeile auf exakt
-`theme = rose-pine-dawn.conf` (Config-Backup automatisch). Vor dem ersten Eingriff sichert
+schreibt `~/.config/ghostty/themes/<theme>.conf` (Theme-ID = Verzeichnisname, z. B.
+`rose-pine.conf`) und setzt die `theme`-Zeile auf exakt `theme = rose-pine.conf`
+(Config-Backup automatisch). Vor dem ersten Eingriff sichert
 `src/state.ts` den Originalzustand nach `~/.local/state/themeswitch/state.json`;
 `themeswitch reset [--dry-run]` stellt ihn wieder her (keine geratenen Defaults).
 Render-Adresse/Indexreihenfolge folgt 1:1 dem Omarchy-Template, damit die Farben identisch zur
@@ -209,7 +208,7 @@ Theme-Override, aktiviert über User-Themes (`install shell-theme`).
   Regeln — nur GTK. Belastbare Shell-Vorlage ist WhiteSur (SCSS, siehe oben).
 - **Fan Control bewusst unangetastet** (Extension-Fehlerzustand, kein Theme-Problem).
 
-### 3.8 Icons
+### 3.9 Icons
 Passendes Dawn-kompatibles Icon-Theme (auszuwählen, offen). Omarchy-Referenz:
 `themes/rose-pine/icons.theme` = `Yaru-blue`.
 
@@ -219,12 +218,12 @@ Passendes Dawn-kompatibles Icon-Theme (auszuwählen, offen). Omarchy-Referenz:
 ## 4. Anwendungskette (Pipeline)
 
 ```
-colors.toml ─▶ Parser (src/lib-colors.sh) ─▶ normalisierte VAR_* Semantik
+colors.toml ─▶ Parser (src/colors.ts, Rollen via src/palette.ts) ─▶ normalisierte Semantik
                  │
                  ├─▶ Render GTK3     → ~/.themes/<name>/gtk-3.0/gtk.css
                  ├─▶ Render GTK4/lib → CSS-Fragment / GTK_THEME
                  ├─▶ Render Shell    → gnome-shell CSS-Fragment
-                 ├─▶ Terminal        → dconf-Profil (uuid)
+                 ├─▶ Terminal        → ~/.config/ghostty/themes/<theme>.conf
                  └─▶ System          → gsettings (color-scheme, icon-theme, wallpaper)
 APPLY via org.gnome (gsettings/dconf) + Dateikopie
 ```

@@ -1,6 +1,6 @@
 # Projekt: Rose Pine Dawn als GNOME-Theme auf Ubuntu 26.04
 
-**Status:** Plan (draft)
+**Status:** umgesetzt (v1, funktionsfähig)
 **Datum:** 2026-09-07
 **Zielversion:** Ubuntu 26.04.1 LTS („Resolute Raccoon"), GNOME (ubuntu-Session)
 **Verwandte Notiz:** `~/dokumente/brain/.../Rose Pine Dawn auf Ubuntu GNOME.md`
@@ -78,7 +78,7 @@ Omarchy-`colors.toml` und übersetzt es in die GNOME-eigenen Schichten:
 1. **GNOME Shell** → generiertes `gnome-shell-theme.css`
 2. **GTK3** → generiertes `gtk.css` (gtk-theme unter `~/.themes`)
 3. **GTK4 / libadwaita** → generiertes CSS bzw. via `libadwaita`-Recolor
-4. **Ghostty (Terminal)** → Theme-Datei `~/.config/ghostty/themes/rose-pine-dawn.conf` + `theme`-Key
+4. **Ghostty (Terminal)** → Theme-Datei `~/.config/ghostty/themes/rose-pine.conf` + `theme`-Key
    (Mapping nach Omarchy `ghostty.conf.tpl`) — **entschieden 2026-09-07**; Ptyxis verworfen
 5. **GNOME Icon-Theme** → ausgewähltes passendes Icon-Theme
 6. **Light Mode** → `gsettings color-scheme = prefer-light`
@@ -94,15 +94,15 @@ Render-Backends (Shell/GTK3/GTK4/Terminal) → Anwendung via `gsettings`/`dconf`
 
 Wenn das Projekt abgeschlossen ist:
 
-- [ ] `themeswitch set rose-pine` wendet Rose Pine Dawn konsistent auf das GNOME-System an.
-- [ ] GNOME Shell verwendet die Dawn-Palette.
-- [ ] GTK3- und GTK4/libadwaita-Apps verwenden die Dawn-Palette.
-- [ ] GNOME Terminal nutzt die Dawn-Farben (bzw. Profil).
-- [ ] Light-Dark-Präferenz steht auf Light.
-- [ ] Ein Rose-Pine-Dawn-Wallpaper ist als Standard gesetzt.
-- [ ] Es existiert ein Verzeichnis-Standard + installierbares Script (Doku + Setup).
-- [ ] Das Tool ist über ein einzelnes Kommando aufrufbar und idempotent.
-- [ ] README/PROJECT-Doku beschreibt Installation, Nutzung und Limits.
+- [x] `themeswitch set rose-pine` wendet Rose Pine Dawn konsistent auf das GNOME-System an.
+- [x] GNOME Shell verwendet die Dawn-Palette.
+- [x] GTK3- und GTK4/libadwaita-Apps verwenden die Dawn-Palette.
+- [x] Ghostty nutzt die Dawn-Farben (Theme-Datei `rose-pine.conf`).
+- [x] Light-Dark-Präferenz steht auf Light.
+- [x] Ein Rose-Pine-Dawn-Wallpaper ist als Standard gesetzt.
+- [x] Es existiert ein Verzeichnis-Standard + installierbares Script (Doku + Setup).
+- [x] Das Tool ist über ein einzelnes Kommando aufrufbar und idempotent.
+- [x] README/PROJECT-Doku beschreibt Installation, Nutzung und Limits.
 
 ---
 
@@ -126,23 +126,23 @@ Wenn das Projekt abgeschlossen ist:
 ## 7. Akzeptanzkriterien
 
 ### Feature: GNOME-Adapter `themeswitch`
-- [ ] Liesst ein Omarchy-`colors.toml` korrekt (inkl. `mode`, Fore-/Backgrounds, ANSI-Sets).
-- [ ] Generiert gültiges GNOME-Shell-CSS aus der Palette.
-- [ ] Generiert gültiges GTK3-CSS aus der Palette.
-- [ ] Wendet die Farbsemantik auf GTK4/libadwaita an.
-- [ ] Fehlende/strittige Keys werden defensiv behandelt (Default oder Warnung).
+- [x] Liesst ein Omarchy-`colors.toml` korrekt (inkl. `mode`, Fore-/Backgrounds, ANSI-Sets).
+- [x] Generiert gültiges GNOME-Shell-CSS aus der Palette.
+- [x] Generiert gültiges GTK3-CSS aus der Palette.
+- [x] Wendet die Farbsemantik auf GTK4/libadwaita an.
+- [x] Fehlende/strittige Keys werden defensiv behandelt (Default oder Warnung).
 
-### Feature: GNOME-Terminal & System
-- [ ] Setzt Terminal-Farben via dconf/GConf(Profil).
-- [ ] Setzt `color-scheme = prefer-light`.
-- [ ] Setzt/verlinkt ein Wallpaper.
-- [ ] Icon-Theme-Einstellung ist gesetzt.
+### Feature: Ghostty & System
+- [x] Setzt Terminal-Farben via Ghostty-Theme-Datei + `theme`-Key.
+- [x] Setzt `color-scheme = prefer-light`/`prefer-dark`.
+- [x] Setzt/verlinkt ein Wallpaper.
+- [x] Icon-Theme-Einstellung ist gesetzt.
 
 ### Feature: CLI/Robustheit
-- [ ] `themeswitch set rose-pine` idempotent (mehrfach laufen → gleiches Ergebnis).
-- [ ] `--dry-run` zeigt, was geändert würde, ohne zu ändern.
-- [ ] Fehler bei fehlenden Programmen (z. B. `gsettings`) werden klar gemeldet.
-- [ ] Doku (README) vollständig.
+- [x] `themeswitch set rose-pine` idempotent (mehrfach laufen → gleiches Ergebnis).
+- [x] `--dry-run` zeigt, was geändert würde, ohne zu ändern.
+- [x] Fehler bei fehlenden Programmen (z. B. `gsettings`) werden klar gemeldet.
+- [x] Doku (README) vollständig.
 
 ---
 
@@ -239,7 +239,7 @@ rosepinetheme/
 | Frage | Status |
 |---|---|
 | Farb-Mapping `colors.toml` → GNOME-Shell-Token | zu erarbeiten in `docs/architektur.md` |
-| Terminal-Hebel | **erledigt** — Ghostty-Theme installiert (`rose-pine-dawn`), Ptyxis verworfen (unproduktiv) |
+| Terminal-Hebel | **erledigt** — Ghostty-Theme installiert (`rose-pine.conf`), Ptyxis verworfen (unproduktiv) |
 | GTK4/libadwaita-Ansatz (generierte CSS vs. `GTK_THEME`-Fallback) | zu evaluieren in Umsetzung |
 | Icon-Theme-Variante (welches passende Dawn-Icon-Theme) | zu wählen |
 | Wallpaper-Quelle (Rose-Pine-Dawn-Assets) | zu beschaffen |

@@ -1,15 +1,13 @@
 import { test, expect, beforeEach } from "bun:test";
 import { parseColors, type Colors } from "../colors.ts";
 import { resolvePalette, type Palette } from "../palette.ts";
-import {
-  renderGhostty,
-  installGhostty,
-  GHOSTTY_THEME_NAME,
-  GHOSTTY_THEME_FILE,
-} from "./ghostty.ts";
+import { renderGhostty, installGhostty } from "./ghostty.ts";
 import { mkdtemp, readFile, mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
+/** Ghostty-Theme-Name wie vom Theme-Resolver erzeugt (`<id>.conf`). */
+const TEST_THEME = "test-theme.conf";
 
 let base: Colors;
 let pal: Palette;
@@ -64,8 +62,12 @@ test("renderGhostty endet mit newline", () => {
 
 test("installGhostty --dry-run ändert nichts auf der Platte", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg-dry-"));
-  const res = await installGhostty(renderGhostty(pal), { dry: true, configDir: dir });
-  expect(res.themeFile).toContain(GHOSTTY_THEME_NAME);
+  const res = await installGhostty(renderGhostty(pal), {
+    dry: true,
+    configDir: dir,
+    themeName: TEST_THEME,
+  });
+  expect(res.themeFile).toContain(TEST_THEME);
   const existing = await readFile(join(dir, "config")).catch(() => null);
   expect(existing).toBeNull();
 });
@@ -76,16 +78,20 @@ test("installGhostty schreibt Theme und setzt theme-Zeile (mit Backup)", async (
   const cfgPath = join(dir, "config");
   await writeFile(cfgPath, 'background = "#111"\ntheme = light:GitHub Light Default, dark: GitHub Dark\n');
 
-  const res = await installGhostty(renderGhostty(pal), { dry: false, configDir: dir });
+  const res = await installGhostty(renderGhostty(pal), {
+    dry: false,
+    configDir: dir,
+    themeName: TEST_THEME,
+  });
 
   // Theme-Datei und theme-Referenz sind identisch (Ghostty listet User-Themes MIT Endung)
-  expect(res.themeFile.endsWith(`/${GHOSTTY_THEME_FILE}`)).toBe(true);
-  const themeText = await readFile(join(dir, "themes", GHOSTTY_THEME_FILE), "utf8");
+  expect(res.themeFile.endsWith(`/${TEST_THEME}`)).toBe(true);
+  const themeText = await readFile(join(dir, "themes", TEST_THEME), "utf8");
   expect(themeText).toContain("palette = 13=#907aa9");
 
   // Config: theme ersetzt
   const newCfg = await readFile(cfgPath, "utf8");
-  expect(newCfg).toContain(`theme = ${GHOSTTY_THEME_NAME}`);
+  expect(newCfg).toContain(`theme = ${TEST_THEME}`);
   expect(newCfg).not.toContain("GitHub Light");
 
   // Backup vorhanden mit Original

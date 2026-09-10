@@ -14,7 +14,7 @@ import { installVscode, defaultCodeTarget } from "./render/vscode.ts";
 import { realGSettings } from "./gsettings.ts";
 import { ensureSnapshot, setAppliedTheme } from "./state.ts";
 import { resetAll, type ResetTarget } from "./reset.ts";
-import { loadTheme, listThemes, themesRoot, type Theme } from "./themes.ts";
+import { loadTheme, listThemes, type Theme } from "./themes.ts";
 import { join } from "node:path";
 
 const ROOT = import.meta.dir; // …/src
@@ -199,14 +199,14 @@ async function applyTheme(theme: Theme, dry: boolean): Promise<void> {
   }
 
   // GNOME-Shell-Theme (vollständig, Basis Yaru + rekolorierter Override)
+  const {
+    readSystemShellBase,
+    renderShellOverride,
+    renderShellTheme,
+    installShellTheme,
+    shellThemeName,
+  } = await import("./render/shellTheme.ts");
   try {
-    const {
-      readSystemShellBase,
-      renderShellOverride,
-      renderShellTheme,
-      installShellTheme,
-      shellThemeName,
-    } = await import("./render/shellTheme.ts");
     const base = await readSystemShellBase();
     const css = renderShellTheme(base, renderShellOverride(p));
     await installShellTheme(shellThemeName(theme.gtkThemeName), css, { dry });
@@ -232,7 +232,7 @@ async function applyTheme(theme: Theme, dry: boolean): Promise<void> {
         id: theme.id,
         ghosttyThemeFile: `${process.env.XDG_CONFIG_HOME || `${process.env.HOME}/.config`}/ghostty/themes/${theme.ghosttyThemeName}`,
         gtkThemeName: theme.gtkThemeName,
-        shellThemeName: `${theme.gtkThemeName}Shell`,
+        shellThemeName: shellThemeName(theme.gtkThemeName),
       },
       realGSettings,
     );
@@ -395,5 +395,3 @@ async function main(): Promise<void> {
 }
 
 await main();
-
-export { themesRoot };
