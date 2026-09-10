@@ -1,13 +1,13 @@
-// themes.ts — generischer Omarchy-Theme-Resolver (Option B).
+// themes.ts — generic Omarchy theme resolver (option B).
 //
-// Omarchy hält pro Theme ein Verzeichnis `themes/<id>/` mit:
-//   colors.toml      (Pflicht, Farbrollen + mode)
+// Omarchy keeps a directory `themes/<id>/` per theme with:
+//   colors.toml      (required, color roles + mode)
 //   vscode.json      (optional: { name, extension })
-//   icons.theme      (optional: Icon-Theme-Name, Default Yaru-blue)
-//   backgrounds/     (optional: Wallpapers)
-// Genau wie bei Omarchy werden daraus alle abgeleiteten Artefakte **on the fly**
-// gerendert (Ghostty .conf, GTK3 css, GTK4-Overlay, PaperWM-Block). Es wird
-// kein vorgerendertes Asset mitgeführt.
+//   icons.theme      (optional: icon theme name, default Yaru-blue)
+//   backgrounds/     (optional: wallpapers)
+// Just like Omarchy, all derived artifacts are rendered **on the fly** from
+// this (Ghostty .conf, GTK3 css, GTK4 overlay, PaperWM block). No
+// pre-rendered asset is kept.
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,31 +15,31 @@ import type { Colors } from "./colors.ts";
 import { mergeThemeColors, resolvePalette, missingCoreColors, type Palette } from "./palette.ts";
 import type { VscodeDescriptor } from "./render/vscode.ts";
 
-/** Root-Verzeichnis der Theme-Quellen (…/themes). */
+/** Root directory of the theme sources (…/themes). */
 export function themesRoot(): string {
   return join(fileURLToPath(new URL(".", import.meta.url)), "..", "themes");
 }
 
 export interface Theme {
-  /** Normalisierte ID = Verzeichnisname (z. B. "rose-pine"). */
+  /** Normalized ID = directory name (e.g. "rose-pine"). */
   id: string;
-  /** Absoluter Pfad zum Theme-Verzeichnis. */
+  /** Absolute path to the theme directory. */
   dir: string;
-  /** Anzeigename, Titel-cased (z. B. "Rose Pine"). */
+  /** Display name, title-cased (e.g. "Rose Pine"). */
   displayName: string;
-  /** "light" | "dark" laut colors.toml. */
+  /** "light" | "dark" per colors.toml. */
   mode: string;
-  /** Gemergte Roh-Farben (colors.toml gewinnt, extended.toml füllt Lücken). */
+  /** Merged raw colors (colors.toml wins, extended.toml fills gaps). */
   colors: Colors;
-  /** Deklarativ aufgelöste Rollen-Palette (Renderer arbeiten nur hiermit). */
+  /** Declaratively resolved role palette (renderers use only this). */
   palette: Palette;
-  /** GTK3-Theme-Name (keine Leerzeichen, z. B. "RosePine"). */
+  /** GTK3 theme name (no spaces, e.g. "RosePine"). */
   gtkThemeName: string;
-  /** Ghostty-Theme-Dateiname/-ID (z. B. "rose-pine.conf"). */
+  /** Ghostty theme file name/ID (e.g. "rose-pine.conf"). */
   ghosttyThemeName: string;
-  /** Optionales VS-Code-Metadatum. */
+  /** Optional VS Code metadata. */
   vscode: VscodeDescriptor | null;
-  /** Icon-Theme-Name aus icons.theme (Default "Yaru-blue"). */
+  /** Icon theme name from icons.theme (default "Yaru-blue"). */
   iconsTheme: string;
   hasBackgrounds: boolean;
 }
@@ -57,11 +57,11 @@ function pascal(s: string): string {
 }
 
 export function isValidThemeId(id: string): boolean {
-  // Wie Omarchy: nur harmlose Verzeichnisnamen.
+  // Like Omarchy: only harmless directory names.
   return /^[a-z0-9][a-z0-9._+-]*$/u.test(id) && !id.includes("..");
 }
 
-/** Listet verfügbare Themes (Verzeichnis mit colors.toml unter themesRoot). */
+/** Lists available themes (directory with colors.toml under themesRoot). */
 export async function listThemes(root?: string): Promise<string[]> {
   const dir = root ?? themesRoot();
   const entries = await readdir(dir, { withFileTypes: true }).catch(() => []);
@@ -88,26 +88,26 @@ export interface LoadThemeOptions {
   root?: string;
 }
 
-/** Lädt ein Theme vollständig aus `themes/<id>/`. Wirft bei fehlender Palette. */
+/** Loads a theme completely from `themes/<id>/`. Throws on missing palette. */
 export async function loadTheme(id: string, opts: LoadThemeOptions = {}): Promise<Theme> {
-  if (!isValidThemeId(id)) throw new Error(`Ungültiger Theme-Name: '${id}'`);
+  if (!isValidThemeId(id)) throw new Error(`Invalid theme name: '${id}'`);
   const dir = join(opts.root ?? themesRoot(), id);
 
   const colorsText = await readFile(join(dir, "colors.toml"), "utf8").catch(() => null);
   if (colorsText === null) {
     throw new Error(
-      `Theme '${id}' hat kein themes/${id}/colors.toml. Verfügbar: ${(await listThemes(opts.root)).join(", ")}`,
+      `Theme '${id}' has no themes/${id}/colors.toml. Available: ${(await listThemes(opts.root)).join(", ")}`,
     );
   }
-  // extended.toml ist optional und füllt nur Lücken (volle Rose-Pine-Rollen).
+  // extended.toml is optional and only fills gaps (full Rose-Pine roles).
   const extendedText = await readFile(join(dir, "extended.toml"), "utf8").catch(() => null);
   const colors = mergeThemeColors(colorsText, extendedText);
   if (Object.keys(colors).length === 0) {
-    throw new Error(`colors.toml von '${id}' konnte nicht geparst werden: ${join(dir, "colors.toml")}`);
+    throw new Error(`colors.toml of '${id}' could not be parsed: ${join(dir, "colors.toml")}`);
   }
   const missing = missingCoreColors(colors);
   if (missing.length > 0) {
-    console.warn(`   [!] Theme '${id}' ohne ${missing.join("/")} — Fallback #000000`);
+    console.warn(`   [!] Theme '${id}' without ${missing.join("/")} — Fallback #000000`);
   }
   const palette = resolvePalette(colors);
 

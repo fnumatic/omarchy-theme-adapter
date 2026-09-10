@@ -21,7 +21,7 @@ yellow = "#ea9d34"`,
 );
 const pal = resolvePalette(base);
 
-test("renderGtk4 enthält zentrale libadwaita-Farbnamen", () => {
+test("renderGtk4 contains central libadwaita color names", () => {
   const css = renderGtk4(pal);
   expect(css).toContain("@define-color window_bg_color #faf4ed");
   expect(css).toContain("@define-color window_fg_color #575279");
@@ -31,14 +31,14 @@ test("renderGtk4 enthält zentrale libadwaita-Farbnamen", () => {
   expect(css).toContain(MARKER);
 });
 
-test("renderGtk4 setzt Tooltip-Farben explizit", () => {
+test("renderGtk4 sets tooltip colors explicitly", () => {
   const css = renderGtk4(pal);
   expect(css).toContain("tooltip.background");
   expect(css).toContain("background-color: #ede7e1");
   expect(css).toContain("tooltip label");
 });
 
-test("renderGtk4 enthält kompakte Headerbar-Regeln (spezifisch)", () => {
+test("renderGtk4 contains compact headerbar rules (specific)", () => {
   const css = renderGtk4(pal);
   expect(css).toContain("window headerbar");
   expect(css).toContain("min-height: 24px");
@@ -47,7 +47,7 @@ test("renderGtk4 enthält kompakte Headerbar-Regeln (spezifisch)", () => {
   expect(css).toContain("border-radius: 0");
 });
 
-test("installGtk4 --dry-run schreibt nichts", async () => {
+test("installGtk4 --dry-run writes nothing", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg4-dry-"));
   const gtk4Dir = join(dir, "gtk-4.0");
   await installGtk4(renderGtk4(pal), { dry: true, gtk4Dir });
@@ -55,7 +55,7 @@ test("installGtk4 --dry-run schreibt nichts", async () => {
   expect(existing).toBeNull();
 });
 
-test("installGtk4 schreibt gtk.css neu", async () => {
+test("installGtk4 writes gtk.css anew", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg4-new-"));
   const gtk4Dir = join(dir, "gtk-4.0");
   await installGtk4(renderGtk4(pal), { dry: false, gtk4Dir });
@@ -63,23 +63,23 @@ test("installGtk4 schreibt gtk.css neu", async () => {
   expect(text).toContain("@define-color headerbar_bg_color #ede7e1");
 });
 
-test("installGtk4 verweigert fremde gtk.css statt zu überschreiben", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "rpg4-fremd-"));
+test("installGtk4 rejects foreign gtk.css instead of overwriting", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "rpg4-foreign-"));
   const gtk4Dir = join(dir, "gtk-4.0");
   const { mkdir } = await import("node:fs/promises");
   await mkdir(gtk4Dir, { recursive: true });
-  await writeFile(join(gtk4Dir, "gtk.css"), "/* fremder Inhalt */\n");
+  await writeFile(join(gtk4Dir, "gtk.css"), "/* foreign content */\n");
   let msg = "";
   try {
     await installGtk4(renderGtk4(pal), { dry: false, gtk4Dir });
   } catch (e) {
     msg = String(e instanceof Error ? e.message : e);
   }
-  expect(msg).toContain("nicht von themeswitch");
-  expect(await readFile(join(gtk4Dir, "gtk.css"), "utf8")).toBe("/* fremder Inhalt */\n");
+  expect(msg).toContain("does not originate from themeswitch");
+  expect(await readFile(join(gtk4Dir, "gtk.css"), "utf8")).toBe("/* foreign content */\n");
 });
 
-test("installGtk4 verweigert ungültiges CSS", async () => {
+test("installGtk4 rejects invalid CSS", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg4-bad-"));
   const gtk4Dir = join(dir, "gtk-4.0");
   let msg = "";
@@ -88,10 +88,10 @@ test("installGtk4 verweigert ungültiges CSS", async () => {
   } catch (e) {
     msg = String(e instanceof Error ? e.message : e);
   }
-  expect(msg).toContain("CSS ungültig");
+  expect(msg).toContain("Invalid CSS");
 });
 
-test("installGtk4 verweigert Marker ohne Kommentar-Opener", async () => {
+test("installGtk4 rejects marker without comment opener", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg4-badmark-"));
   const gtk4Dir = join(dir, "gtk-4.0");
   const { mkdir } = await import("node:fs/promises");
@@ -103,10 +103,10 @@ test("installGtk4 verweigert Marker ohne Kommentar-Opener", async () => {
   } catch (e) {
     msg = String(e instanceof Error ? e.message : e);
   }
-  expect(msg).toContain("Kommentar-Opener");
+  expect(msg).toContain("comment opener");
 });
 
-test("installGtk4 aktualisiert eigenen Block idempotent", async () => {
+test("installGtk4 updates its own block idempotently", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg4-idem-"));
   const gtk4Dir = join(dir, "gtk-4.0");
   await installGtk4(renderGtk4(pal), { dry: false, gtk4Dir });

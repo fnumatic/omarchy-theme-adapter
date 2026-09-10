@@ -19,20 +19,20 @@ overlay = "#f2e9e1"
 subtle = "#797593"
 highlight_low = "#f4ede8"`;
 
-test("mergeThemeColors: colors.toml gewinnt, extended.toml füllt Lücken", () => {
+test("mergeThemeColors: colors.toml wins, extended.toml fills gaps", () => {
   const merged = mergeThemeColors(COLORS, EXTENDED);
   expect(merged.background).toBe("#faf4ed");
   expect(merged.surface).toBe("#fffaf3");
   expect(merged.overlay).toBe("#f2e9e1");
 });
 
-test("mergeThemeColors: ohne extended.toml nur colors.toml", () => {
+test("mergeThemeColors: without extended.toml only colors.toml", () => {
   const merged = mergeThemeColors(COLORS, null);
   expect(merged.background).toBe("#faf4ed");
   expect(merged.surface).toBeUndefined();
 });
 
-test("resolvePalette: alle 15 Rollen sind belegt", () => {
+test("resolvePalette: all 15 roles are populated", () => {
   const p = resolvePalette(mergeThemeColors(COLORS, EXTENDED));
   for (const role of ROSE_PINE_ROLES) {
     expect(p[role]).toMatch(/^#[0-9a-f]{6}$/iu);
@@ -41,7 +41,7 @@ test("resolvePalette: alle 15 Rollen sind belegt", () => {
   expect(p.accent).toBe("#56949f");
 });
 
-test("resolvePalette: bestehende Theme-Werte bleiben stabil", () => {
+test("resolvePalette: existing theme values remain stable", () => {
   const p = resolvePalette(mergeThemeColors(COLORS, EXTENDED));
   expect(p.base).toBe("#faf4ed");
   expect(p.surface).toBe("#ede7e1");
@@ -53,7 +53,7 @@ test("resolvePalette: bestehende Theme-Werte bleiben stabil", () => {
   expect(p.love).toBe("#b4637a");
 });
 
-test("resolvePalette: ansi16 in Ghostty-Reihenfolge", () => {
+test("resolvePalette: ansi16 in Ghostty order", () => {
   const p = resolvePalette(parseColors(COLORS));
   expect(p.ansi16).toHaveLength(16);
   expect(p.ansi16[0]).toBe("#faf4ed");
@@ -61,13 +61,13 @@ test("resolvePalette: ansi16 in Ghostty-Reihenfolge", () => {
   expect(p.ansi16[7]).toBe("#575279");
 });
 
-test("missingCoreColors meldet fehlende Kern-Keys", () => {
+test("missingCoreColors reports missing core keys", () => {
   expect(missingCoreColors(parseColors('background = "#fff"\nforeground = "#000"\n'))).toEqual([]);
   expect(missingCoreColors(parseColors('mode = "light"\n'))).toEqual(["background", "foreground"]);
   expect(missingCoreColors(parseColors('background = "#fff"\n'))).toEqual(["foreground"]);
 });
 
-test("ROLE_SOURCES deckt alle Rollen ab", () => {
+test("ROLE_SOURCES covers all roles", () => {
   for (const role of ROSE_PINE_ROLES) {
     expect(ROLE_SOURCES[role]!.length).toBeGreaterThan(0);
   }

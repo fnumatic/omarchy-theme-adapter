@@ -10,11 +10,11 @@ async function twoImages(): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), "rpg-wp-"));
   await writeFile(join(dir, "1-a.webp"), "x");
   await writeFile(join(dir, "2-b.png"), "x");
-  await writeFile(join(dir, "notiz.txt"), "x");
+  await writeFile(join(dir, "notes.txt"), "x");
   return dir;
 }
 
-test("DEFAULT_WALLPAPER leer → Default wird aus sortierter Liste gewählt", async () => {
+test("DEFAULT_WALLPAPER empty → default is chosen from the sorted list", async () => {
   expect(DEFAULT_WALLPAPER).toBe("");
   const dir = await twoImages();
   const gs = fakeGSettings();
@@ -22,12 +22,12 @@ test("DEFAULT_WALLPAPER leer → Default wird aus sortierter Liste gewählt", as
   expect(res.file.endsWith("1-a.webp")).toBe(true);
 });
 
-test("listWallpapers listet nur Bilder, sortiert", async () => {
+test("listWallpapers lists only images, sorted", async () => {
   const dir = await twoImages();
   expect(await listWallpapers(dir)).toEqual(["1-a.webp", "2-b.png"]);
 });
 
-test("installWallpaper --dry-run setzt nichts", async () => {
+test("installWallpaper --dry-run sets nothing", async () => {
   const dir = await twoImages();
   const gs = fakeGSettings();
   const res = await installWallpaper({ dry: true, name: "2-b.png", backgrounds: dir, gs });
@@ -35,7 +35,7 @@ test("installWallpaper --dry-run setzt nichts", async () => {
   expect(gs.sets).toHaveLength(0);
 });
 
-test("Default bevorzugt 2-dot-map.webp, sonst erste sortierte", async () => {
+test("Default prefers 2-dot-map.webp, otherwise the first sorted", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg-wp-pref-"));
   await writeFile(join(dir, "1-a.webp"), "x");
   await writeFile(join(dir, "2-dot-map.webp"), "x");
@@ -44,7 +44,7 @@ test("Default bevorzugt 2-dot-map.webp, sonst erste sortierte", async () => {
   expect(res.file.endsWith("2-dot-map.webp")).toBe(true);
 });
 
-test("installWallpaper setzt picture-uri + picture-uri-dark", async () => {
+test("installWallpaper sets picture-uri + picture-uri-dark", async () => {
   const dir = await twoImages();
   const gs = fakeGSettings();
   const res = await installWallpaper({ dry: false, name: "1-a.webp", backgrounds: dir, gs });
@@ -61,7 +61,7 @@ test("installWallpaper setzt picture-uri + picture-uri-dark", async () => {
   ]);
 });
 
-test("installWallpaper kodiert Pfade mit Leerzeichen als gültige file-URI", async () => {
+test("installWallpaper encodes paths with spaces as a valid file URI", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg wp-"));
   await writeFile(join(dir, "1 a.webp"), "x");
   const gs = fakeGSettings();
@@ -71,14 +71,14 @@ test("installWallpaper kodiert Pfade mit Leerzeichen als gültige file-URI", asy
   expect(gs.sets[0]?.[2]).toBe(`'${res.uri}'`);
 });
 
-test("installWallpaper verweigert unbekannten Namen", async () => {
+test("installWallpaper rejects an unknown name", async () => {
   const dir = await twoImages();
   let msg = "";
   try {
-    await installWallpaper({ dry: false, name: "gibtsnicht.webp", backgrounds: dir, gs: fakeGSettings() });
+    await installWallpaper({ dry: false, name: "doesnotexist.webp", backgrounds: dir, gs: fakeGSettings() });
   } catch (e) {
     msg = String(e instanceof Error ? e.message : e);
   }
-  expect(msg).toContain("nicht in");
+  expect(msg).toContain("not found in");
   expect(msg).toContain("1-a.webp");
 });

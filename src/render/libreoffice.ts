@@ -1,17 +1,17 @@
-// render/libreoffice.ts — LibreOffice dem System-Theme folgen lassen (Option B).
+// render/libreoffice.ts — make LibreOffice follow the system theme (Option B).
 //
-// Befund: LibreOffice zeichnet Symbolleisten/Randleisten über eigene
-// „Anwendungsfarben" (Extras → Optionen → Anwendungsfarben). Das Profil hatte
-// ein festes Schema (CurrentColorScheme=LibreOffice) → System-Theme (unser
-// Rose-Pine-Dawn-GTK) wurde für die UI-Flächen ignoriert.
-// Fix: CurrentColorScheme=Automatic → LO folgt dem System-Theme.
-// Wichtig: registrymodifications.xcu nur bei BEENDETEM LibreOffice anfassen
-// (LO hält die Config im Speicher und schreibt sie beim Beenden zurück).
+// Finding: LibreOffice draws toolbars/sidebars using its own
+// "application colors" (Tools → Options → Application Colors). The profile had
+// a fixed scheme (CurrentColorScheme=LibreOffice) → the system theme (our
+// Rose-Pine-Dawn GTK) was ignored for the UI surfaces.
+// Fix: CurrentColorScheme=Automatic → LO follows the system theme.
+// Important: only touch registrymodifications.xcu while LibreOffice is CLOSED
+// (LO keeps the config in memory and writes it back on exit).
 import { readFile, writeFile } from "node:fs/promises";
 import { ensureParent, timestamp } from "../fsutil.ts";
 import { libreofficeConfigPath } from "../paths.ts";
 
-/** true, wenn ein LibreOffice-Prozess läuft (dann nicht anfassen). */
+/** true if a LibreOffice process is running (then leave it alone). */
 export async function libreofficeRunning(): Promise<boolean> {
   try {
     const out = Bun.spawnSync(["pgrep", "-x", "soffice.bin"]);
@@ -24,13 +24,13 @@ export async function libreofficeRunning(): Promise<boolean> {
 export interface InstallLibreOfficeOptions {
   dry: boolean;
   configFile?: string;
-  /** Prozess-Check (Default: pgrep soffice.bin) — für Tests überschreibbar */
+  /** Process check (default: pgrep soffice.bin) — overridable for tests */
   isRunning?: () => Promise<boolean>;
 }
 
 /**
- * Setzt CurrentColorScheme=Automatic (mit Backup). Wirft, wenn LO läuft
- * oder die Config unerwartet aussieht.
+ * Sets CurrentColorScheme=Automatic (with backup). Throws if LO is running
+ * or the config looks unexpected.
  */
 export async function installLibreOffice(
   opts: InstallLibreOfficeOptions = { dry: false },
@@ -40,7 +40,7 @@ export async function installLibreOffice(
 
   if (running) {
     throw new Error(
-      "LibreOffice läuft noch — bitte zuerst beenden (die Config wird sonst beim Beenden überschrieben).",
+      "LibreOffice is still running — please quit it first (otherwise the config is overwritten on exit).",
     );
   }
 
@@ -48,7 +48,7 @@ export async function installLibreOffice(
   try {
     text = await readFile(configFile, "utf8");
   } catch {
-    throw new Error(`LibreOffice-Config nicht gefunden: ${configFile}`);
+    throw new Error(`LibreOffice config not found: ${configFile}`);
   }
 
   const re =
@@ -56,8 +56,8 @@ export async function installLibreOffice(
 
   if (opts.dry) {
     const m = text.match(re);
-    console.log(`  dry-run: CurrentColorScheme ist '${m ? m[0].match(/<value>(.*?)<\/value>/u)?.[1] : "? (Eintrag fehlt)"}' → würde 'Automatic'`);
-    console.log(`  dry-run: Backup von ${configFile}`);
+    console.log(`  dry-run: CurrentColorScheme is '${m ? m[0].match(/<value>(.*?)<\/value>/u)?.[1] : "? (entry missing)"}' → would become 'Automatic'`);
+    console.log(`  dry-run: backup of ${configFile}`);
     return { configFile, changed: true };
   }
 
@@ -72,9 +72,9 @@ export async function installLibreOffice(
       '<item oor:path="/org.openoffice.Office.UI/ColorScheme"><prop oor:name="CurrentColorScheme" oor:op="fuse"><value>Automatic</value></prop></item>',
     );
   } else {
-    // Eintrag fehlt: vor schließendem Tag einfügen.
+    // Entry missing: insert before the closing tag.
     const close = "</oor:component-data>";
-    if (!text.includes(close)) throw new Error("Unerwartetes Config-Format (kein oor:component-data). Abbruch.");
+    if (!text.includes(close)) throw new Error("Unexpected config format (no oor:component-data). Aborting.");
     next = text.replace(
       close,
       ' <item oor:path="/org.openoffice.Office.UI/ColorScheme"><prop oor:name="CurrentColorScheme" oor:op="fuse"><value>Automatic</value></prop></item>\n' +
@@ -84,7 +84,7 @@ export async function installLibreOffice(
 
   const changed = next !== text;
   await writeFile(configFile, next);
-  console.log(`   ✓ LibreOffice folgt dem System-Theme (CurrentColorScheme=Automatic): ${configFile}`);
+  console.log(`   ✓ LibreOffice follows the system theme (CurrentColorScheme=Automatic): ${configFile}`);
   console.log(`   ✓ Backup: ${backupFile}`);
   return { configFile, backupFile, changed };
 }

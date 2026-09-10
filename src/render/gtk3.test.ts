@@ -24,17 +24,17 @@ selection = "#dfdad9"`,
 );
 const pal = resolvePalette(base);
 
-test("renderGtk3 enthält zentrale @define-color aus dem Mapping", () => {
+test("renderGtk3 contains central @define-color entries from the mapping", () => {
   const css = renderGtk3(pal);
   expect(css).toContain("@import url(\"resource:///org/gtk/libgtk/theme/Adwaita/gtk-contained.css\")");
   expect(css).toContain("@define-color theme_bg_color #faf4ed");
   expect(css).toContain("@define-color theme_base_color #ede7e1");
   expect(css).toContain("@define-color theme_fg_color #575279");
   expect(css).toContain("@define-color theme_selected_bg_color #dfdad9");
-  expect(css).toContain("background-color: #faf4ed"); // opaker Toplevel-Hintergrund
+  expect(css).toContain("background-color: #faf4ed"); // opaque toplevel background
 });
 
-test("renderGtk3 setzt Tooltip-Farben explizit (Lesbarkeit)", () => {
+test("renderGtk3 sets tooltip colors explicitly (readability)", () => {
   const css = renderGtk3(pal);
   expect(css).toContain("@define-color theme_tooltip_bg_color #ede7e1");
   expect(css).toContain("@define-color theme_tooltip_fg_color #575279");
@@ -42,25 +42,25 @@ test("renderGtk3 setzt Tooltip-Farben explizit (Lesbarkeit)", () => {
   expect(css).toContain("text-shadow: none");
 });
 
-test("renderIndexTheme setzt Name und GtkTheme", () => {
+test("renderIndexTheme sets Name and GtkTheme", () => {
   const t = renderIndexTheme();
   expect(t).toContain("Name=RosePine");
   expect(t).toContain("GtkTheme=RosePine");
   expect(t).toContain("Type=X-GNOME-Metatheme");
 });
 
-test("GTK3_THEME_NAME entspricht dem generierten Rose-Pine-Namen", async () => {
+test("GTK3_THEME_NAME matches the generated Rose Pine name", async () => {
   const { loadTheme } = await import("../themes.ts");
   const t = await loadTheme("rose-pine");
   expect(GTK3_THEME_NAME).toBe(t.gtkThemeName);
 });
 
-test("renderGtk3 enthält kompakte Headerbar-Regeln", () => {
+test("renderGtk3 contains compact headerbar rules", () => {
   const css = renderGtk3(pal);
   expect(css).toContain("min-height: 24px");
 });
 
-test("installGtk3 --dry-run schreibt nichts und setzt kein gsettings", async () => {
+test("installGtk3 --dry-run writes nothing and sets no gsettings", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg3-dry-"));
   const gs = fakeGSettings();
   await installGtk3(renderGtk3(pal), { dry: true, themesDir: dir, gs });
@@ -69,7 +69,7 @@ test("installGtk3 --dry-run schreibt nichts und setzt kein gsettings", async () 
   expect(gs.sets).toHaveLength(0);
 });
 
-test("installGtk3 verweigert ungültiges CSS", async () => {
+test("installGtk3 rejects invalid CSS", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg3-bad-"));
   let msg = "";
   try {
@@ -77,10 +77,10 @@ test("installGtk3 verweigert ungültiges CSS", async () => {
   } catch (e) {
     msg = String(e instanceof Error ? e.message : e);
   }
-  expect(msg).toContain("CSS ungültig");
+  expect(msg).toContain("Invalid CSS");
 });
 
-test("installGtk3 schreibt gtk.css und index.theme", async () => {
+test("installGtk3 writes gtk.css and index.theme", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg3-inst-"));
   const gs = fakeGSettings();
   const res = await installGtk3(renderGtk3(pal), { dry: false, themesDir: dir, gs });

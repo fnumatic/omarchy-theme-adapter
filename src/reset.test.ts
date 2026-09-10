@@ -17,7 +17,7 @@ afterEach(() => {
   else process.env.HOME = ORIG_HOME;
 });
 
-test("ensureSnapshot erfasst Werte und wird nur einmal geschrieben", async () => {
+test("ensureSnapshot captures values and is written only once", async () => {
   const stateDir = await mkdtemp(join(tmpdir(), "rpg-state-"));
   const gs = fakeGSettings({
     "org.gnome.desktop.interface gtk-theme": "'Yaru'",
@@ -28,14 +28,14 @@ test("ensureSnapshot erfasst Werte und wird nur einmal geschrieben", async () =>
   expect(first.created).toBe(true);
   expect(first.snapshot.gtkTheme).toBe("'Yaru'");
 
-  // Zweiter Aufruf: kein Überschreiben, auch wenn sich gsettings ändert
+  // Second call: no overwrite, even if gsettings changes
   await gs.set("org.gnome.desktop.interface", "gtk-theme", "RosePineDawn");
   const second = await ensureSnapshot(gs, stateDir);
   expect(second.created).toBe(false);
   expect((await loadSnapshot(stateDir))?.gtkTheme).toBe("'Yaru'");
 });
 
-test("ensureSnapshot migriert alten Snapshot um fehlende Felder", async () => {
+test("ensureSnapshot migrates an old snapshot for missing fields", async () => {
   const home = await mkdtemp(join(tmpdir(), "rpg-state-mig-"));
   const stateDir = join(home, "state");
   process.env.HOME = home;
@@ -55,7 +55,7 @@ test("ensureSnapshot migriert alten Snapshot um fehlende Felder", async () => {
 
   const { created, snapshot } = await ensureSnapshot(fakeGSettings(), stateDir);
   expect(created).toBe(false);
-  expect(snapshot.gtkTheme).toBe("'Adwaita'"); // bestehender Originalwert bleibt
+  expect(snapshot.gtkTheme).toBe("'Adwaita'"); // existing original value is kept
   for (const key of [
     "gtk4CssText",
     "libreofficeConfigText",
@@ -69,7 +69,7 @@ test("ensureSnapshot migriert alten Snapshot um fehlende Felder", async () => {
   await rm(home, { recursive: true, force: true });
 });
 
-test("reset ohne Snapshot wirft kontrollierten Fehler", async () => {
+test("reset without snapshot throws a controlled error", async () => {
   const stateDir = await mkdtemp(join(tmpdir(), "rpg-state-empty-"));
   const gs = fakeGSettings();
   let msg = "";
@@ -78,10 +78,10 @@ test("reset ohne Snapshot wirft kontrollierten Fehler", async () => {
   } catch (e) {
     msg = String(e instanceof Error ? e.message : e);
   }
-  expect(msg).toContain("Kein Snapshot");
+  expect(msg).toContain("No snapshot");
 });
 
-test("reset migriert vergifteten GTK-Theme-Snapshot (aktuell + legacy) auf Yaru", () => {
+test("reset migrates a poisoned GTK theme snapshot (current + legacy) to Yaru", () => {
   expect(restoreGtkTheme("'RosePine'")).toEqual({
     theme: UBUNTU_DEFAULT_GTK_THEME,
     migrated: true,
@@ -94,14 +94,14 @@ test("reset migriert vergifteten GTK-Theme-Snapshot (aktuell + legacy) auf Yaru"
   expect(restoreGtkTheme(null)).toEqual({ theme: null, migrated: false });
 });
 
-test("reset migriert vergifteten Ghostty-Rose-Pine-Snapshot auf hellen Standard", () => {
+test("reset migrates a poisoned Ghostty Rose Pine snapshot to the light default", () => {
   expect(restoreGhosttyConfig("theme = rose-pine-dawn\n")).toEqual({
     text: `theme = ${GHOSTTY_DEFAULT_THEME}\n`, migrated: true,
   });
   expect(restoreGhosttyConfig("theme = rose-pine-dawn.conf\n")).toEqual({
     text: `theme = ${GHOSTTY_DEFAULT_THEME}\n`, migrated: true,
   });
-  // aktuelle, generische Namensgebung ebenfalls migrieren
+  // also migrate the current, generic naming
   expect(restoreGhosttyConfig("theme = rose-pine.conf\n")).toEqual({
     text: `theme = ${GHOSTTY_DEFAULT_THEME}\n`, migrated: true,
   });
@@ -114,7 +114,7 @@ test("reset migriert vergifteten Ghostty-Rose-Pine-Snapshot auf hellen Standard"
   expect(restoreGhosttyConfig("font-size = 14\n")).toEqual({ text: "font-size = 14\n", migrated: false });
 });
 
-test("reset setzt bei ursprünglich leerer Ghostty-Config einen hellen Ghostty-Standard", async () => {
+test("reset sets a light Ghostty default for an originally empty Ghostty config", async () => {
   const home = await mkdtemp(join(tmpdir(), "rpg-ghostty-default-"));
   const stateDir = join(home, "state");
   const cfgDir = join(home, "cfg");
@@ -134,32 +134,32 @@ test("reset setzt bei ursprünglich leerer Ghostty-Config einen hellen Ghostty-S
     .toBe(`theme = ${GHOSTTY_DEFAULT_THEME}\n`);
 });
 
-test("reset entfernt nur den rosepine-Block aus gtk.css und erhält Fremdinhalt", async () => {
+test("reset removes only the rosepine block from gtk.css and preserves foreign content", async () => {
   const home = await mkdtemp(join(tmpdir(), "rpg-home3-"));
   const stateDir = join(home, "state");
   const cfgDir = join(home, "cfg");
   process.env.XDG_CONFIG_HOME = cfgDir;
 
   const snapGs = fakeGSettings({});
-  await ensureSnapshot(snapGs, stateDir); // sichert: keine gtk.css (existed=false)
+  await ensureSnapshot(snapGs, stateDir); // captures: no gtk.css (existed=false)
 
-  // Fremdinhalt + unser Block (wie nach installGtk4 mit append)
+  // foreign content + our block (as after installGtk4 with append)
   const cssPath = join(cfgDir, "gtk-4.0", "gtk.css");
   await mkdir(join(cfgDir, "gtk-4.0"), { recursive: true });
   const { renderGtk4 } = await import("./render/gtk4.ts");
   const { parseColors } = await import("./colors.ts");
   const { resolvePalette } = await import("./palette.ts");
   const css = renderGtk4(resolvePalette(parseColors('background = "#faf4ed"\nforeground = "#575279"\n')));
-  await writeFile(cssPath, "/* fremd */\n\n" + css);
+  await writeFile(cssPath, "/* foreign */\n\n" + css);
 
   const gs = fakeGSettings();
   await resetAll({ dry: false, gs, stateDir, configHome: cfgDir, themesDir: join(home, "themes") });
 
-  expect(await readFile(cssPath, "utf8")).toBe("/* fremd */\n");
+  expect(await readFile(cssPath, "utf8")).toBe("/* foreign */\n");
   await rm(home, { recursive: true, force: true });
 });
 
-test("reset --dry-run verändert nichts", async () => {
+test("reset --dry-run changes nothing", async () => {
   const home = await mkdtemp(join(tmpdir(), "rpg-home-"));
   const stateDir = join(home, "state");
   const cfgDir = join(home, "cfg");
@@ -172,7 +172,7 @@ test("reset --dry-run verändert nichts", async () => {
     "org.gnome.desktop.interface gtk-theme": "'Yaru'",
     "org.gnome.desktop.interface color-scheme": "'default'",
   });
-  // Snapshot mit anderen (Original-)Werten anlegen
+  // create snapshot with different (original) values
   const snapGs = fakeGSettings({
     "org.gnome.desktop.interface gtk-theme": "'Adwaita'",
     "org.gnome.desktop.interface color-scheme": "'prefer-dark'",
@@ -185,19 +185,19 @@ test("reset --dry-run verändert nichts", async () => {
 
   await resetAll({ dry: true, gs, stateDir, themesDir });
 
-  // nichts geändert
+  // nothing changed
   expect(await readFile(join(cfgDir, "ghostty", "config"), "utf8")).toContain("rose-pine-dawn");
   expect(gs.sets).toHaveLength(0);
   expect(await readFile(join(themesDir, "RosePineDawn", "gtk-3.0", "gtk.css"), "utf8")).toBe("x");
 });
 
-test("reset stellt Snapshot-Werte wieder her", async () => {
+test("reset restores snapshot values", async () => {
   const home = await mkdtemp(join(tmpdir(), "rpg-home2-"));
   const stateDir = join(home, "state");
   const cfgDir = join(home, "cfg");
   process.env.XDG_CONFIG_HOME = cfgDir;
   await mkdir(join(cfgDir, "ghostty", "themes"), { recursive: true });
-  // Original-Config, die der Snapshot sichert:
+  // original config that the snapshot captures:
   await writeFile(
     join(cfgDir, "ghostty", "config"),
     "theme = light:GitHub Light Default, dark: GitHub Dark\n",
@@ -209,7 +209,7 @@ test("reset stellt Snapshot-Werte wieder her", async () => {
   });
   await ensureSnapshot(snapGs, stateDir);
 
-  // … dann wird "installiert" (Zustand danach):
+  // … then it is "installed" (state afterwards):
   await writeFile(join(cfgDir, "ghostty", "config"), "theme = rose-pine-dawn.conf\n");
   await writeFile(join(cfgDir, "ghostty", "themes", "rose-pine-dawn.conf"), "theme\n");
   const themesDir = join(home, "themes");
@@ -222,7 +222,7 @@ test("reset stellt Snapshot-Werte wieder her", async () => {
   expect(await readFile(join(cfgDir, "ghostty", "config"), "utf8")).toContain("GitHub Light");
   expect(gs.sets).toContainEqual(["org.gnome.desktop.interface", "gtk-theme", "Yaru"]);
   expect(gs.sets).toContainEqual(["org.gnome.desktop.interface", "color-scheme", "prefer-dark"]);
-  // generierte Dateien weg
+  // generated files gone
   let themeGone = false;
   try {
     await readFile(join(cfgDir, "ghostty", "themes", "rose-pine-dawn.conf"), "utf8");
@@ -240,14 +240,14 @@ test("reset stellt Snapshot-Werte wieder her", async () => {
   await rm(home, { recursive: true, force: true });
 });
 
-test("reset stellt LibreOffice-Config aus Snapshot wieder her", async () => {
+test("reset restores LibreOffice config from snapshot", async () => {
   const home = await mkdtemp(join(tmpdir(), "rpg-home-lo-"));
   const stateDir = join(home, "state");
   const loFile = join(home, "registrymodifications.xcu");
   const ORIGINAL = '<item oor:path="/org.openoffice.Office.UI/ColorScheme"><prop oor:name="CurrentColorScheme" oor:op="fuse"><value>LibreOffice</value></prop></item>';
   await writeFile(loFile, ORIGINAL);
 
-  // Snapshot von Hand anlegen (LO-Pfad ist HOME-fixiert → state.json direkt schreiben)
+  // create snapshot manually (LO path is HOME-fixed → write state.json directly)
   await mkdir(join(stateDir, "themeswitch"), { recursive: true });
   await writeFile(
     join(stateDir, "themeswitch", "state.json"),
@@ -274,7 +274,7 @@ test("reset stellt LibreOffice-Config aus Snapshot wieder her", async () => {
   await rm(home, { recursive: true, force: true });
 });
 
-test("reset bricht bei gtk.css-Marker ohne Kommentar-Opener ab, ohne zu ändern", async () => {
+test("reset aborts on gtk.css marker without comment opener, without changing anything", async () => {
   const home = await mkdtemp(join(tmpdir(), "rpg-home-corrupt-g4-"));
   const stateDir = join(home, "state");
   const cfgDir = join(home, "cfg");
@@ -282,7 +282,7 @@ test("reset bricht bei gtk.css-Marker ohne Kommentar-Opener ab, ohne zu ändern"
   await ensureSnapshot(fakeGSettings(), stateDir); // gtk4CssExisted=false
   const cssPath = join(cfgDir, "gtk-4.0", "gtk.css");
   await mkdir(join(cfgDir, "gtk-4.0"), { recursive: true });
-  const content = GTK4_MARKER + " ohne opener\n";
+  const content = GTK4_MARKER + " without opener\n";
   await writeFile(cssPath, content);
 
   let msg = "";
@@ -291,22 +291,22 @@ test("reset bricht bei gtk.css-Marker ohne Kommentar-Opener ab, ohne zu ändern"
   } catch (e) {
     msg = String(e instanceof Error ? e.message : e);
   }
-  expect(msg).toContain("beschädigt");
+  expect(msg).toContain("corrupted");
   expect(await readFile(cssPath, "utf8")).toBe(content);
   await rm(home, { recursive: true, force: true });
 });
 
-test("reset bricht bei PaperWM-Marker ohne Kommentar-Opener ab, ohne zu ändern", async () => {
+test("reset aborts on PaperWM marker without comment opener, without changing anything", async () => {
   const home = await mkdtemp(join(tmpdir(), "rpg-home-corrupt-pw-"));
   const stateDir = join(home, "state");
   const cfgDir = join(home, "cfg");
   process.env.HOME = home;
   process.env.XDG_CONFIG_HOME = cfgDir;
   await ensureSnapshot(fakeGSettings(), stateDir); // paperwmUserCssExisted=false
-  // PaperWM nutzt GLib.get_user_config_dir() → XDG_CONFIG_HOME
+  // PaperWM uses GLib.get_user_config_dir() → XDG_CONFIG_HOME
   const pwFile = join(cfgDir, "paperwm", "user.css");
   await mkdir(join(cfgDir, "paperwm"), { recursive: true });
-  const content = SHELL_MARKER + " ohne opener\n";
+  const content = SHELL_MARKER + " without opener\n";
   await writeFile(pwFile, content);
 
   let msg = "";
@@ -315,12 +315,12 @@ test("reset bricht bei PaperWM-Marker ohne Kommentar-Opener ab, ohne zu ändern"
   } catch (e) {
     msg = String(e instanceof Error ? e.message : e);
   }
-  expect(msg).toContain("beschädigt");
+  expect(msg).toContain("corrupted");
   expect(await readFile(pwFile, "utf8")).toBe(content);
   await rm(home, { recursive: true, force: true });
 });
 
-test("reset mit Ziel berührt nur dieses Ziel", async () => {
+test("reset with a target touches only that target", async () => {
   const home = await mkdtemp(join(tmpdir(), "rpg-home-t-"));
   const stateDir = join(home, "state");
   const loFile = join(home, "registrymodifications.xcu");
@@ -348,7 +348,7 @@ test("reset mit Ziel berührt nur dieses Ziel", async () => {
   await resetAll({ dry: false, gs, stateDir, libreofficeConfigFile: loFile, target: "libreoffice" });
 
   expect(await readFile(loFile, "utf8")).toBe(ORIGINAL);
-  // gtk-theme wurde NICHT angerührt (gehört zu Ziel gtk3)
+  // gtk-theme was NOT touched (belongs to target gtk3)
   expect(gs.sets).toHaveLength(0);
   await rm(home, { recursive: true, force: true });
 });

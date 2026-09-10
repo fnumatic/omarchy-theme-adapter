@@ -1,5 +1,5 @@
-// render/ghostty.ts — Ghostty-Theme aus colors.toml rendern + installieren.
-// Logik (Option B): spiegelt omarchy default/themed/ghostty.conf.tpl.
+// render/ghostty.ts — render + install Ghostty theme from colors.toml.
+// Logic (Option B): mirrors omarchy default/themed/ghostty.conf.tpl.
 import type { Palette } from "../palette.ts";
 import { mkdir, writeFile, readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -7,8 +7,8 @@ import { timestamp } from "../fsutil.ts";
 import { ghosttyConfigDir } from "../paths.ts";
 
 /**
- * Rendert ein gültiges Ghostty-Theme (.conf) aus der geparsten colors.toml.
- * Paletten-Index/-Reihenfolge exakt wie im Omarchy-Template.
+ * Renders a valid Ghostty theme (.conf) from the parsed colors.toml.
+ * Palette index/order exactly as in the Omarchy template.
  */
 export function renderGhostty(p: Palette): string {
   const lines: string[] = [
@@ -27,9 +27,9 @@ export function renderGhostty(p: Palette): string {
 
 export interface InstallOptions {
   dry: boolean;
-  /** Ghostty-Config-Verzeichnis (Default: $XDG_CONFIG_HOME|~/.config + /ghostty) */
+  /** Ghostty config directory (default: $XDG_CONFIG_HOME|~/.config + /ghostty) */
   configDir?: string;
-  /** Theme-Dateiname/-ID (z. B. "rose-pine.conf") — aus der Theme-ID abgeleitet. */
+  /** Theme file name/ID (e.g. "rose-pine.conf") — derived from the theme ID. */
   themeName: string;
 }
 
@@ -40,8 +40,8 @@ export interface InstallResult {
 }
 
 /**
- * Schreibt theme nach <configDir>/themes/<name>.conf und setzt `theme = <name>`
- * in <configDir>/config (mit Backup). Bei dry=true wird nichts geschrieben.
+ * Writes theme to <configDir>/themes/<name>.conf and sets `theme = <name>`
+ * in <configDir>/config (with backup). With dry=true nothing is written.
  */
 async function exists(path: string): Promise<boolean> {
   try {
@@ -66,14 +66,14 @@ export async function installGhostty(
 
   if (opts.dry) {
     console.log(`  dry-run: mkdir -p ${themesDir}`);
-    console.log(`  dry-run: schreibe ${themeFile}`);
-    console.log(`  dry-run: theme-Zeile → "theme = ${themeName}" in ${configFile}`);
+    console.log(`  dry-run: write ${themeFile}`);
+    console.log(`  dry-run: theme line → "theme = ${themeName}" in ${configFile}`);
     return result;
   }
 
   await mkdir(themesDir, { recursive: true });
   await writeFile(themeFile, theme);
-  console.log(`   ✓ Theme geschrieben: ${themeFile}`);
+  console.log(`   ✓ theme written: ${themeFile}`);
 
   let cfgText = "";
   if (!(await exists(configFile))) {
@@ -98,6 +98,6 @@ export async function installGhostty(
   }
 
   await writeFile(configFile, next);
-  console.log(`   ✓ config aktualisiert: ${configFile}`);
+  console.log(`   ✓ config updated: ${configFile}`);
   return result;
 }

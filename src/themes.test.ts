@@ -13,7 +13,7 @@ async function makeThemeRoot(): Promise<string> {
   return mkdtemp(join(tmpdir(), "rpg-om-themes-"));
 }
 
-test("isValidThemeId erlaubt nur harmlose Namen", () => {
+test("isValidThemeId allows only harmless names", () => {
   expect(isValidThemeId("rose-pine")).toBe(true);
   expect(isValidThemeId("catppuccin-latte")).toBe(true);
   expect(isValidThemeId("a.b_c")).toBe(true);
@@ -22,22 +22,22 @@ test("isValidThemeId erlaubt nur harmlose Namen", () => {
   expect(isValidThemeId(".hidden")).toBe(false);
 });
 
-test("titleWords capitalisiert Wörter", () => {
+test("titleWords capitalizes words", () => {
   expect(titleWords("rose-pine")).toBe("Rose Pine");
   expect(titleWords("tokyo-night")).toBe("Tokyo Night");
 });
 
-test("listThemes liefert nur Verzeichnisse mit colors.toml", async () => {
+test("listThemes returns only directories with colors.toml", async () => {
   const root = await makeThemeRoot();
   await mkdir(join(root, "rose-pine"), { recursive: true });
   await writeFile(join(root, "rose-pine", "colors.toml"), 'mode = "light"\n');
-  await mkdir(join(root, "kein-theme"), { recursive: true });
-  await writeFile(join(root, "kein-theme", "notiz.txt"), "x");
+  await mkdir(join(root, "plain-dir"), { recursive: true });
+  await writeFile(join(root, "plain-dir", "notes.txt"), "x");
 
   expect(await listThemes(root)).toEqual(["rose-pine"]);
 });
 
-test("loadTheme leitet Namen ab und liest optionale Metadaten", async () => {
+test("loadTheme derives names and reads optional metadata", async () => {
   const root = await makeThemeRoot();
   const tdir = join(root, "catppuccin-latte");
   await mkdir(join(tdir, "backgrounds"), { recursive: true });
@@ -56,7 +56,7 @@ test("loadTheme leitet Namen ab und liest optionale Metadaten", async () => {
   expect(t.hasBackgrounds).toBe(true);
 });
 
-test("loadTheme setzt Icon-Default Yaru-blue und keine backgrounds", async () => {
+test("loadTheme sets icon default Yaru-blue and no backgrounds", async () => {
   const root = await makeThemeRoot();
   const tdir = join(root, "nord");
   await mkdir(tdir, { recursive: true });
@@ -69,9 +69,9 @@ test("loadTheme setzt Icon-Default Yaru-blue und keine backgrounds", async () =>
   expect(t.hasBackgrounds).toBe(false);
 });
 
-test("loadTheme warnt bei fehlenden Kernfarben", async () => {
+test("loadTheme warns on missing core colors", async () => {
   const root = await makeThemeRoot();
-  const tdir = join(root, "kaputt");
+  const tdir = join(root, "broken");
   await mkdir(tdir, { recursive: true });
   await writeFile(join(tdir, "colors.toml"), 'mode = "light"\n');
 
@@ -81,7 +81,7 @@ test("loadTheme warnt bei fehlenden Kernfarben", async () => {
     warned += String(m);
   };
   try {
-    await loadTheme("kaputt", { root });
+    await loadTheme("broken", { root });
   } finally {
     console.warn = orig;
   }
@@ -89,13 +89,13 @@ test("loadTheme warnt bei fehlenden Kernfarben", async () => {
   expect(warned).toContain("foreground");
 });
 
-test("loadTheme wirft für unbekanntes Theme/Missing colors", async () => {
+test("loadTheme throws for unknown theme/missing colors", async () => {
   const root = await makeThemeRoot();
   let msg = "";
   try {
-    await loadTheme("gibtsnicht", { root });
+    await loadTheme("doesnotexist", { root });
   } catch (e) {
     msg = String(e instanceof Error ? e.message : e);
   }
-  expect(msg).toContain("gibtsnicht");
+  expect(msg).toContain("doesnotexist");
 });

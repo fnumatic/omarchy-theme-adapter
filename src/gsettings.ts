@@ -1,10 +1,10 @@
-// gsettings.ts — testbar kapselter gsettings-Zugriff.
+// gsettings.ts — testably encapsulated gsettings access.
 export interface GSettingsRunner {
   get(schema: string, key: string): Promise<string | null>;
   set(schema: string, key: string, value: string): Promise<number>;
 }
 
-/** Echter gsettings-Runner; `env` setzt optional eine abweichende Umgebung. */
+/** Real gsettings runner; `env` optionally sets a different environment. */
 function makeRealGSettings(env?: Record<string, string | undefined>): GSettingsRunner {
   const spawn = (args: string[]) => (env ? Bun.spawnSync(args, { env }) : Bun.spawnSync(args));
   return {
@@ -30,7 +30,7 @@ function makeRealGSettings(env?: Record<string, string | undefined>): GSettingsR
 
 export const realGSettings: GSettingsRunner = makeRealGSettings();
 
-/** In-Memory-Fake für Tests. */
+/** In-memory fake for tests. */
 export function fakeGSettings(initial: Record<string, string> = {}): GSettingsRunner & {
   store: Record<string, string>;
   sets: Array<[string, string, string]>;
@@ -52,8 +52,9 @@ export function fakeGSettings(initial: Record<string, string> = {}): GSettingsRu
 }
 
 /**
- * gsettings-Runner, der eine Sprachschema-Dir setzt (nötig für Extension-Schemas,
- * z. B. org.gnome.shell.extensions.user-theme, die nicht systemkompiliert sind).
+ * gsettings runner that sets a language schema dir (needed for extension
+ * schemas, e.g. org.gnome.shell.extensions.user-theme, which are not
+ * system-compiled).
  */
 export function realGSettingsWithSchemaDir(schemaDir: string): GSettingsRunner {
   return makeRealGSettings({ ...process.env, GSETTINGS_SCHEMA_DIR: schemaDir });

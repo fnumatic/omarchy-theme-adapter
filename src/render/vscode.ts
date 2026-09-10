@@ -1,10 +1,10 @@
-// render/vscode.ts — VS Code dem Omarchy-Theme folgen lassen (Option B).
+// render/vscode.ts — make VS Code follow the Omarchy theme (Option B).
 //
-// Omarchy-Mechanik (bin/omarchy-theme-set-vscode): Das Theme liefert einen
-// Deskriptor (themes/rose-pine/vscode.json = {name, extension}); Omarchy
-// installiert die Extension und setzt workbench.colorTheme in settings.json.
-// settings.json ist JSONC (Kommentare/trailing commas) → Edit per Regex wie
-// bei Omarchy, kein JSON-Roundtrip (kein Reformat, keine Kommentar-Verluste).
+// Omarchy mechanics (bin/omarchy-theme-set-vscode): the theme provides a
+// descriptor (themes/rose-pine/vscode.json = {name, extension}); Omarchy
+// installs the extension and sets workbench.colorTheme in settings.json.
+// settings.json is JSONC (comments/trailing commas) → edit via regex as
+// in Omarchy, no JSON round-trip (no reformat, no comment loss).
 import { readFile, writeFile } from "node:fs/promises";
 import { ensureParent } from "../fsutil.ts";
 import { vscodeSettingsPath } from "../paths.ts";
@@ -15,9 +15,9 @@ export interface VscodeDescriptor {
 }
 
 export interface EditorTarget {
-  /** Binary, z. B. "code" */
+  /** Binary, e.g. "code" */
   cmd: string;
-  /** settings.json-Pfad */
+  /** settings.json path */
   settingsPath: string;
 }
 
@@ -30,7 +30,7 @@ export interface InstallVscodeOptions {
   descriptor: VscodeDescriptor;
   targets?: EditorTarget[];
   settingsPath?: string;
-  /** Befehls-Runner (Default: Bun.spawnSync) — für Tests überschreibbar */
+  /** Command runner (default: Bun.spawnSync) — overridable for tests */
   run?: (cmd: string, args: string[]) => { exitCode: number; stdout: string };
 }
 
@@ -47,7 +47,7 @@ function commandPresent(run: NonNullable<InstallVscodeOptions["run"]>, cmd: stri
   return run(cmd, ["--version"]).exitCode === 0;
 }
 
-/** Setzt/ersetzt workbench.colorTheme JSONC-sicher (wie Omarchy per sed). */
+/** Sets/replaces workbench.colorTheme JSONC-safely (like Omarchy via sed). */
 export function setColorTheme(settingsText: string, themeName: string): string {
   if (!/"workbench\.colorTheme"/u.test(settingsText)) {
     return settingsText.replace(/\{/u, `{\n  "workbench.colorTheme": "${themeName}",`);
@@ -67,15 +67,15 @@ export async function installVscode(
 
   for (const t of targets) {
     if (!commandPresent(run, t.cmd)) {
-      console.log(`   − ${t.cmd} nicht vorhanden, übersprungen`);
+      console.log(`   − ${t.cmd} not present, skipped`);
       continue;
     }
     const settingsPath = opts.settingsPath ?? t.settingsPath;
 
-    // Extension installieren (nur wenn fehlend, ID-Format prüfen wie Omarchy)
+    // Install extension (only if missing, validate ID format as in Omarchy)
     const { extension, name } = opts.descriptor;
     if (!/^[a-zA-Z0-9._-]+$/u.test(extension)) {
-      throw new Error(`Ungültige Extension-ID im Deskriptor: ${extension}`);
+      throw new Error(`Invalid extension ID in descriptor: ${extension}`);
     }
     const listed = run(t.cmd, ["--list-extensions"]);
     if (!listed.stdout.split("\n").some((l) => l.trim().toLowerCase() === extension.toLowerCase())) {
@@ -84,12 +84,12 @@ export async function installVscode(
       } else {
         const inst = run(t.cmd, ["--install-extension", extension]);
         if (inst.exitCode !== 0) {
-          throw new Error(`${t.cmd} --install-extension ${extension} fehlgeschlagen (${inst.exitCode})`);
+          throw new Error(`${t.cmd} --install-extension ${extension} failed (${inst.exitCode})`);
         }
-        console.log(`   ✓ Extension installiert: ${extension} (${t.cmd})`);
+        console.log(`   ✓ Extension installed: ${extension} (${t.cmd})`);
       }
     } else {
-      console.log(`   − Extension bereits vorhanden: ${extension} (${t.cmd})`);
+      console.log(`   − Extension already present: ${extension} (${t.cmd})`);
     }
 
     if (opts.dry) {
@@ -102,7 +102,7 @@ export async function installVscode(
       } catch {
         text = "{\n}\n";
       }
-      // Leere Datei → gültiges JSONC-Gerüst, sonst greift setColorTheme ins Leere.
+      // Empty file → valid JSONC skeleton, otherwise setColorTheme has nothing to match.
       if (text.trim() === "") text = "{\n}\n";
       await writeFile(settingsPath, setColorTheme(text, name));
       console.log(`   ✓ workbench.colorTheme → "${name}" (${t.cmd})`);

@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
-// cli.ts — Omarchy-Theme als GNOME-Theme via colors.toml (Option B).
+// cli.ts — Omarchy theme as GNOME theme via colors.toml (Option B).
 // TypeScript/Bun: themeswitch parse|render|install|set|reset
-// Mit `set <theme>` wird jedes Omarchy-Theme (themes/<id>/colors.toml inkl.
-// optionaler vscode.json/icons.theme/backgrounds) on-the-fly auf GNOME, Ghostty,
-// GTK, VS Code und PaperWM angewendet.
+// With `set <theme>`, every Omarchy theme (themes/<id>/colors.toml incl.
+// optional vscode.json/icons.theme/backgrounds) is applied on the fly to GNOME, Ghostty,
+// GTK, VS Code and PaperWM.
 import { parseColors, normalize, semanticLines, type Colors } from "./colors.ts";
 import { resolvePalette, type Palette } from "./palette.ts";
 import { installGhostty, renderGhostty } from "./render/ghostty.ts";
@@ -31,30 +31,30 @@ const ROOT = import.meta.dir; // …/src
 const DEFAULT_COLORS = join(ROOT, "..", "themes", "rose-pine", "colors.toml");
 const DEFAULT_THEME = "rose-pine";
 
-const usage = `themeswitch — Omarchy-Themes als GNOME-Theme (aus colors.toml, Option B)
+const usage = `themeswitch — Omarchy themes as GNOME theme (from colors.toml, Option B)
 
-Verwendung:
-  themeswitch set <theme> [--dry-run]      Theme vollständig anwenden (Ghostty,
+Usage:
+  themeswitch set <theme> [--dry-run]      Apply theme completely (Ghostty,
                                               GTK3, GTK4, VS Code, Wallpaper, PaperWM,
-                                              Farbschema + Icon-Theme), on-the-fly
-  themeswitch themes                        Verfügbare Omarchy-Themes auflisten
-  themeswitch parse [--colors FILE]        colors.toml normalisiert ausgeben
+                                              color scheme + icon theme), on the fly
+  themeswitch themes                        List available Omarchy themes
+  themeswitch parse [--colors FILE]        Output normalized colors.toml
   themeswitch render ghostty|gtk3|gtk4 [--colors FILE]
-                                              einzelnes Ziel auf stdout rendern
-  themeswitch install <ziel> [--theme <id>|--dry-run]
-                                              Ghostty|GTK3|GTK4|LibreOffice|VS-Code|Wallpaper|Shell
+                                              render a single target to stdout
+  themeswitch install <target> [--theme <id>|--dry-run]
+                                              Ghostty|GTK3|GTK4|LibreOffice|VS Code|Wallpaper|Shell
   themeswitch apply [--dry-run] [--theme <id>]
-                                              Farbschema + Icon-Theme setzen (System-Grundlage)
-  themeswitch reset [--dry-run|--theme <id>] [ziel]
-                                              Originalzustand aus Snapshot wiederherstellen
+                                              Set color scheme + icon theme (system base)
+  themeswitch reset [--dry-run|--theme <id>] [target]
+                                              Restore original state from snapshot
 
-Ziele (install/reset): ghostty|gtk3|gtk4|libreoffice|vscode|wallpaper|shell|shell-theme
+Targets (install/reset): ghostty|gtk3|gtk4|libreoffice|vscode|wallpaper|shell|shell-theme
 
-Optionen:
-  --theme <id>    Theme-Name (Default: rose-pine)
-  --colors FILE   alternatives colors.toml (nur parse/render)
-  --dry-run       nur anzeigen, was geändert würde
-  -h, --help      diese Hilfe
+Options:
+  --theme <id>    Theme name (default: rose-pine)
+  --colors FILE   alternative colors.toml (only parse/render)
+  --dry-run       only show what would change
+  -h, --help      this help
 `;
 
 const C = {
@@ -70,9 +70,9 @@ async function requireColorsText(colorsFile: string): Promise<string> {
   try {
     return await Bun.file(colorsFile).text();
   } catch (e) {
-    C.die(`colors.toml konnte nicht gelesen werden: ${colorsFile} (${String(e)})`);
+    C.die(`could not read colors.toml: ${colorsFile} (${String(e)})`);
   }
-  return ""; // unreachable (C.die terminiert)
+  return ""; // unreachable (C.die exits)
 }
 
 interface Args {
@@ -96,13 +96,13 @@ function parseArgs(argv: string[]): Args {
         break;
       case "--theme":
       case "-t":
-        args.theme = argv[++i] ?? C.die("--theme braucht einen Wert");
+        args.theme = argv[++i] ?? C.die("--theme requires a value");
         break;
       case "--colors":
-        args.colors = argv[++i] ?? C.die("--colors braucht einen Wert");
+        args.colors = argv[++i] ?? C.die("--colors requires a value");
         break;
       default:
-        if (a.startsWith("-")) C.die(`Unbekannte Option: ${a}`);
+        if (a.startsWith("-")) C.die(`Unknown option: ${a}`);
         args.cmds.push(a);
     }
   }
@@ -113,12 +113,12 @@ async function withColors(args: Args, fn: (c: Colors) => void): Promise<void> {
   const text = await requireColorsText(args.colors);
   const colors = parseColors(text);
   if (Object.keys(colors).length === 0) {
-    C.die(`colors.toml konnte nicht geparst werden: ${args.colors}`);
+    C.die(`could not parse colors.toml: ${args.colors}`);
   }
   fn(colors);
 }
 
-/** Wie withColors, löst aber zusätzlich die deklarative Rollen-Palette auf. */
+/** Like withColors, but additionally resolves the declarative role palette. */
 async function withPalette(args: Args, fn: (p: Palette) => void): Promise<void> {
   await withColors(args, (c) => fn(resolvePalette(c)));
 }
@@ -129,9 +129,9 @@ async function withTheme(args: Args, fn: (t: Theme) => Promise<void>): Promise<v
     theme = await loadTheme(args.theme);
   } catch (e) {
     const avail = (await listThemes()).join(", ");
-    C.die(`${String(e instanceof Error ? e.message : e)}${avail ? `\nVerfügbar: ${avail}` : ""}`);
+    C.die(`${String(e instanceof Error ? e.message : e)}${avail ? `\nAvailable: ${avail}` : ""}`);
   }
-  // Originalzustand einmalig sichern, bevor ein Theme das System verändert.
+  // Capture the original state once before a theme modifies the system.
   await snapshotOnce(args.dry);
   await fn(theme!);
 }
@@ -144,26 +144,26 @@ if (args.cmds.length === 0) {
 
 async function snapshotOnce(dry: boolean): Promise<void> {
   if (dry) {
-    console.log("  dry-run: würde ggf. Snapshot sichern, keine Änderung");
+    console.log("  dry-run: would capture snapshot if needed, no change");
     return;
   }
   const { created } = await ensureSnapshot(realGSettings);
-  if (created) console.log("   ✓ Originalzustand gesichert (Snapshot)");
+  if (created) console.log("   ✓ original state saved (snapshot)");
 }
 
-/** PaperWM-Topbar-Block anwenden (on-the-fly aus der Palette). */
+/** Apply the PaperWM topbar block (on the fly from the palette). */
 async function applyPaperwm(p: Palette, dry: boolean): Promise<void> {
   await installShellPaperwm(renderShellPaperwm(p), { dry });
 }
 
-/** Vollständiges GNOME-Shell-Theme installieren (System-Yaru + Override). */
+/** Install the complete GNOME Shell theme (system Yaru + override). */
 async function applyShellTheme(p: Palette, gtkName: string, dry: boolean): Promise<void> {
   const base = await readSystemShellBase();
   const css = renderShellTheme(base, renderShellOverride(p));
   await installShellTheme(shellThemeName(gtkName), css, { dry });
 }
 
-/** Farbschema + Icon-Theme setzen (System-Grundlage, wie omarchy-theme-set-gnome). */
+/** Set color scheme + icon theme (system base, like omarchy-theme-set-gnome). */
 async function applySystemSettings(t: Theme, dry: boolean): Promise<void> {
   const scheme = t.mode === "light" ? "prefer-light" : "prefer-dark";
   if (dry) {
@@ -172,16 +172,16 @@ async function applySystemSettings(t: Theme, dry: boolean): Promise<void> {
     return;
   }
   const code = await realGSettings.set("org.gnome.desktop.interface", "color-scheme", scheme);
-  if (code !== 0) C.warn(`gsettings color-scheme fehlgeschlagen (${code})`);
+  if (code !== 0) C.warn(`gsettings color-scheme failed (${code})`);
   else console.log(`   ✓ color-scheme: ${scheme}`);
   const icode = await realGSettings.set("org.gnome.desktop.interface", "icon-theme", t.iconsTheme);
-  if (icode !== 0) C.warn(`gsettings icon-theme fehlgeschlagen (${icode})`);
+  if (icode !== 0) C.warn(`gsettings icon-theme failed (${icode})`);
   else console.log(`   ✓ icon-theme: ${t.iconsTheme}`);
 }
 
-/** Wendet ein Theme vollständig auf alle Ziele an (Ghostty, GTK3, GTK4, VSCode, Wallpaper, Shell). */
+/** Applies a theme completely to all targets (Ghostty, GTK3, GTK4, VSCode, Wallpaper, Shell). */
 async function applyTheme(theme: Theme, dry: boolean): Promise<void> {
-  C.log(`${theme.displayName} (${theme.mode}) anwenden`);
+  C.log(`Applying ${theme.displayName} (${theme.mode})`);
 
   const p = theme.palette;
 
@@ -189,60 +189,60 @@ async function applyTheme(theme: Theme, dry: boolean): Promise<void> {
   try {
     await installGhostty(renderGhostty(p), { dry, themeName: theme.ghosttyThemeName });
   } catch (e) {
-    C.die(`Ghostty fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`);
+    C.die(`Ghostty failed: ${String(e instanceof Error ? e.message : e)}`);
   }
 
   // GTK3
   try {
     await installGtk3(renderGtk3(p), { dry, name: theme.gtkThemeName });
   } catch (e) {
-    C.die(`GTK3 fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`);
+    C.die(`GTK3 failed: ${String(e instanceof Error ? e.message : e)}`);
   }
 
   // GTK4-Overlay
   try {
     await installGtk4(renderGtk4(p), { dry });
   } catch (e) {
-    C.die(`GTK4 fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`);
+    C.die(`GTK4 failed: ${String(e instanceof Error ? e.message : e)}`);
   }
 
-  // VS Code (nur wenn Deskriptor vorhanden)
+  // VS Code (only if a descriptor is present)
   if (theme.vscode) {
     try {
       await installVscode({ dry, descriptor: theme.vscode, targets: [defaultCodeTarget()] });
     } catch (e) {
-      C.die(`VS Code fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`);
+      C.die(`VS Code failed: ${String(e instanceof Error ? e.message : e)}`);
     }
   } else {
-    console.log("   − VS Code: kein vscode.json im Theme, übersprungen");
+    console.log("   − VS Code: no vscode.json in theme, skipped");
   }
 
-  // Wallpaper (nur wenn backgrounds vorhanden)
+  // Wallpaper (only if backgrounds are present)
   if (theme.hasBackgrounds) {
     try {
       await installWallpaper({ dry, backgrounds: join(theme.dir, "backgrounds") });
     } catch (e) {
-      C.die(`Wallpaper fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`);
+      C.die(`Wallpaper failed: ${String(e instanceof Error ? e.message : e)}`);
     }
   } else {
-    console.log("   − Wallpaper: kein backgrounds/ im Theme, übersprungen");
+    console.log("   − Wallpaper: no backgrounds/ in theme, skipped");
   }
 
-  // PaperWM-Topbar
+  // PaperWM topbar
   try {
     await applyPaperwm(p, dry);
   } catch (e) {
-    C.die(`Shell fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`);
+    C.die(`Shell failed: ${String(e instanceof Error ? e.message : e)}`);
   }
 
-  // GNOME-Shell-Theme (vollständig, Basis Yaru + rekolorierter Override)
+  // GNOME Shell theme (complete, base Yaru + recolored override)
   try {
     await applyShellTheme(p, theme.gtkThemeName, dry);
   } catch (e) {
     C.warn(`GNOME-Shell-Theme: ${String(e instanceof Error ? e.message : e)}`);
   }
 
-  // Farbschema + Icon-Theme (System-Grundlage)
+  // Color scheme + icon theme (system base)
   await applySystemSettings(theme, dry);
 
   if (!dry) {
@@ -261,66 +261,66 @@ async function installOne(args: Args): Promise<void> {
     case "ghostty":
       await withTheme(args, async (t) => {
         await installGhostty(renderGhostty(t.palette), { dry: args.dry, themeName: t.ghosttyThemeName })
-          .catch((e) => C.die(`install ghostty fehlgeschlagen: ${String(e)}`));
+          .catch((e) => C.die(`install ghostty failed: ${String(e)}`));
       });
       break;
     case "gtk3":
       await withTheme(args, async (t) => {
         await installGtk3(renderGtk3(t.palette), { dry: args.dry, name: t.gtkThemeName })
-          .catch((e) => C.die(`install gtk3 fehlgeschlagen: ${String(e)}`));
+          .catch((e) => C.die(`install gtk3 failed: ${String(e)}`));
       });
       break;
     case "gtk4":
       await withTheme(args, async (t) => {
         await installGtk4(renderGtk4(t.palette), { dry: args.dry })
-          .catch((e) => C.die(`install gtk4 fehlgeschlagen: ${String(e)}`));
+          .catch((e) => C.die(`install gtk4 failed: ${String(e)}`));
       });
       break;
     case "libreoffice":
       await snapshotOnce(args.dry);
       await installLibreOffice({ dry: args.dry })
-        .catch((e) => C.die(`install libreoffice fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`));
+        .catch((e) => C.die(`install libreoffice failed: ${String(e instanceof Error ? e.message : e)}`));
       break;
     case "vscode":
       await withTheme(args, async (t) => {
         if (!t.vscode) {
-          C.warn(`Theme '${args.theme}' hat kein vscode.json`);
+          C.warn(`Theme '${args.theme}' has no vscode.json`);
           return;
         }
         await installVscode({ dry: args.dry, descriptor: t.vscode, targets: [defaultCodeTarget()] })
-          .catch((e) => C.die(`install vscode fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`));
+          .catch((e) => C.die(`install vscode failed: ${String(e instanceof Error ? e.message : e)}`));
       });
       break;
     case "wallpaper":
       await withTheme(args, async (t) => {
         if (!t.hasBackgrounds) {
-          C.warn(`Theme '${args.theme}' hat kein backgrounds/`);
+          C.warn(`Theme '${args.theme}' has no backgrounds/`);
           return;
         }
         const name = args.cmds[2];
         const bgs = join(t.dir, "backgrounds");
         if (name !== undefined) {
           const available = await listWallpapers(bgs);
-          if (!available.includes(name)) C.die(`Unbekanntes Wallpaper '${name}'. Verfügbar: ${available.join(", ")}`);
+          if (!available.includes(name)) C.die(`Unknown wallpaper '${name}'. Available: ${available.join(", ")}`);
         }
         await installWallpaper({ dry: args.dry, name, backgrounds: bgs })
-          .catch((e) => C.die(`install wallpaper fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`));
+          .catch((e) => C.die(`install wallpaper failed: ${String(e instanceof Error ? e.message : e)}`));
       });
       break;
     case "shell-theme":
       await withTheme(args, async (t) => {
         await applyShellTheme(t.palette, t.gtkThemeName, args.dry)
-          .catch((e) => C.die(`install shell-theme fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`));
+          .catch((e) => C.die(`install shell-theme failed: ${String(e instanceof Error ? e.message : e)}`));
       });
       break;
     case "shell":
       await withTheme(args, async (t) => {
         await applyPaperwm(t.palette, args.dry)
-          .catch((e) => C.die(`install shell fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`));
+          .catch((e) => C.die(`install shell failed: ${String(e instanceof Error ? e.message : e)}`));
       });
       break;
     default:
-      C.die(`install: unbekanntes Ziel '${target ?? ""}' (ghostty|gtk3|gtk4|libreoffice|vscode|wallpaper|shell)`);
+      C.die(`install: unknown target '${target ?? ""}' (ghostty|gtk3|gtk4|libreoffice|vscode|wallpaper|shell)`);
   }
 }
 
@@ -331,7 +331,7 @@ async function main(): Promise<void> {
       break;
 
     case "set":
-      if (!args.cmds[1]) C.die("set braucht einen Theme-Namen, z. B. `set rose-pine` (verfügbar: themes)");
+      if (!args.cmds[1]) C.die("set requires a theme name, e.g. `set rose-pine` (available: themes)");
       args.theme = args.cmds[1];
       await withTheme(args, (t) => applyTheme(t, args.dry));
       break;
@@ -344,7 +344,7 @@ async function main(): Promise<void> {
       if (args.cmds[1] === "ghostty") await withPalette(args, (p) => console.log(renderGhostty(p)));
       else if (args.cmds[1] === "gtk3") await withPalette(args, (p) => console.log(renderGtk3(p)));
       else if (args.cmds[1] === "gtk4") await withPalette(args, (p) => console.log(renderGtk4(p)));
-      else C.die(`render: unbekanntes Ziel '${args.cmds[1] ?? ""}' (ghostty|gtk3|gtk4)`);
+      else C.die(`render: unknown target '${args.cmds[1] ?? ""}' (ghostty|gtk3|gtk4)`);
       break;
 
     case "install":
@@ -353,17 +353,17 @@ async function main(): Promise<void> {
 
     case "apply":
       await withTheme(args, async (t) => {
-        C.log(`${t.displayName} (${t.mode}) — Farbschema + Icon-Theme`);
+        C.log(`${t.displayName} (${t.mode}) — color scheme + icon theme`);
         await applySystemSettings(t, args.dry);
       });
       break;
 
     case "reset": {
-      C.log(`Originalzustand wiederherstellen`);
+      C.log(`Restore original state`);
       const t = args.cmds[1];
       const targets = ["ghostty", "gtk3", "gtk4", "libreoffice", "vscode", "wallpaper", "shell", "shell-theme"];
       if (t !== undefined && !targets.includes(t)) {
-        C.die(`reset: unbekanntes Ziel '${t}' (${targets.join("|")})`);
+        C.die(`reset: unknown target '${t}' (${targets.join("|")})`);
       }
       try {
         await resetAll({ dry: args.dry, gs: realGSettings, target: t as ResetTarget | undefined });
@@ -374,7 +374,7 @@ async function main(): Promise<void> {
     }
 
     default:
-      C.die(`Unbekanntes Kommando: ${args.cmds[0]} (siehe --help)`);
+      C.die(`Unknown command: ${args.cmds[0]} (see --help)`);
   }
 }
 

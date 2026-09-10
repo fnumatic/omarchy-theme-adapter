@@ -1,4 +1,4 @@
-// cli.test.ts — Integrationstest der `set`-Orchestrierung (nur --dry-run, schreibt nichts).
+// cli.test.ts — integration test of the `set` orchestration (only --dry-run, writes nothing).
 import { test, expect } from "bun:test";
 import { access, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -9,14 +9,14 @@ const exists = (p: string): Promise<boolean> => access(p).then(() => true, () =>
 const CLI = join(import.meta.dir, "cli.ts");
 const PROJECT_ROOT = join(import.meta.dir, "..");
 
-test("themeswitch set <theme> --dry-run läuft durch und legt keine Artefakte an", async () => {
+test("themeswitch set <theme> --dry-run runs through and creates no artifacts", async () => {
   const home = await mkdtemp(join(tmpdir(), "rpg-cli-"));
   const env = {
     ...process.env,
     HOME: home,
     XDG_CONFIG_HOME: join(home, ".config"),
     XDG_STATE_HOME: join(home, ".local", "state"),
-    // `code` & Co. nicht auffindbar → optionale Adapter werden übersprungen.
+    // `code` & co. not found → optional adapters are skipped.
     PATH: "/nonexistent",
   };
   const out = Bun.spawnSync([process.execPath, CLI, "set", "rose-pine", "--dry-run"], {
@@ -27,7 +27,7 @@ test("themeswitch set <theme> --dry-run läuft durch und legt keine Artefakte an
   expect(out.exitCode).toBe(0);
   expect(text).toContain("Rose Pine");
   expect(text).toContain("dry-run");
-  // Keine themeswitch-Artefakte (`.bun` ist ein Runtime-Artefakt des Bun-Prozesses).
+  // No themeswitch artifacts (`.bun` is a runtime artifact of the Bun process).
   expect(await exists(join(home, ".config", "ghostty"))).toBe(false);
   expect(await exists(join(home, ".config", "gtk-4.0"))).toBe(false);
   expect(await exists(join(home, ".themes"))).toBe(false);

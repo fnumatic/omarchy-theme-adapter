@@ -1,4 +1,4 @@
-// types/css-tree.d.ts — minimale Typsicherung für css-tree (nutzt nur parse).
+// types/css-tree.d.ts — minimal type safety for css-tree (only uses parse).
 declare module "css-tree" {
   export interface ParseError {
     message: string;

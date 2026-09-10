@@ -6,15 +6,15 @@ import { setColorTheme, installVscode } from "./vscode.ts";
 
 const DESC = { name: "Rosé Pine Dawn", extension: "mvllow.rose-pine" };
 
-test("setColorTheme ersetzt vorhandenes Theme JSONC-sicher", () => {
-  const src = '{\n  // Kommentar bleibt\n  "workbench.colorTheme": "Light Modern",\n  "editor.fontSize": 13,\n}\n';
+test("setColorTheme replaces an existing theme JSONC-safely", () => {
+  const src = '{\n  // comment remains\n  "workbench.colorTheme": "Light Modern",\n  "editor.fontSize": 13,\n}\n';
   const out = setColorTheme(src, "Rosé Pine Dawn");
   expect(out).toContain('"workbench.colorTheme": "Rosé Pine Dawn"');
-  expect(out).toContain("// Kommentar bleibt");
+  expect(out).toContain("// comment remains");
   expect(out).toContain('"editor.fontSize": 13');
 });
 
-test("setColorTheme fügt fehlendes Theme ein", () => {
+test("setColorTheme inserts a missing theme", () => {
   const out = setColorTheme('{\n  "editor.fontSize": 13\n}\n', "Rosé Pine Dawn");
   expect(out).toContain('"workbench.colorTheme": "Rosé Pine Dawn"');
   expect(out).toContain('"editor.fontSize": 13');
@@ -33,7 +33,7 @@ function fakeRun(state: { installed: string[]; log: string[][] }) {
   };
 }
 
-test("installVscode installiert Extension und setzt Theme (dry-run ändert nichts)", async () => {
+test("installVscode installs the extension and sets the theme (dry-run changes nothing)", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg-vs-dry-"));
   const settings = join(dir, "settings.json");
   await writeFile(settings, '{\n  "workbench.colorTheme": "Light Modern"\n}\n');
@@ -49,7 +49,7 @@ test("installVscode installiert Extension und setzt Theme (dry-run ändert nicht
   expect(state.installed).toHaveLength(0);
 });
 
-test("installVscode schreibt settings und installiert fehlende Extension", async () => {
+test("installVscode writes settings and installs a missing extension", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg-vs-ok-"));
   const settings = join(dir, "settings.json");
   await writeFile(settings, '{\n  "workbench.colorTheme": "Light Modern",\n}\n');
@@ -67,7 +67,7 @@ test("installVscode schreibt settings und installiert fehlende Extension", async
   expect(out).not.toContain("Light Modern");
 });
 
-test("installVscode überspringt vorhandene Extension, setzt Theme trotzdem", async () => {
+test("installVscode skips an existing extension but still sets the theme", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg-vs-have-"));
   const settings = join(dir, "settings.json");
   await writeFile(settings, '{}\n');
@@ -83,7 +83,7 @@ test("installVscode überspringt vorhandene Extension, setzt Theme trotzdem", as
   expect(await readFile(settings, "utf8")).toContain("Rosé Pine Dawn");
 });
 
-test("installVscode setzt Theme in leerer settings.json", async () => {
+test("installVscode sets the theme in an empty settings.json", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg-vs-empty-"));
   const settings = join(dir, "settings.json");
   await writeFile(settings, "");
@@ -98,28 +98,28 @@ test("installVscode setzt Theme in leerer settings.json", async () => {
   expect(await readFile(settings, "utf8")).toContain("Rosé Pine Dawn");
 });
 
-test("installVscode überspringt fehlenden Editor", async () => {
+test("installVscode skips a missing editor", async () => {
   const res = await installVscode({
     dry: false,
     descriptor: DESC,
-    targets: [{ cmd: "gibtsnicht", settingsPath: "/tmp/x.json" }],
+    targets: [{ cmd: "doesnotexist", settingsPath: "/tmp/x.json" }],
     run: () => ({ exitCode: 1, stdout: "" }),
   });
   expect(res).toHaveLength(0);
 });
 
-test("installVscode verweigert ungültige Extension-ID", async () => {
+test("installVscode rejects an invalid extension ID", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg-vs-bad-"));
   let msg = "";
   try {
     await installVscode({
       dry: false,
-      descriptor: { name: "X", extension: "böse;rm -rf" },
+      descriptor: { name: "X", extension: "evil;rm -rf" },
       targets: [{ cmd: "code", settingsPath: join(dir, "s.json") }],
       run: fakeRun({ installed: [], log: [] }),
     });
   } catch (e) {
     msg = String(e instanceof Error ? e.message : e);
   }
-  expect(msg).toContain("Ungültige Extension-ID");
+  expect(msg).toContain("Invalid extension ID");
 });

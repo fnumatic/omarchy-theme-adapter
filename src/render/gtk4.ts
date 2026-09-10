@@ -1,16 +1,16 @@
-// render/gtk4.ts — libadwaita-Recolor aus colors.toml (Option B).
-// libadwaita lädt ~/.config/gtk-4.0/gtk.css automatisch als Overlay; die dort
-// definierten öffentlichen Farbnamen (window_bg_color, accent_bg_color, …)
-// färben libadwaita-Apps inkl. Ghostty-Fensterrahmen. Mapping: docs/architektur.md §3.3.
+// render/gtk4.ts — libadwaita recolor from colors.toml (Option B).
+// libadwaita loads ~/.config/gtk-4.0/gtk.css automatically as an overlay; the
+// public color names defined there (window_bg_color, accent_bg_color, …)
+// color libadwaita apps including the Ghostty window frame. Mapping: docs/architecture.md §3.3.
 import type { Palette } from "../palette.ts";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { assertValidCss } from "../cssutil.ts";
 import { locateBlock } from "../managedBlock.ts";
 import { gtk4Dir } from "../paths.ts";
 
-export const MARKER = "Generiert aus Omarchy colors.toml (Option B)";
+export const MARKER = "Generated from Omarchy colors.toml (Option B)";
 
-/** Erzeugt ein libadwaita-Overlay (`gtk-4.0/gtk.css`) aus der Rollen-Palette. */
+/** Generates a libadwaita overlay (`gtk-4.0/gtk.css`) from the role palette. */
 export function renderGtk4(p: Palette): string {
   const bg = p.base;
   const surface = p.surface;
@@ -25,7 +25,7 @@ export function renderGtk4(p: Palette): string {
   const yellow = p.gold;
 
   return `/* ${MARKER} */
-/* Mapping: docs/architektur.md §3.3 */
+/* Mapping: docs/architecture.md §3.3 */
 @define-color accent_bg_color ${accent};
 @define-color accent_fg_color ${bg};
 @define-color accent_color ${accent};
@@ -65,9 +65,9 @@ export function renderGtk4(p: Palette): string {
 @define-color theme_selected_bg_color ${selection};
 @define-color theme_selected_fg_color ${fg};
 
-/* Kompakte Headerbars (Wunsch: flachere Menüleisten).
-   Hinweis: GTK-CSS unterstützt weder 'important' noch Fantasie-Typselektoren.
-   Valide, spezifische Selektoren, die libadwaita/GTK tatsächlich verarbeitet. */
+/* Compact headerbars (goal: flatter menubars).
+   Note: GTK CSS supports neither 'important' nor fantasy type selectors.
+   Valid, specific selectors that libadwaita/GTK actually processes. */
 window headerbar,
 window .header-bar,
 window .titlebar {
@@ -93,8 +93,8 @@ window .tab-box tab {
   padding-top: 0;
   padding-bottom: 0;
 }
-/* Scharfe Fensterecken (Wunsch: keine/möglichst geringe Rundung).
-   Wirkt für GTK4/CSD-Fenster (bestätigt per Test); mutter-Clip darüber bleibt. */
+/* Sharp window corners (goal: no/minimal rounding).
+   Applies to GTK4/CSD windows (confirmed by test); the mutter clip above remains. */
 window.csd,
 window {
   border-radius: 0;
@@ -107,9 +107,9 @@ windowcontrols button {
   padding: 0;
 }
 
-/* Tooltips: libadwaita kodiert Hintergrund/Text fest (dunkel/weiß) und kennt
-   keine Farbnamen. Hier explizit auf die Theme-Fläche/-Vordergrund umstellen,
-   konsistent zu GTK3. */
+/* Tooltips: libadwaita hardcodes background/text (dark/white) and knows
+   no color names. Here we switch explicitly to the theme surface/foreground,
+   consistent with GTK3. */
 tooltip,
 tooltip.background {
   background-color: ${surface};
@@ -124,14 +124,14 @@ tooltip label {
 
 export interface InstallGtk4Options {
   dry: boolean;
-  /** gtk-4.0-Verzeichnis (Default: $XDG_CONFIG_HOME|~/.config/gtk-4.0) */
+  /** gtk-4.0 directory (default: $XDG_CONFIG_HOME|~/.config/gtk-4.0) */
   gtk4Dir?: string;
 }
 
 /**
- * Installiert das Overlay nach `<gtk4Dir>/gtk.css`. Existiert bereits eine
- * gtk.css, wird sie nur erweitert, wenn sie unseren Marker trägt; sonst wird
- * abgebrochen statt fremde Inhalte zu überschreiben.
+ * Installs the overlay to `<gtk4Dir>/gtk.css`. If a gtk.css already exists,
+ * it is only extended when it carries our marker; otherwise the installation
+ * is aborted rather than overwriting foreign content.
  */
 export async function installGtk4(
   css: string,
@@ -141,7 +141,7 @@ export async function installGtk4(
   const cssFile = `${dir}/gtk.css`;
 
   if (opts.dry) {
-    console.log(`  dry-run: schreibe/erweitere ${cssFile}`);
+    console.log(`  dry-run: write/extend ${cssFile}`);
     return { cssFile, appended: false };
   }
 
@@ -157,25 +157,25 @@ export async function installGtk4(
   const loc = locateBlock(existing, MARKER);
   if (loc.kind === "absent" && existing) {
     throw new Error(
-      `${cssFile} existiert und stammt nicht von themeswitch — Abbruch statt Überschreiben. ` +
-        `Bitte manuell sichern/zusammenführen.`,
+      `${cssFile} exists and does not originate from themeswitch — aborting instead of overwriting. ` +
+        `Please back up/merge manually.`,
     );
   }
   if (loc.kind === "corrupt") {
     throw new Error(
-      `${cssFile} enthält den themeswitch-Marker ohne Kommentar-Opener — Abbruch statt Beschädigung.`,
+      `${cssFile} contains the themeswitch marker without a comment opener — aborting instead of corrupting.`,
     );
   }
 
   if (loc.kind === "found") {
-    // Unseren alten Block ersetzen (alles vor dem Marker behalten, Rest neu).
+    // Replace our old block (keep everything before the marker, recreate the rest).
     const head = existing.slice(0, loc.start).replace(/\s+$/u, "");
     await writeFile(cssFile, (head ? head + "\n\n" : "") + css);
-    console.log(`   ✓ libadwaita-Overlay aktualisiert: ${cssFile}`);
+    console.log(`   ✓ libadwaita overlay updated: ${cssFile}`);
     return { cssFile, appended: false };
   }
 
   await writeFile(cssFile, (existing ? existing.replace(/\s+$/u, "") + "\n\n" : "") + css);
-  console.log(`   ✓ libadwaita-Overlay geschrieben: ${cssFile}`);
+  console.log(`   ✓ libadwaita overlay written: ${cssFile}`);
   return { cssFile, appended: existing !== "" };
 }

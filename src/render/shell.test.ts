@@ -17,29 +17,29 @@ const base = parseColors(
 );
 const pal = resolvePalette(base);
 
-test("hexToRgba wandelt Dawn-Farben korrekt", () => {
+test("hexToRgba converts Dawn colors correctly", () => {
   expect(hexToRgba("#faf4ed", 0.85)).toBe("rgba(250, 244, 237, 0.85)");
   expect(hexToRgba("#575279", 1)).toBe("rgba(87, 82, 121, 1)");
 });
 
-test("hexToRgba akzeptiert Kurz- und 8-stellige Hex-Werte", () => {
+test("hexToRgba accepts short and 8-digit hex values", () => {
   expect(hexToRgba("#fff", 1)).toBe("rgba(255, 255, 255, 1)");
   expect(hexToRgba("#abc", 0.5)).toBe("rgba(170, 187, 204, 0.5)");
   expect(hexToRgba("#abcd", 1)).toBe("rgba(170, 187, 204, 1)");
   expect(hexToRgba("#faf4edff", 0.5)).toBe("rgba(250, 244, 237, 0.5)");
 });
 
-test("hexToRgba verweigert ungültiges Hex", () => {
+test("hexToRgba rejects invalid hex", () => {
   let msg = "";
   try {
-    hexToRgba("keine-farbe", 1);
+    hexToRgba("not-a-color", 1);
   } catch (e) {
     msg = String(e instanceof Error ? e.message : e);
   }
-  expect(msg).toContain("Ungültige Hex-Farbe");
+  expect(msg).toContain("Invalid hex color");
 });
 
-test("renderShellPaperwm färbt PaperWM-Topbar in Dawn", () => {
+test("renderShellPaperwm colors the PaperWM top bar in Dawn", () => {
   const css = renderShellPaperwm(pal);
   expect(css).toContain(".topbar-transparent-background");
   expect(css).toContain("rgba(250, 244, 237, 0.95)");
@@ -48,7 +48,7 @@ test("renderShellPaperwm färbt PaperWM-Topbar in Dawn", () => {
   expect(css).toContain(END_MARKER);
 });
 
-test("installShellPaperwm --dry-run schreibt nichts", async () => {
+test("installShellPaperwm --dry-run writes nothing", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg-sh-dry-"));
   const cssFile = join(dir, "user.css");
   await installShellPaperwm(renderShellPaperwm(pal), { dry: true, cssFile });
@@ -56,7 +56,7 @@ test("installShellPaperwm --dry-run schreibt nichts", async () => {
   expect(existing).toBeNull();
 });
 
-test("installShellPaperwm verweigert beschädigten Marker", async () => {
+test("installShellPaperwm rejects a corrupt marker", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg-sh-bad-"));
   const cssFile = join(dir, "user.css");
   await writeFile(cssFile, MARKER + "\n");
@@ -66,21 +66,21 @@ test("installShellPaperwm verweigert beschädigten Marker", async () => {
   } catch (e) {
     msg = String(e instanceof Error ? e.message : e);
   }
-  expect(msg).toContain("beschädigt");
+  expect(msg).toContain("corrupt");
 });
 
-test("installShellPaperwm erhält Fremdinhalt und ist idempotent", async () => {
+test("installShellPaperwm preserves foreign content and is idempotent", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg-sh-ok-"));
   const cssFile = join(dir, "user.css");
-  await writeFile(cssFile, "/* meine Notizen */\n.workspace-icon-button { padding: 4px; }\n");
+  await writeFile(cssFile, "/* my notes */\n.workspace-icon-button { padding: 4px; }\n");
 
   await installShellPaperwm(renderShellPaperwm(pal), { dry: false, cssFile });
   let text = await readFile(cssFile, "utf8");
-  expect(text).toContain("meine Notizen");
+  expect(text).toContain("my notes");
   expect(text).toContain("rgba(250, 244, 237, 0.95)");
 
   await installShellPaperwm(renderShellPaperwm(pal), { dry: false, cssFile });
   text = await readFile(cssFile, "utf8");
   expect(text.split(MARKER).length - 1).toBe(1);
-  expect(text).toContain("meine Notizen");
+  expect(text).toContain("my notes");
 });

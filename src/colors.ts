@@ -1,7 +1,7 @@
-// colors.ts — Omarchy colors.toml lesen und normalisieren (TS/Bun).
-// Ersetzt ./src/lib-colors.sh
+// colors.ts — read and normalize Omarchy colors.toml (TS/Bun).
+// Replaces ./src/lib-colors.sh
 
-/** Alle von Omarchy bekannten Schlüssel (nur diese werden übernommen). */
+/** All keys known to Omarchy (only these are adopted). */
 const KNOWN = new Set([
   "mode",
   "accent",
@@ -29,7 +29,7 @@ const KNOWN = new Set([
   "bright_cyan",
   "bright_blue",
   "bright_magenta",
-  // extended.toml: volle Rose-Pine-Rollen (Lückenfüller zu colors.toml)
+  // extended.toml: full Rose-Pine roles (gap fillers for colors.toml)
   "surface",
   "overlay",
   "subtle",
@@ -44,10 +44,10 @@ const KNOWN = new Set([
   "highlight_high",
 ]);
 
-/** Rohe Schlüssel→Wert-Karte aus einer colors.toml (nur bekannte Schlüssel). */
+/** Raw key→value map from a colors.toml (only known keys). */
 export type Colors = Record<string, string>;
 
-/** colors.toml-Text parsen. Unbekannte Zeilen/Keys werden ignoriert. */
+/** Parse colors.toml text. Unknown lines/keys are ignored. */
 export function parseColors(text: string): Colors {
   const out: Colors = {};
   const re = /^[ \t]*([A-Za-z_]+)[ \t]*=[ \t]*(.*)$/;
@@ -63,7 +63,7 @@ export function parseColors(text: string): Colors {
   return out;
 }
 
-/** Normalisierte Farbsemantik (wie Omarchy-`colors_semantic`). */
+/** Normalized color semantics (like Omarchy `colors_semantic`). */
 export interface Semantic {
   mode: string;
   background: string;
@@ -77,13 +77,13 @@ export interface Semantic {
   accent: string;
   selectionBg: string;
   muted: string;
-  /** 16 ANSI-Zellen 0..15 */
+  /** 16 ANSI cells 0..15 */
   ansi: string[];
 }
 
 const s = (c: Colors, k: string, fb = "#000000"): string => c[k] ?? fb;
 
-/** Aus einer geparsten colors.toml die normale Semantik ableiten. */
+/** Derive the normal semantics from a parsed colors.toml. */
 export function normalize(c: Colors): Semantic {
   const ansi = [
     s(c, "red"),
@@ -120,7 +120,7 @@ export function normalize(c: Colors): Semantic {
   };
 }
 
-/** normalisierte Semantik als zeilenweise KEY=VALUE (entspricht `parse`-Ausgabe). */
+/** Normalized semantics as line-by-line KEY=VALUE (matches `parse` output). */
 export function semanticLines(sem: Semantic): string {
   const rows: Array<[string, string]> = [
     ["MODE", sem.mode],

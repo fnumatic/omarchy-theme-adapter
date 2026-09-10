@@ -1,17 +1,17 @@
-# Quelle: Rose Pine (Dawn) — Omarchy Stock-Theme `colors.toml`
+# Source: Rose Pine (Dawn) — Omarchy stock theme `colors.toml`
 
-- **Repository:** https://github.com/omacom/omarchy (neues Primär-Repo, ehem. Zugriff via `basecamp/omarchy`)
+- **Repository:** https://github.com/omacom/omarchy (new primary repo, formerly accessed via `basecamp/omarchy`)
 - **Branch:** `quattro`
-- **Pfad:** `themes/rose-pine/colors.toml`
-- **Lizenz des Repos:** MIT
-- **Stand (Kommitsh):** siehe beim Import notieren — siehe git log dieses Repos.
-- **Bemerkung:** `mode = "light"`; Stock-Theme ist die helle *Dawn*-Variante. Fetcht am 2026-09-07 per raw.githubusercontent.com. Bei einem Upstream-Update hier bewusst erneut prüfen.
+- **Path:** `themes/rose-pine/colors.toml`
+- **License of the repo:** MIT
+- **State (commit hash):** note at import time — see the git log of this repo.
+- **Note:** `mode = "light"`; stock theme is the light *Dawn* variant. Fetched on 2026-09-07 via raw.githubusercontent.com. In case of an upstream update, deliberately re-check here.
 
-## Backgrounds (Default-Regel wie Omarchy)
+## Backgrounds (default rule as in Omarchy)
 
-Omarchy wählt beim Theme-Wechsel das erste der sortierten `backgrounds/` (`bin/omarchy-theme-set`):
-Default = **`1-funky-shapes.webp`**. Alle vier Dateien liegen unter `backgrounds/` (Stand 2026-09-07).
-Das Projekt ist jetzt generisch: `rosepine-gnome set <theme>` wendet jedes
-Omarchy-Theme (themes/<id>/colors.toml + optionale vscode.json/icons.theme/
-backgrounds) on-the-fly an. Weitere Themes: raw.githubusercontent.com/
-omacom/omarchy/quattro/themes/<name>/ … nach themes/<name>/ kopieren.
+Omarchy selects the first of the sorted `backgrounds/` on theme change (`bin/omarchy-theme-set`):
+Default = **`1-funky-shapes.webp`**. All four files are located under `backgrounds/` (as of 2026-09-07).
+The project is now generic: `rosepine-gnome set <theme>` applies any
+Omarchy theme (themes/<id>/colors.toml + optional vscode.json/icons.theme/
+backgrounds) on the fly. More themes: copy raw.githubusercontent.com/
+omacom/omarchy/quattro/themes/<name>/ … into themes/<name>/.

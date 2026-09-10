@@ -1,32 +1,32 @@
 # themeswitch
 
-Wende jedes **Omarchy-Theme** als Erscheinungsbild eines Ubuntu-GNOME-Systems an —
-aus dessen `colors.toml` (Option B: eigener GNOME-Adapter, **ohne** Omarchy/Hyprland).
-Ghostty-, GTK3-, GTK4- und PaperWM-Artefakte werden on-the-fly erzeugt; `mode`
-steuert `prefer-light`/`prefer-dark`, `icons.theme` das Icon-Theme.
+Apply any **Omarchy theme** as the appearance of an Ubuntu GNOME system —
+from its `colors.toml` (Option B: custom GNOME adapter, **without** Omarchy/Hyprland).
+Ghostty, GTK3, GTK4 and PaperWM artifacts are generated on the fly; `mode`
+controls `prefer-light`/`prefer-dark`, `icons.theme` controls the icon theme.
 
-> **Status:** funktionsfähig. **Interpreter:** TypeScript + [Bun](https://bun.sh) (`./bin/themeswitch`).
-> Siehe [PROJECT.md](./PROJECT.md) für das Projektkonzept und [docs/architektur.md](./docs/architektur.md).
+> **Status:** functional. **Interpreter:** TypeScript + [Bun](https://bun.sh) (`./bin/themeswitch`).
+> See [PROJECT.md](./PROJECT.md) for the project concept and [docs/architecture.md](./docs/architecture.md).
 
-## Voraussetzungen
-- [Bun](https://bun.sh) ≥ 1 (Interpreter)
+## Prerequisites
+- [Bun](https://bun.sh) ≥ 1 (interpreter)
 - Ubuntu 26.04 / GNOME
 
-## Nutzung
+## Usage
 ```bash
-bun install                        # Dev-Abhängigkeiten (@types/bun, css-tree)
-./bin/themeswitch themes                          # verfügbare Omarchy-Themes
-./bin/themeswitch set rose-pine --dry-run         # Vorschau für ein Theme
-./bin/themeswitch set catppuccin-latte            # Theme vollständig anwenden
-./bin/themeswitch set tokyo-night                 # … auch dunkle Themes (mode=dark)
-./bin/themeswitch reset --dry-run                 # Vorschau der Wiederherstellung
-./bin/themeswitch reset                           # Originalzustand aus Snapshot wiederherstellen
+bun install                        # Dev dependencies (@types/bun, css-tree)
+./bin/themeswitch themes                          # available Omarchy themes
+./bin/themeswitch set rose-pine --dry-run         # preview for a theme
+./bin/themeswitch set catppuccin-latte            # apply theme fully
+./bin/themeswitch set tokyo-night                 # … including dark themes (mode=dark)
+./bin/themeswitch reset --dry-run                 # preview the restore
+./bin/themeswitch reset                           # restore original state from snapshot
 ```
 
-## Quellen & Korrektur
-- Omarchy: [`omacom/omarchy`](https://github.com/omacom/omarchy) @ `quattro` (nicht `basecamp/omarchy`).
-- Themes unter [`themes/<id>/`](./themes): je `colors.toml` (Pflicht) + optionale `vscode.json`, `icons.theme`, `backgrounds/`.
-- Brain-Notiz: `~/dokumente/brain/brain/Atlas/Dots/Things/Rose Pine Dawn auf Ubuntu GNOME.md`
+## Sources & corrections
+- Omarchy: [`omacom/omarchy`](https://github.com/omacom/omarchy) @ `quattro` (not `basecamp/omarchy`).
+- Themes under [`themes/<id>/`](./themes): each with `colors.toml` (required) + optional `vscode.json`, `icons.theme`, `backgrounds/`.
+- Brain note: `~/dokumente/brain/brain/Atlas/Dots/Things/Rose Pine Dawn auf Ubuntu GNOME.md`
 
-## Lizenz
-MIT (in Anlehnung an Omarchy).
+## License
+MIT (inspired by Omarchy).

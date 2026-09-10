@@ -1,4 +1,4 @@
-// state.ts — Snapshot der Originaleinstellungen vor dem ersten Eingriff.
+// state.ts — snapshot of the original settings before the first intervention.
 import { readFile, writeFile } from "node:fs/promises";
 import type { GSettingsRunner } from "./gsettings.ts";
 import { ensureParent } from "./fsutil.ts";
@@ -27,11 +27,11 @@ export interface Snapshot {
   vscodeSettingsText: string | null;
   wallpaperPictureUri: string | null;
   wallpaperPictureUriDark: string | null;
-  /** Original des aktiven GNOME-Shell-Themes (User-Themes). */
+  /** Original of the active GNOME Shell theme (user themes). */
   userThemeName: string | null;
   paperwmUserCssExisted: boolean | null;
   paperwmUserCssText: string | null;
-  /** Zuletzt angewandtes Theme + generierte Artefakte (für Reset-Cleanup). */
+  /** Last applied theme + generated artifacts (for reset cleanup). */
   appliedTheme: AppliedTheme | null;
 }
 
@@ -46,7 +46,7 @@ export function statePath(overrideDir?: string): string {
   return stateFilePath(overrideDir);
 }
 
-/** Schreibt das zuletzt angewandte Theme in den Snapshot (für Reset-Cleanup). */
+/** Writes the last applied theme into the snapshot (for reset cleanup). */
 export async function setAppliedTheme(
   applied: AppliedTheme,
   overrideDir?: string,
@@ -68,7 +68,7 @@ export async function loadSnapshot(overrideDir?: string): Promise<Snapshot | nul
   }
 }
 
-/** Aktives GNOME-Shell-Theme (User-Themes) lesen — Schema-Dir ist Extension-spezifisch. */
+/** Read the active GNOME Shell theme (user themes) — schema dir is extension-specific. */
 async function readUserThemeName(): Promise<string | null> {
   const out = await Bun.spawnSync(["gsettings", "get", "org.gnome.shell.extensions.user-theme", "name"], {
     env: { ...process.env, GSETTINGS_SCHEMA_DIR: userThemeSchemaDir() },
@@ -86,9 +86,9 @@ async function readOptional(path: string): Promise<{ existed: boolean; text: str
 }
 
 /**
- * Erfasst den Originalzustand — aber nur, wenn noch kein Snapshot existiert.
- * Fehlen in einem alten Snapshot neuere Felder (Migration), werden sie aus dem
- * aktuellen System nacherfasst. Gibt zurück, ob neu geschrieben wurde.
+ * Captures the original state — but only if no snapshot exists yet.
+ * If newer fields are missing from an old snapshot (migration), they are
+ * captured afterward from the current system. Returns whether it was rewritten.
  */
 export async function ensureSnapshot(
   gs: GSettingsRunner,
@@ -96,7 +96,7 @@ export async function ensureSnapshot(
 ): Promise<{ created: boolean; snapshot: Snapshot }> {
   const existing = await loadSnapshot(overrideDir);
   if (existing) {
-    // Migration alter Snapshots (ohne neuere Felder)
+    // Migration of old snapshots (without newer fields)
     const raw = existing as unknown as Record<string, unknown>;
     const needsGtk4 = !("gtk4CssText" in raw);
     const needsLO = !("libreofficeConfigText" in raw);
@@ -133,7 +133,7 @@ export async function ensureSnapshot(
       const p = statePath(overrideDir);
       await ensureParent(p);
       await writeFile(p, JSON.stringify(migrated, null, 2) + "\n");
-      console.log("   ✓ Snapshot erweitert (Migration)");
+      console.log("   ✓ Snapshot extended (migration)");
       return { created: false, snapshot: migrated };
     }
     return { created: false, snapshot: existing };

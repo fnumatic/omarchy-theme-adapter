@@ -6,7 +6,7 @@ import { mkdtemp, readFile, mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-/** Ghostty-Theme-Name wie vom Theme-Resolver erzeugt (`<id>.conf`). */
+/** Ghostty theme name as produced by the theme resolver (`<id>.conf`). */
 const TEST_THEME = "test-theme.conf";
 
 let base: Colors;
@@ -36,7 +36,7 @@ bright_cyan = "#d7827e"`,
   pal = resolvePalette(base);
 });
 
-test("renderGhostty enthält Basis- und selection-Zeilen", () => {
+test("renderGhostty contains base and selection lines", () => {
   const out = renderGhostty(pal);
   expect(out).toContain("background = #faf4ed");
   expect(out).toContain("foreground = #575279");
@@ -44,7 +44,7 @@ test("renderGhostty enthält Basis- und selection-Zeilen", () => {
   expect(out).toContain("selection-background = #dfdad9");
 });
 
-test("renderGhostty: Palette 0..15 in Omarchy-Reihenfolge", () => {
+test("renderGhostty: palette 0..15 in Omarchy order", () => {
   const out = renderGhostty(pal);
   expect(out).toContain("palette = 0=#faf4ed"); // background
   expect(out).toContain("palette = 1=#b4637a"); // red
@@ -56,11 +56,11 @@ test("renderGhostty: Palette 0..15 in Omarchy-Reihenfolge", () => {
   expect(out).toContain("palette = 15=#575279"); // bright_foreground
 });
 
-test("renderGhostty endet mit newline", () => {
+test("renderGhostty ends with newline", () => {
   expect(renderGhostty(pal).endsWith("\n")).toBe(true);
 });
 
-test("installGhostty --dry-run ändert nichts auf der Platte", async () => {
+test("installGhostty --dry-run changes nothing on disk", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg-dry-"));
   const res = await installGhostty(renderGhostty(pal), {
     dry: true,
@@ -72,7 +72,7 @@ test("installGhostty --dry-run ändert nichts auf der Platte", async () => {
   expect(existing).toBeNull();
 });
 
-test("installGhostty schreibt Theme und setzt theme-Zeile (mit Backup)", async () => {
+test("installGhostty writes theme and sets theme line (with backup)", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg-inst-"));
   await mkdir(join(dir, "themes"), { recursive: true });
   const cfgPath = join(dir, "config");
@@ -84,17 +84,17 @@ test("installGhostty schreibt Theme und setzt theme-Zeile (mit Backup)", async (
     themeName: TEST_THEME,
   });
 
-  // Theme-Datei und theme-Referenz sind identisch (Ghostty listet User-Themes MIT Endung)
+  // Theme file and theme reference are identical (Ghostty lists user themes WITH extension)
   expect(res.themeFile.endsWith(`/${TEST_THEME}`)).toBe(true);
   const themeText = await readFile(join(dir, "themes", TEST_THEME), "utf8");
   expect(themeText).toContain("palette = 13=#907aa9");
 
-  // Config: theme ersetzt
+  // Config: theme replaced
   const newCfg = await readFile(cfgPath, "utf8");
   expect(newCfg).toContain(`theme = ${TEST_THEME}`);
   expect(newCfg).not.toContain("GitHub Light");
 
-  // Backup vorhanden mit Original
+  // Backup present with original
   expect(res.backupFile).toBeDefined();
   const backupText = await readFile(res.backupFile!, "utf8");
   expect(backupText).toContain("GitHub Light");

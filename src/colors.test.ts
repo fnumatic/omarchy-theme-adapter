@@ -15,7 +15,7 @@ green = "#286983"
 yellow = "#ea9d34"
 bright_magenta = "#907aa9"`;
 
-test("parseColors liest bekannte Schlüssel und entfernt Anführungszeichen", () => {
+test("parseColors reads known keys and removes quotes", () => {
   const c = parseColors(SAMPLE);
   expect(c.mode).toBe("light");
   expect(c.background).toBe("#faf4ed");
@@ -24,29 +24,29 @@ test("parseColors liest bekannte Schlüssel und entfernt Anführungszeichen", ()
   expect(c.bright_magenta).toBe("#907aa9");
 });
 
-test("parseColors übernimmt keine unbekannten Schlüssel", () => {
+test("parseColors does not adopt unknown keys", () => {
   const c = parseColors(`${SAMPLE}\nunknown_key = "#123456"\n`);
   expect(c["unknown_key"]).toBeUndefined();
 });
 
-test("parseColors ignoriert Kommentare und leere Zeilen", () => {
-  const c = parseColors(`# Kommentar\n\nmode = "light"\n`);
+test("parseColors ignores comments and blank lines", () => {
+  const c = parseColors(`# comment\n\nmode = "light"\n`);
   expect(c.mode).toBe("light");
 });
 
-test("parseColors trimmt nachfolgende Leerzeichen in Werten", () => {
+test("parseColors trims trailing whitespace in values", () => {
   const c = parseColors('background = "#faf4ed"   \n');
   expect(c.background).toBe("#faf4ed");
 });
 
-test("parseColors verarbeitet letzte Zeile ohne abschließendes Newline", () => {
+test("parseColors handles last line without trailing newline", () => {
   const withNewline = `${SAMPLE}\nbright_magenta = "#907aa9"\n`;
-  const without = `${SAMPLE}\nbright_magenta = "#907aa9"`; // kein trailing \n
+  const without = `${SAMPLE}\nbright_magenta = "#907aa9"`; // no trailing \n
   expect(parseColors(withNewline).bright_magenta).toBe("#907aa9");
   expect(parseColors(without).bright_magenta).toBe("#907aa9");
 });
 
-test("normalize liefert 16 ANSI-Zellen mit korrekter Reihenfolge", () => {
+test("normalize returns 16 ANSI cells in correct order", () => {
   const c = parseColors(SAMPLE);
   const s = normalize(c);
   expect(s.ansi).toHaveLength(16);
@@ -59,14 +59,14 @@ test("normalize liefert 16 ANSI-Zellen mit korrekter Reihenfolge", () => {
   expect(s.background).toBe("#faf4ed");
 });
 
-test("normalize: orange/brown-Fallback, wenn yellow fehlt", () => {
+test("normalize: orange/brown fallback when yellow is missing", () => {
   const c = parseColors('red = "#b4637a"\ngreen = "#286983"\n');
   const s = normalize(c);
-  // Zelle 3 (gelb) fällt auf Default zurück, wenn kein yellow/brown
+  // Cell 3 (yellow) falls back to default when there is no yellow/brown
   expect(s.ansi[3]).toBeDefined();
 });
 
-test("semanticLines enthält MODE-, Basisfarben- und ANSI-Zeilen", () => {
+test("semanticLines contains MODE, base color, and ANSI lines", () => {
   const s = normalize(parseColors(SAMPLE));
   const lines = semanticLines(s);
   expect(lines).toContain("MODE=light");

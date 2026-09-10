@@ -1,26 +1,26 @@
-# extended.toml — Rose Pine Dawn: volle 15 Rollen des offiziellen Designsystems.
-# Quelle: https://github.com/rose-pine/palette/blob/main/palette.json (+ Spec:
-# https://github.com/rose-pine/palette — Rollen mit Verwendung).
+# extended.toml — Rose Pine Dawn: full 15 roles of the official design system.
+# Source: https://github.com/rose-pine/palette/blob/main/palette.json (+ spec:
+# https://github.com/rose-pine/palette — roles with usage).
 #
-# Diese Datei füllt nur LÜCKEN. Vorrang hat immer colors.toml:
-#   1. colors.toml (Omarchy-Keys; teils bewusst abweichend, z. B. foreground
-#      #575279 statt offiziellem text #464261, muted #cecacd = highlight_high)
-#   2. extended.toml (diese Datei, offizielle Rollenwerte)
-#   3. ROLE_SOURCES-Fallbackketten in src/palette.ts
+# This file only fills GAPS. colors.toml always takes precedence:
+#   1. colors.toml (Omarchy keys; partly deliberately deviating, e.g. foreground
+#      #575279 instead of the official text #464261, muted #cecacd = highlight_high)
+#   2. extended.toml (this file, official role values)
+#   3. ROLE_SOURCES fallback chains in src/palette.ts
 #
-# Die Auflösung ist deklarativ in src/palette.ts (ROLE_SOURCES) geregelt;
-# Renderer arbeiten nur noch mit Rollennamen (Palette), nie mit Roh-Keys.
+# The resolution is governed declaratively in src/palette.ts (ROLE_SOURCES);
+# renderers work only with role names (Palette), never with raw keys.
 
 mode = "light"
 
-# --- Flächen-Rollen (offiziell) ---
+# --- Surface roles (official) ---
 surface = "#fffaf3"
 overlay = "#f2e9e1"
 
-# --- Vordergrund-Rollen (offiziell) ---
+# --- Foreground roles (official) ---
 subtle = "#797593"
 
-# --- Akzent-Rollen (offiziell; usage siehe palette-Spec) ---
+# --- Accent roles (official; usage see palette spec) ---
 love = "#b4637a"
 gold = "#ea9d34"
 rose = "#d7827e"
@@ -28,8 +28,8 @@ pine = "#286983"
 foam = "#56949f"
 iris = "#907aa9"
 
-# --- Highlight-Rollen (offiziell; im Upstream als Alpha-Overlays definiert,
-# hier die etablierten Dawn-Hexwerte; konsistent zu selection/muted) ---
+# --- Highlight roles (official; defined upstream as alpha overlays,
+# here the established Dawn hex values; consistent with selection/muted) ---
 highlight_low = "#f4ede8"
 highlight_med = "#dfdad9"
 highlight_high = "#cecacd"

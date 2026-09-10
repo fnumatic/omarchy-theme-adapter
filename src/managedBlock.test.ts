@@ -4,12 +4,12 @@ import { locateBlock } from "./managedBlock.ts";
 const M = "themeswitch: Testblock";
 const E = "themeswitch: Ende Testblock";
 
-test("locateBlock: absent ohne Marker", () => {
+test("locateBlock: absent without marker", () => {
   expect(locateBlock("a { color: red; }\n", M, E)).toEqual({ kind: "absent" });
 });
 
-test("locateBlock: found mit Start- und Endmarker", () => {
-  const css = `/* fremd */\n/* ${M} */\n.x { color: red; }\n/* ${E} */\n`;
+test("locateBlock: found with start and end marker", () => {
+  const css = `/* foreign */\n/* ${M} */\n.x { color: red; }\n/* ${E} */\n`;
   const loc = locateBlock(css, M, E);
   expect(loc.kind).toBe("found");
   if (loc.kind === "found") {
@@ -17,8 +17,8 @@ test("locateBlock: found mit Start- und Endmarker", () => {
   }
 });
 
-test("locateBlock: found ohne Endmarker reicht bis Dateiende", () => {
-  const css = `/* fremd */\n/* ${M} */\n.x { color: red; }\n`;
+test("locateBlock: found without end marker extends to end of file", () => {
+  const css = `/* foreign */\n/* ${M} */\n.x { color: red; }\n`;
   const loc = locateBlock(css, M);
   expect(loc.kind).toBe("found");
   if (loc.kind === "found") {
@@ -26,10 +26,10 @@ test("locateBlock: found ohne Endmarker reicht bis Dateiende", () => {
   }
 });
 
-test("locateBlock: corrupt bei Marker ohne Kommentar-Opener", () => {
-  expect(locateBlock(`${M} ohne opener\n`, M)).toEqual({ kind: "corrupt" });
+test("locateBlock: corrupt on marker without comment opener", () => {
+  expect(locateBlock(`${M} without opener\n`, M)).toEqual({ kind: "corrupt" });
 });
 
-test("locateBlock: corrupt bei fehlendem Endmarker", () => {
+test("locateBlock: corrupt on missing end marker", () => {
   expect(locateBlock(`/* ${M} */\n.x { color: red; }\n`, M, E)).toEqual({ kind: "corrupt" });
 });

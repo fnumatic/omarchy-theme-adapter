@@ -1,15 +1,15 @@
-// render/gtk3.ts — GTK3-Theme aus colors.toml rendern + installieren (Option B).
-// Mapping siehe docs/architektur.md §3.2.
+// render/gtk3.ts — render + install GTK3 theme from colors.toml (Option B).
+// Mapping see docs/architecture.md §3.2.
 import type { Palette } from "../palette.ts";
 import { mkdir, writeFile } from "node:fs/promises";
 import { realGSettings, type GSettingsRunner } from "../gsettings.ts";
 import { assertValidCss } from "../cssutil.ts";
 import { userThemesDir } from "../paths.ts";
 
-/** Default-/Referenzname des GTK-Themes (Verzeichnis unter ~/.themes) — entspricht `pascal("rose-pine")`. */
+/** Default/reference name of the GTK theme (directory under ~/.themes) — corresponds to `pascal("rose-pine")`. */
 export const GTK3_THEME_NAME = "RosePine";
 
-/** Erzeugt ein `gtk-3.0/gtk.css` aus der aufgelösten Rollen-Palette. */
+/** Generates a `gtk-3.0/gtk.css` from the resolved role palette. */
 export function renderGtk3(p: Palette): string {
   const bg = p.base;
   const base = p.surface;
@@ -19,9 +19,9 @@ export function renderGtk3(p: Palette): string {
   const muted = p.highlight_high;
   const selection = p.highlight_med;
 
-  return `/* Generiert aus Omarchy colors.toml (Option B) */
-/* Basis: eingebautes GTK3-Adwaita (immer verfügbar) als volle Struktur;
-   darüber legt dieser Block den Rose-Pine-Recolor + Kompaktierung. */
+  return `/* Generated from Omarchy colors.toml (Option B) */
+/* Base: built-in GTK3 Adwaita (always available) as the full structure;
+   this block layers the Rose Pine recolor + compaction on top. */
 @import url("resource:///org/gtk/libgtk/theme/Adwaita/gtk-contained.css");
 @define-color theme_base_color ${base};
 @define-color theme_bg_color ${bg};
@@ -40,10 +40,10 @@ export function renderGtk3(p: Palette): string {
 @define-color theme_tooltip_bg_color ${base};
 @define-color theme_tooltip_fg_color ${fg};
 
-/* Konkrete Blöcke für gängigste Widgets (heller Dawn-Look) */
+/* Concrete blocks for the most common widgets (light Dawn look) */
 .window-frame, .window-frame:backdrop { box-shadow: none; border-width: 0; }
-/* Opaker Toplevel-Hintergrund — ohne ihn zeichnen GTK3-Fenster (z. B. alacarte,
-   menulibre) transparent durchscheinend. */
+/* Opaque toplevel background — without it GTK3 windows (e.g. alacarte,
+   menulibre) render transparently. */
 window, window.background,
 .background,
 dialog, dialog.background {
@@ -55,8 +55,8 @@ entry { color: ${fg}; background-color: ${base}; }
 treeview, list, row { background-color: ${bg}; color: ${fg}; }
 label { color: ${fg}; }
 
-/* Kompakte Headerbars/Menüleisten (Wunsch: flachere Leisten).
-   Kein !important — GTK-CSS unterstützt das nicht. */
+/* Compact headerbars/menubars (goal: flatter bars).
+   No !important — GTK CSS does not support it. */
 headerbar, .header-bar, .titlebar, menubar {
   min-height: 24px;
   padding-top: 0;
@@ -81,10 +81,10 @@ windowcontrols button {
 }
 menubar, menuitem { padding-top: 1px; padding-bottom: 1px; }
 
-/* Tooltips: Adwaita nutzt einen dunklen Tooltip mit weißem Text. Das globale
-   label-Recolor oben hat denselben Selektor-Spezifitätswert und steht danach,
-   überschreibt also tooltip * → dunkler Text auf dunklem Grund. Hier explizit
-   auf die Theme-Fläche/-Vordergrund setzen (Regeln stehen am Ende → gewinnen). */
+/* Tooltips: Adwaita uses a dark tooltip with white text. The global
+   label recolor above has the same selector specificity and comes after it,
+   so it overrides tooltip * → dark text on a dark background. Here we set it
+   explicitly to the theme surface/foreground (rules come last → they win). */
 tooltip,
 tooltip.background {
   background-color: ${base};
@@ -99,11 +99,11 @@ tooltip * {
 `;
 }
 
-/** Stylesheet-Zeile `Themes=...`/index.theme (Metathema-Minimalinhalt). */
+/** Stylesheet line `Themes=...`/index.theme (minimal metatheme content). */
 export function renderIndexTheme(name: string = GTK3_THEME_NAME): string {
   return `[Desktop Entry]
 Name=${name}
-Comment=Rose Pine Dawn (aus Omarchy colors.toml, Option B)
+Comment=Rose Pine Dawn (from Omarchy colors.toml, Option B)
 Encoding=UTF-8
 Type=X-GNOME-Metatheme
 GtkTheme=${name}
@@ -112,14 +112,14 @@ GtkTheme=${name}
 
 export interface InstallGtk3Options {
   dry: boolean;
-  /** Oberverzeichnis für Themes (Default: ~/.themes) */
+  /** Parent directory for themes (default: ~/.themes) */
   themesDir?: string;
-  /** GTK-Theme-Name (Default: GTK3_THEME_NAME) — für andere Omarchy-Themes */
+  /** GTK theme name (default: GTK3_THEME_NAME) — for other Omarchy themes */
   name?: string;
   gs?: GSettingsRunner;
 }
 
-/** Setzt gtk-theme. Gibt exitCode zurück (oder -1 bei dry). */
+/** Sets gtk-theme. Returns exitCode (or -1 on dry). */
 async function setGtkTheme(gs: GSettingsRunner, name: string, dry: boolean): Promise<number> {
   if (dry) {
     console.log(`  dry-run: gsettings set org.gnome.desktop.interface gtk-theme '${name}'`);
@@ -129,8 +129,8 @@ async function setGtkTheme(gs: GSettingsRunner, name: string, dry: boolean): Pro
 }
 
 /**
- * Installiert das GTK3-Theme nach `<themesDir>/<GTK3_THEME_NAME>/` und setzt das
- * gtk-theme via gsettings. Bei dry=true wird nichts geschrieben.
+ * Installs the GTK3 theme to `<themesDir>/<GTK3_THEME_NAME>/` and sets the
+ * gtk-theme via gsettings. With dry=true nothing is written.
  */
 export async function installGtk3(
   css: string,
@@ -143,20 +143,20 @@ export async function installGtk3(
 
   const gs = opts.gs ?? realGSettings;
   if (opts.dry) {
-    console.log(`  dry-run: schreibe ${cssFile}`);
-    console.log(`  dry-run: schreibe ${indexFile}`);
+    console.log(`  dry-run: write ${cssFile}`);
+    console.log(`  dry-run: write ${indexFile}`);
     await setGtkTheme(gs, name, true);
     return { cssFile, indexFile };
   }
 
-  assertValidCss(css, `GTK3-Theme ${name}`);
+  assertValidCss(css, `GTK3 theme ${name}`);
   await mkdir(`${themesDir}/${name}/gtk-3.0`, { recursive: true });
   await writeFile(cssFile, css);
   await writeFile(indexFile, renderIndexTheme(name));
-  console.log(`   ✓ GTK3-Theme geschrieben: ${cssFile}`);
+  console.log(`   ✓ GTK3 theme written: ${cssFile}`);
 
   const code = await setGtkTheme(gs, name, false);
-  if (code !== 0) console.warn(`   [!] gsettings gtk-theme fehlgeschlagen (${code})`);
-  else console.log(`   ✓ gtk-theme gesetzt: ${name}`);
+  if (code !== 0) console.warn(`   [!] gsettings gtk-theme failed (${code})`);
+  else console.log(`   ✓ gtk-theme set: ${name}`);
   return { cssFile, indexFile };
 }

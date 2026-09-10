@@ -1,15 +1,15 @@
-// palette.ts — deklarative Rollenauflösung für Rose-Pine-Themes.
+// palette.ts — declarative role resolution for Rose-Pine themes.
 //
-// Statt verstreuter `v(c, "dark_background", bg)`-Ketten in jedem Renderer gibt
-// es genau EINE Tabelle (ROLE_SOURCES): Rose-Pine-Rolle → Kandidaten-Keys in
-// den gemergten Theme-Farben (colors.toml gewinnt, extended.toml füllt Lücken).
-// Renderer arbeiten nur mit Rollennamen (Palette).
+// Instead of scattered `v(c, "dark_background", bg)` chains in every renderer,
+// there is exactly ONE table (ROLE_SOURCES): Rose-Pine role → candidate keys in
+// the merged theme colors (colors.toml wins, extended.toml fills gaps).
+// Renderers work only with role names (Palette).
 //
-// Rollen und Verwendung: https://github.com/rose-pine/palette (Spec).
+// Roles and usage: https://github.com/rose-pine/palette (spec).
 import type { Colors } from "./colors.ts";
 import { parseColors } from "./colors.ts";
 
-/** Die 15 kanonischen Rose-Pine-Rollen. */
+/** The 15 canonical Rose-Pine roles. */
 export const ROSE_PINE_ROLES = [
   "base",
   "surface",
@@ -31,10 +31,10 @@ export const ROSE_PINE_ROLES = [
 export type Role = (typeof ROSE_PINE_ROLES)[number];
 
 /**
- * Deklarative Fallbackketten: Rolle → Roh-Keys (erster Treffer gewinnt).
- * Reihenfolge bevorzugt bewusst die Keys, die Renderer bisher nutzten, damit
- * bestehende Themes ihr Aussehen behalten; extended.toml-Rollen greifen dort,
- * wo Omarchy-Keys fehlen.
+ * Declarative fallback chains: role → raw keys (first match wins).
+ * The order deliberately prefers the keys renderers used so far, so that
+ * existing themes keep their look; extended.toml roles take effect where
+ * Omarchy keys are missing.
  */
 export const ROLE_SOURCES: Record<Role, string[]> = {
   base: ["background"],
@@ -54,19 +54,19 @@ export const ROLE_SOURCES: Record<Role, string[]> = {
   highlight_high: ["muted", "highlight_high"],
 };
 
-/** Omarchy-weite Auswahl des aktiven Akzents (keine Rose-Pine-Rolle). */
+/** Omarchy-wide selection of the active accent (not a Rose-Pine role). */
 const ACCENT_SOURCES = ["accent", "foam", "iris"];
 
-/** Vollständig aufgelöste Palette: nur Rollennamen, keine Roh-Keys. */
+/** Fully resolved palette: only role names, no raw keys. */
 export interface Palette extends Record<Role, string> {
   mode: string;
-  /** Aktiver Akzent (Omarchy-`accent`, z. B. Dawn-Foam). */
+  /** Active accent (Omarchy `accent`, e.g. Dawn Foam). */
   accent: string;
-  /** 16 Terminalzellen in Ghostty-Reihenfolge (Omarchy-Template-exakt). */
+  /** 16 terminal cells in Ghostty order (Omarchy template exact). */
   ansi16: string[];
 }
 
-/** Ghostty-Palettenreihenfolge: Index → Roh-Key (Omarchy-Template). */
+/** Ghostty palette order: index → raw key (Omarchy template). */
 const ANSI16_KEYS = [
   "background",
   "red",
@@ -86,12 +86,12 @@ const ANSI16_KEYS = [
   "bright_foreground",
 ];
 
-/** Kern-Keys, ohne die die Palette auf den #000000-Fallback zurückfällt. */
+/** Core keys without which the palette falls back to #000000. */
 export function missingCoreColors(c: Colors): string[] {
   return ["background", "foreground"].filter((k) => !c[k]);
 }
 
-/** Erster Treffer aus der Kette, sonst Fallback. */
+/** First match from the chain, otherwise fallback. */
 function first(c: Colors, chain: string[], fb: string): string {
   for (const k of chain) {
     const val = c[k];
@@ -100,7 +100,7 @@ function first(c: Colors, chain: string[], fb: string): string {
   return fb;
 }
 
-/** Löst alle Rollen aus gemergten Theme-Farben auf. */
+/** Resolves all roles from merged theme colors. */
 export function resolvePalette(c: Colors): Palette {
   const p = {} as Record<Role, string>;
   for (const role of ROSE_PINE_ROLES) {
@@ -112,8 +112,8 @@ export function resolvePalette(c: Colors): Palette {
 }
 
 /**
- * Mergt colors.toml + extended.toml: colors.toml gewinnt, extended.toml füllt
- * nur Lücken (fehlende Keys). Gibt die gemergten Roh-Farben zurück.
+ * Merges colors.toml + extended.toml: colors.toml wins, extended.toml only
+ * fills gaps (missing keys). Returns the merged raw colors.
  */
 export function mergeThemeColors(colorsText: string, extendedText: string | null): Colors {
   const merged = parseColors(extendedText ?? "");

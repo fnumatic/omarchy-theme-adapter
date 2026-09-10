@@ -1,18 +1,18 @@
-// render/wallpaper.ts — Rose-Pine-Wallpaper setzen (Option B).
+// render/wallpaper.ts — set the Rose-Pine wallpaper (Option B).
 //
-// Omarchy-Logik (bin/omarchy-theme-set): sortierte backgrounds/-Liste, beim
-// Theme-Wechsel das erste → Default = 1-funky-shapes.webp. GNOME-Umsetzung:
-// picture-uri + picture-uri-dark per gsettings (file://-URI).
+// Omarchy logic (bin/omarchy-theme-set): sorted backgrounds/ list, on theme
+// switch the first one → default = 1-funky-shapes.webp. GNOME implementation:
+// picture-uri + picture-uri-dark via gsettings (file:// URI).
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { realGSettings, type GSettingsRunner } from "../gsettings.ts";
 
-/** Omarchy-Default-Regel: erstes der sortierten backgrounds (dynamisch). */
+/** Omarchy default rule: first of the sorted backgrounds (dynamic). */
 export const DEFAULT_WALLPAPER = "";
 
 export function backgroundsDir(): string {
-  // src/render → ../../themes/rose-pine/backgrounds (Default-Theme)
+  // src/render → ../../themes/rose-pine/backgrounds (default theme)
   return join(fileURLToPath(new URL(".", import.meta.url)), "..", "..", "themes", "rose-pine", "backgrounds");
 }
 
@@ -25,13 +25,13 @@ export async function listWallpapers(dir?: string): Promise<string[]> {
 
 export interface InstallWallpaperOptions {
   dry: boolean;
-  /** Dateiname in backgrounds/ (Default: bevorzugt 2-dot-map.webp, sonst erste sortierte) */
+  /** File name in backgrounds/ (default: prefer 2-dot-map.webp, otherwise the first sorted) */
   name?: string;
   backgrounds?: string;
   gs?: GSettingsRunner;
 }
 
-/** Bevorzugter Default (Dot-Map) — falls im Theme vorhanden. */
+/** Preferred default (dot map) — if present in the theme. */
 export const PREFERRED_DEFAULT = "2-dot-map.webp";
 
 export async function installWallpaper(
@@ -44,7 +44,7 @@ export async function installWallpaper(
     (available.includes(PREFERRED_DEFAULT) ? PREFERRED_DEFAULT : available[0] ?? DEFAULT_WALLPAPER);
   if (!available.includes(name)) {
     throw new Error(
-      `Wallpaper '${name}' nicht in ${dir} gefunden. Verfügbar: ${available.join(", ") || "(keine)"}`,
+      `Wallpaper '${name}' not found in ${dir}. Available: ${available.join(", ") || "(none)"}`,
     );
   }
   const gs = opts.gs ?? realGSettings;
@@ -58,8 +58,8 @@ export async function installWallpaper(
 
   for (const key of ["picture-uri", "picture-uri-dark"] as const) {
     const code = await gs.set("org.gnome.desktop.background", key, `'${uri}'`);
-    if (code !== 0) throw new Error(`gsettings ${key} fehlgeschlagen (${code})`);
+    if (code !== 0) throw new Error(`gsettings ${key} failed (${code})`);
   }
-  console.log(`   ✓ Wallpaper gesetzt: ${name}`);
+  console.log(`   ✓ Wallpaper set: ${name}`);
   return { file, uri };
 }

@@ -10,7 +10,7 @@ const SAMPLE =
 const noLO = async () => false;
 const yesLO = async () => true;
 
-test("installLibreOffice verweigert bei laufendem LO", async () => {
+test("installLibreOffice refuses while LO is running", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg-lo-"));
   const cfg = join(dir, "registrymodifications.xcu");
   await writeFile(cfg, SAMPLE);
@@ -20,11 +20,11 @@ test("installLibreOffice verweigert bei laufendem LO", async () => {
   } catch (e) {
     msg = String(e instanceof Error ? e.message : e);
   }
-  expect(msg).toContain("läuft noch");
+  expect(msg).toContain("still running");
   expect(await readFile(cfg, "utf8")).toBe(SAMPLE);
 });
 
-test("installLibreOffice --dry-run ändert nichts", async () => {
+test("installLibreOffice --dry-run changes nothing", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg-lo-dry-"));
   const cfg = join(dir, "registrymodifications.xcu");
   await writeFile(cfg, SAMPLE);
@@ -32,7 +32,7 @@ test("installLibreOffice --dry-run ändert nichts", async () => {
   expect(await readFile(cfg, "utf8")).toBe(SAMPLE);
 });
 
-test("installLibreOffice setzt Automatic (mit Backup)", async () => {
+test("installLibreOffice sets Automatic (with backup)", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg-lo-ok-"));
   const cfg = join(dir, "registrymodifications.xcu");
   await writeFile(cfg, SAMPLE);
@@ -45,7 +45,7 @@ test("installLibreOffice setzt Automatic (mit Backup)", async () => {
   expect(res.changed).toBe(true);
 });
 
-test("installLibreOffice ist idempotent", async () => {
+test("installLibreOffice is idempotent", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg-lo-idem-"));
   const cfg = join(dir, "registrymodifications.xcu");
   await writeFile(cfg, SAMPLE);

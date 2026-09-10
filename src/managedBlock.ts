@@ -1,9 +1,9 @@
-// managedBlock.ts — Auffinden und Verwalten markierter CSS-Blöcke.
+// managedBlock.ts — locating and managing marked CSS blocks.
 //
-// GTK4-Overlay und PaperWM-user.css werden über Kommentar-Marker verwaltet.
-// Beide Installationen (und der Reset) müssen denselben Marker zuverlässig
-// finden und „Marker ohne Kommentar-Opener" als beschädigt erkennen, statt die
-// Datei per slice(0, -1) still zu beschädigen.
+// The GTK4 overlay and PaperWM user.css are managed via comment markers.
+// Both installations (and the reset) must reliably find the same marker and
+// recognize "marker without comment opener" as corrupted, instead of silently
+// corrupting the file via slice(0, -1).
 
 export type BlockLocation =
   | { kind: "absent" }
@@ -11,15 +11,15 @@ export type BlockLocation =
   | { kind: "found"; start: number; end: number };
 
 /**
- * Sucht einen von themeswitch verwalteten Block.
+ * Searches for a block managed by themeswitch.
  *
- * @param marker    Markertext ohne `/* ` (z. B. "themeswitch: …").
- * @param endMarker Optionaler Endmarker ohne `/* ` und ` *\/`.
+ * @param marker    Marker text without `/* ` (e.g. "themeswitch: …").
+ * @param endMarker Optional end marker without `/* ` and ` *\/`.
  *
- * Rückgabe:
- *  - `absent`  Marker kommt nicht vor
- *  - `corrupt` Marker kommt vor, aber Kommentar-Opener bzw. Endmarker fehlt
- *  - `found`   `start` = Index des Openers, `end` = Index direkt hinter dem Block
+ * Returns:
+ *  - `absent`  marker does not occur
+ *  - `corrupt` marker occurs, but the comment opener or end marker is missing
+ *  - `found`   `start` = index of the opener, `end` = index directly after the block
  */
 export function locateBlock(text: string, marker: string, endMarker?: string): BlockLocation {
   if (!text.includes(marker)) return { kind: "absent" };

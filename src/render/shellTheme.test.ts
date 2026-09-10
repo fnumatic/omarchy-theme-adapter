@@ -19,7 +19,7 @@ const base = parseColors(
 );
 const pal = resolvePalette(base);
 
-test("renderShellOverride enthält Rose-Pine-Farben für Kernflächen", () => {
+test("renderShellOverride contains Rose-Pine colors for core surfaces", () => {
   const css = renderShellOverride(pal);
   expect(css).toContain("#panel");
   expect(css).toContain("background-color: transparent");
@@ -35,19 +35,19 @@ test("renderShellOverride enthält Rose-Pine-Farben für Kernflächen", () => {
   expect(css).toContain("-barlevel-active-background-color: #56949f");
 });
 
-test("renderShellTheme hängt Override an eine vollständige Basis an (valid)", () => {
-  const full = renderShellTheme("/* basis */\nstage { color: #222; }", renderShellOverride(pal));
-  expect(full.startsWith("/* basis */")).toBe(true);
+test("renderShellTheme appends the override to a complete base (valid)", () => {
+  const full = renderShellTheme("/* base */\nstage { color: #222; }", renderShellOverride(pal));
+  expect(full.startsWith("/* base */")).toBe(true);
   assertValidCss(full, "shell-theme");
 });
 
-test("assertValidCss akzeptiert das gerenderte Theme (praktische Strukturprüfung)", () => {
-  // assertValidCss nutzt css-trees onParseError; das erwiesenermaßen valide Theme
-  // darf nie abgelehnt werden. Definitiver Maßstab bleibt GNOME Shell (Journal) beim Laden.
+test("assertValidCss accepts the rendered theme (practical structure check)", () => {
+  // assertValidCss uses css-tree's onParseError; the proven-valid theme
+  // must never be rejected. The definitive benchmark remains GNOME Shell (journal) at load time.
   assertValidCss(renderShellTheme("stage {}\n", renderShellOverride(pal)), "shell-theme");
 });
 
-test("installShellTheme schreibt Datei, validiert CSS und setzt User-Themes (mock)", async () => {
+test("installShellTheme writes the file, validates CSS and sets User Themes (mock)", async () => {
   const home = await mkdtemp(join(tmpdir(), "rpg-shtheme-"));
   const themesDir = join(home, "themes");
   const gs = fakeGSettings({});
@@ -67,7 +67,7 @@ test("installShellTheme schreibt Datei, validiert CSS und setzt User-Themes (moc
   await rm(home, { recursive: true, force: true });
 });
 
-test("installShellTheme --dry-run schreibt nichts", async () => {
+test("installShellTheme --dry-run writes nothing", async () => {
   const home = await mkdtemp(join(tmpdir(), "rpg-shtheme-dry-"));
   const themesDir = join(home, "themes");
   const gs = fakeGSettings();
@@ -81,6 +81,6 @@ test("installShellTheme --dry-run schreibt nichts", async () => {
   await rm(home, { recursive: true, force: true });
 });
 
-test("shellThemeName hängt 'Shell' an", () => {
+test("shellThemeName appends 'Shell'", () => {
   expect(shellThemeName("RosePine")).toBe("RosePineShell");
 });

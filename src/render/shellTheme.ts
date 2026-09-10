@@ -1,18 +1,18 @@
-// render/shellTheme.ts — GNOME-Shell-Theme aus colors.toml (Option B).
+// render/shellTheme.ts — GNOME Shell theme from colors.toml (Option B).
 //
-// Die User-Themes-Extension ersetzt das vollständige Shell-Stylesheet
-// (Main.setThemeStylesheet). Ein eigenes Shell-Theme muss deshalb auf einer
-// vollständigen Basis aufbauen, sonst verliert die Shell ihre Standard-Regeln.
-// Wir verwenden das System-Yaru-Shell-Theme als Basis (on-the-fly gelesen) und
-// hängen einen Rose-Pine-Override-Block an, der die sichtbaren Oberflächen
-// (Panel, Uhr, Icons, Übersicht, Dash, Popover/QuickSettings, OSD) rekoloziert.
+// The User Themes extension replaces the complete shell stylesheet
+// (Main.setThemeStylesheet). A custom shell theme must therefore build on a
+// complete base, otherwise the shell loses its default rules.
+// We use the system Yaru shell theme as the base (read on the fly) and
+// append a Rose-Pine override block that recolors the visible surfaces
+// (panel, clock, icons, overview, dash, popover/QuickSettings, OSD).
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import type { Palette } from "../palette.ts";
 import { realGSettingsWithSchemaDir, type GSettingsRunner } from "../gsettings.ts";
 import { assertValidCss } from "../cssutil.ts";
 import { userThemeSchemaDir, userThemesDir } from "../paths.ts";
 
-/** Basis des System-Shell-Themes (Ubuntu Yaru). */
+/** Base of the system shell theme (Ubuntu Yaru). */
 export function systemShellBasePath(): string {
   return "/usr/share/gnome-shell/theme/Yaru/gnome-shell.css";
 }
@@ -20,15 +20,15 @@ export function systemShellBasePath(): string {
 export const USER_THEME_UUID = "user-theme@gnome-shell-extensions.gcampax.github.com";
 export const USER_THEME_SCHEMA = "org.gnome.shell.extensions.user-theme";
 
-/** Shell-Theme-Name (z. B. "RosePine" → "RosePineShell"). */
+/** Shell theme name (e.g. "RosePine" → "RosePineShell"). */
 export function shellThemeName(gtkThemeName: string): string {
   return `${gtkThemeName}Shell`;
 }
 
 /**
- * Rose-Pine-Override-Block für die sichtbaren Shell-Oberflächen.
- * Selektoren sind Yaru-kompatibel und bewusst hochspezifisch (flat CSS).
- * Farben kommen ausschließlich aus der deklarativen Rollen-Palette.
+ * Rose-Pine override block for the visible shell surfaces.
+ * Selectors are Yaru-compatible and deliberately highly specific (flat CSS).
+ * Colors come exclusively from the declarative role palette.
  */
 export function renderShellOverride(p: Palette): string {
   const bg = p.base;
@@ -40,10 +40,10 @@ export function renderShellOverride(p: Palette): string {
   const selection = p.highlight_med;
   const muted = p.highlight_high;
 
-  return `/* themeswitch: GNOME-Shell-Override (aus Omarchy colors.toml) */
-/* Flacher Hugo: Yaru-Basis bleibt, teils gesetzt auf Theme-Farben. */
+  return `/* themeswitch: GNOME Shell override (from Omarchy colors.toml) */
+/* Flat Hugo: Yaru base remains, partly set to theme colors. */
 
-/* Panel ist bei PaperWM transparent; hier nur Schrift/Farben sicherstellen. */
+/* Panel is transparent with PaperWM; here only ensure font/colors. */
 #panel {
   background-color: transparent;
   color: ${fg};
@@ -72,12 +72,12 @@ export function renderShellOverride(p: Palette): string {
   color: ${fg};
 }
 
-/* Aktivitäten-/Workspace-Anzeige.
-   Die aktive Workspace-'Pill' und die inaktiven Punkte sind allesamt
-   '.workspace-dot' (Aktiv: volle Skala/Deckkraft, inaktiv: halbtransparent).
-   Yaru erzwingt am Stylesheet-Ende weiße Dots per '!important' (#f2f2f2) —
-   auf hellem Topbar unsichtbar. '!important' ist im Shell-CSS zulässig (anders
-   als bei GTK) und nötig, um Yarus End-Override zu schlagen. */
+/* Activities/workspace indicator.
+   The active workspace 'pill' and the inactive dots are all
+   '.workspace-dot' (active: full scale/opacity, inactive: semi-transparent).
+   Yaru forces white dots at the end of the stylesheet via '!important' (#f2f2f2) —
+   invisible on a light top bar. '!important' is allowed in shell CSS (unlike
+   GTK) and necessary to beat Yaru's end override. */
 .workspaces-indicator,
 .workspace-dot,
 .activity-button {
@@ -89,7 +89,7 @@ export function renderShellOverride(p: Palette): string {
   background-color: ${accent} !important;
 }
 
-/* Übersicht & Dash */
+/* Overview & dash */
 #overview,
 .overview-controls,
 .workspace-thumbnail,
@@ -111,7 +111,7 @@ export function renderShellOverride(p: Palette): string {
   background-color: ${raised};
 }
 
-/* Popover / Menüs / QuickSettings / OSD */
+/* Popover / menus / QuickSettings / OSD */
 .popup-menu,
 .popup-menu-content,
 .popup-menu .popup-menu-item,
@@ -152,10 +152,10 @@ export function renderShellOverride(p: Palette): string {
   color: ${fgMuted};
 }
 
-/* Quick Settings nach dem WhiteSur-Muster: Inaktiv ist die Basisregel
-   (mit '!important', sonst schlägt Yaru durch); ':checked' liegt darüber.
-   Kein ':not()' — das unterstützt St-Theme-CSS nicht zuverlässig.
-   Aktiv = Omarchy-Akzent mit hellem Text; inaktiv = Theme-Surface. */
+/* Quick Settings following the WhiteSur pattern: inactive is the base rule
+   (with '!important', otherwise Yaru wins); ':checked' sits above it.
+   No ':not()' — St-Theme CSS does not support it reliably.
+   Active = Omarchy accent with light text; inactive = theme surface. */
 .quick-toggle,
 .quick-toggle-has-menu .quick-toggle {
   background-color: ${raised} !important;
@@ -204,8 +204,8 @@ export function renderShellOverride(p: Palette): string {
 .quick-toggle-has-menu:checked .quick-toggle-separator {
   background-color: ${bg} !important;
 }
-/* Lautstärkeregler: Yaru färbt die aktive Füllung über '-st-accent-color'
-   (systemweit Orange). Eigene Barlevel-Farben setzen den Theme-Akzent. */
+/* Volume slider: Yaru colors the active fill via '-st-accent-color'
+   (system-wide orange). Custom bar level colors set the theme accent. */
 .slider {
   color: ${fg};
   -barlevel-background-color: ${muted};
@@ -215,17 +215,17 @@ export function renderShellOverride(p: Palette): string {
   box-shadow: none;
   background-color: ${raised};
 }
-/* Framework Fan Control hat keine eigene Kachel-CSS und fällt bei Fehlern auf
-   ein helles symbolisches Icon zurück. Theme-Foreground erzwingt Kontrast. */
+/* Framework Fan Control has no tile CSS of its own and falls back to
+   a light symbolic icon on errors. Theme foreground enforces contrast. */
 .fw-fctrl-popup-menu,
 .fw-fctrl-popup-menu StIcon,
 .fw-fctrl-popup-menu StLabel {
   color: ${fg};
 }
 
-/* Scharfe Ecken für aufgeklappte Panels (Popups, QuickSettings, OSD, …).
-   Yaru rundet diese Container (20px/999px); konsistent zur scharfen Fenster-
-   Gestaltung wird die Eckenrundung aufgehoben. */
+/* Sharp corners for expanded panels (popups, QuickSettings, OSD, …).
+   Yaru rounds these containers (20px/999px); consistent with the sharp window
+   design, the corner rounding is removed. */
 .popup-menu-content,
 .candidate-popup-content,
 .quick-settings,
@@ -239,16 +239,16 @@ export function renderShellOverride(p: Palette): string {
 `;
 }
 
-/** Liest das System-Yaru-Shell-CSS als Basis (für on-the-fly). */
+/** Reads the system Yaru shell CSS as the base (for on-the-fly). */
 export async function readSystemShellBase(path = systemShellBasePath()): Promise<string> {
   try {
     return await readFile(path, "utf8");
   } catch (e) {
-    throw new Error(`System-Shell-Basis konnte nicht gelesen werden: ${path} (${String(e)})`);
+    throw new Error(`Could not read system shell base: ${path} (${String(e)})`);
   }
 }
 
-/** Vervollständigt eine Basis um den Return-CSS-Override. */
+/** Completes a base with the returned CSS override. */
 export function renderShellTheme(baseCss: string, override: string): string {
   const head = baseCss.replace(/\s+$/u, "");
   return head + "\n\n" + override.trimEnd() + "\n";
@@ -256,16 +256,16 @@ export function renderShellTheme(baseCss: string, override: string): string {
 
 export interface InstallShellThemeOptions {
   dry: boolean;
-  /** ~/.themes-Verzeichnis (Default: $HOME/.themes) */
+  /** ~/.themes directory (default: $HOME/.themes) */
   themesDir?: string;
-  /** Basis-Shell-CSS (Default: System-Yaru) — für Tests überschreibbar */
+  /** Base shell CSS (default: system Yaru) — overridable for tests */
   baseCss?: string;
   gs?: GSettingsRunner;
-  /** Extension-Reload überspringen (für Tests) */
+  /** Skip extension reload (for tests) */
   skipReload?: boolean;
 }
 
-/** Installiert ein Shell-Theme und aktiviert es über User Themes. */
+/** Installs a shell theme and activates it via User Themes. */
 export async function installShellTheme(
   name: string,
   css: string,
@@ -277,7 +277,7 @@ export async function installShellTheme(
   const gs = opts.gs ?? realGSettingsWithSchemaDir(userThemeSchemaDir());
 
   if (opts.dry) {
-    console.log(`  dry-run: schreibe ${cssFile}`);
+    console.log(`  dry-run: write ${cssFile}`);
     console.log(`  dry-run: ${USER_THEME_SCHEMA} name → '${name}'`);
     return { cssFile, themeDir };
   }
@@ -285,16 +285,16 @@ export async function installShellTheme(
   await mkdir(`${themeDir}/gnome-shell`, { recursive: true });
   assertValidCss(css, `GNOME-Shell-Theme ${name}`);
   await writeFile(cssFile, css);
-  console.log(`   ✓ GNOME-Shell-Theme geschrieben: ${cssFile}`);
+  console.log(`   ✓ GNOME Shell theme written: ${cssFile}`);
 
   const code = await gs.set(USER_THEME_SCHEMA, "name", name);
-  if (code !== 0) throw new Error(`User-Themes-Name setzen fehlgeschlagen (${code})`);
-  console.log(`   ✓ User-Themes active: ${name}`);
+  if (code !== 0) throw new Error(`Setting User Themes name failed (${code})`);
+  console.log(`   ✓ User Themes active: ${name}`);
 
   if (!opts.skipReload) {
     Bun.spawnSync(["gnome-extensions", "disable", USER_THEME_UUID]);
     Bun.spawnSync(["gnome-extensions", "enable", USER_THEME_UUID]);
-    console.log("   → User-Themes neu geladen");
+    console.log("   → User Themes reloaded");
   }
 
   return { cssFile, themeDir };
