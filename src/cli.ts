@@ -131,6 +131,8 @@ async function withTheme(args: Args, fn: (t: Theme) => Promise<void>): Promise<v
     const avail = (await listThemes()).join(", ");
     C.die(`${String(e instanceof Error ? e.message : e)}${avail ? `\nVerfügbar: ${avail}` : ""}`);
   }
+  // Originalzustand einmalig sichern, bevor ein Theme das System verändert.
+  await snapshotOnce(args.dry);
   await fn(theme!);
 }
 
@@ -179,7 +181,6 @@ async function applySystemSettings(t: Theme, dry: boolean): Promise<void> {
 
 /** Wendet ein Theme vollständig auf alle Ziele an (Ghostty, GTK3, GTK4, VSCode, Wallpaper, Shell). */
 async function applyTheme(theme: Theme, dry: boolean): Promise<void> {
-  await snapshotOnce(dry);
   C.log(`${theme.displayName} (${theme.mode}) anwenden`);
 
   const p = theme.palette;
@@ -259,21 +260,18 @@ async function installOne(args: Args): Promise<void> {
   switch (target) {
     case "ghostty":
       await withTheme(args, async (t) => {
-        await snapshotOnce(args.dry);
         await installGhostty(renderGhostty(t.palette), { dry: args.dry, themeName: t.ghosttyThemeName })
           .catch((e) => C.die(`install ghostty fehlgeschlagen: ${String(e)}`));
       });
       break;
     case "gtk3":
       await withTheme(args, async (t) => {
-        await snapshotOnce(args.dry);
         await installGtk3(renderGtk3(t.palette), { dry: args.dry, name: t.gtkThemeName })
           .catch((e) => C.die(`install gtk3 fehlgeschlagen: ${String(e)}`));
       });
       break;
     case "gtk4":
       await withTheme(args, async (t) => {
-        await snapshotOnce(args.dry);
         await installGtk4(renderGtk4(t.palette), { dry: args.dry })
           .catch((e) => C.die(`install gtk4 fehlgeschlagen: ${String(e)}`));
       });
@@ -285,7 +283,6 @@ async function installOne(args: Args): Promise<void> {
       break;
     case "vscode":
       await withTheme(args, async (t) => {
-        await snapshotOnce(args.dry);
         if (!t.vscode) {
           C.warn(`Theme '${args.theme}' hat kein vscode.json`);
           return;
@@ -296,7 +293,6 @@ async function installOne(args: Args): Promise<void> {
       break;
     case "wallpaper":
       await withTheme(args, async (t) => {
-        await snapshotOnce(args.dry);
         if (!t.hasBackgrounds) {
           C.warn(`Theme '${args.theme}' hat kein backgrounds/`);
           return;
@@ -313,14 +309,12 @@ async function installOne(args: Args): Promise<void> {
       break;
     case "shell-theme":
       await withTheme(args, async (t) => {
-        await snapshotOnce(args.dry);
         await applyShellTheme(t.palette, t.gtkThemeName, args.dry)
           .catch((e) => C.die(`install shell-theme fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`));
       });
       break;
     case "shell":
       await withTheme(args, async (t) => {
-        await snapshotOnce(args.dry);
         await applyPaperwm(t.palette, args.dry)
           .catch((e) => C.die(`install shell fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`));
       });
@@ -359,7 +353,6 @@ async function main(): Promise<void> {
 
     case "apply":
       await withTheme(args, async (t) => {
-        await snapshotOnce(args.dry);
         C.log(`${t.displayName} (${t.mode}) — Farbschema + Icon-Theme`);
         await applySystemSettings(t, args.dry);
       });

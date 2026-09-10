@@ -1,7 +1,7 @@
 // reset.ts — stellt den im Snapshot gesicherten Originalzustand wieder her.
 import { readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { loadSnapshot } from "./state.ts";
+import { loadSnapshot, type Snapshot } from "./state.ts";
 import { realGSettingsWithSchemaDir, type GSettingsRunner } from "./gsettings.ts";
 import { ensureParent } from "./fsutil.ts";
 import { locateBlock } from "./managedBlock.ts";
@@ -93,18 +93,22 @@ function libreofficeConfigFile(opts: ResetOptions): string {
   return opts.libreofficeConfigFile ?? libreofficeConfigPath();
 }
 
-export async function resetAll(opts: ResetOptions): Promise<void> {
-  const snap = await loadSnapshot(opts.stateDir);
-  if (!snap) {
-    throw new Error(
-      "Kein Snapshot vorhanden — nichts wiederherzustellen. " +
-        "Es wurde kein Originalzustand erfasst (install/apply wurden noch nie ausgeführt).",
-    );
+/** Aktives User-Themes-Original wiederherstellen (falls im Snapshot vorhanden). */
+async function restoreUserTheme(opts: ResetOptions, snap: Snapshot): Promise<void> {
+  if (snap.userThemeName !== undefined && snap.userThemeName !== null) {
+    if (opts.dry) {
+      console.log(`  dry-run: ${USER_THEME_SCHEMA} name → ${snap.userThemeName}`);
+    } else {
+      await realGSettingsWithSchemaDir(userThemeSchemaDir()).set(USER_THEME_SCHEMA, "name", snap.userThemeName);
+      console.log(`   ✓ User-Themes wiederhergestellt: ${snap.userThemeName}`);
+    }
+  } else {
+    console.log(`   − User-Themes-Original: kein Wert im Snapshot`);
   }
-  const want = (t: ResetTarget): boolean => !opts.target || opts.target === t;
+}
 
-  if (want("ghostty")) {
-  // Ghostty-Config
+/** Ghostty-Config + generiertes Theme wiederherstellen. */
+async function resetGhostty(opts: ResetOptions, snap: Snapshot): Promise<void> {
   const cfg = ghosttyConfigFile(opts);
   if (opts.dry) {
     console.log(`  dry-run: stelle ${cfg} aus Snapshot wieder her`);
@@ -144,10 +148,10 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
     await rm(themeFile, { force: true });
     console.log(`   ✓ Ghostty-Theme gelöscht: ${themeFile}`);
   }
-  }
+}
 
-  if (want("gtk3")) {
-  // Generiertes GTK3-Theme löschen (nur unseres)
+/** Generiertes GTK3-Theme löschen und gtk-theme zurücksetzen. */
+async function resetGtk3(opts: ResetOptions, snap: Snapshot): Promise<void> {
   const themesDir = opts.themesDir ?? userThemesDir();
   const gtkName = snap.appliedTheme?.gtkThemeName ?? GTK3_THEME_NAME;
   const gtkDir = `${themesDir}/${gtkName}`;
@@ -158,8 +162,8 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
     console.log(`   ✓ GTK3-Theme gelöscht: ${gtkDir}`);
   }
 
-  // gsettings gtk-theme zurücksetzen. Frühere Snapshots konnten bereits
-  // RosePineDawn enthalten; diesen bekannten vergifteten Wert migrieren.
+  // Frühere Snapshots konnten bereits RosePine/RosePineDawn enthalten;
+  // diesen bekannten vergifteten Wert migrieren.
   const gtkRestore = restoreGtkTheme(snap.gtkTheme);
   if (gtkRestore.theme !== null) {
     if (opts.dry) {
@@ -175,10 +179,10 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
   } else {
     console.log(`   − gtk-theme: kein Original im Snapshot, übersprungen`);
   }
-  }
+}
 
-  if (want("shell-theme")) {
-  // Generiertes Shell-Theme entfernen + aktives User-Theme zurücksetzen
+/** Generiertes GNOME-Shell-Theme entfernen und User-Theme zurücksetzen. */
+async function resetShellTheme(opts: ResetOptions, snap: Snapshot): Promise<void> {
   const themesDir = opts.themesDir ?? userThemesDir();
   const shName = snap.appliedTheme?.shellThemeName;
   if (shName) {
@@ -192,21 +196,11 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
   } else {
     console.log(`   − kein angewandtes GNOME-Shell-Theme im Snapshot, übersprungen`);
   }
-  if (snap.userThemeName !== undefined && snap.userThemeName !== null) {
-    if (opts.dry) {
-      console.log(`  dry-run: ${USER_THEME_SCHEMA} name → ${snap.userThemeName}`);
-    } else {
-      const ut = realGSettingsWithSchemaDir(userThemeSchemaDir());
-      await ut.set(USER_THEME_SCHEMA, "name", snap.userThemeName);
-      console.log(`   ✓ User-Themes wiederhergestellt: ${snap.userThemeName}`);
-    }
-  } else {
-    console.log(`   − User-Themes-Original: kein Wert im Snapshot`);
-  }
-  }
+  await restoreUserTheme(opts, snap);
+}
 
-  if (want("gtk4")) {
-  // libadwaita-Overlay (gtk-4.0/gtk.css)
+/** libadwaita-Overlay wiederherstellen bzw. nur unseren Block entfernen. */
+async function resetGtk4(opts: ResetOptions, snap: Snapshot): Promise<void> {
   const cssFile = gtk4CssFile(opts);
   if (snap.gtk4CssText === undefined || snap.gtk4CssExisted === undefined) {
     console.log(`   − gtk-4.0-Overlay: kein Original im Snapshot (alter Snapshot), übersprungen`);
@@ -239,10 +233,10 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
       console.log(`   − keine gtk-4.0/gtk.css vorhanden, nichts zu tun`);
     }
   }
-  }
+}
 
-  if (want("libreoffice")) {
-  // LibreOffice-Config (Anwendungsfarben-Schema)
+/** LibreOffice-Config aus Snapshot wiederherstellen. */
+async function resetLibreOffice(opts: ResetOptions, snap: Snapshot): Promise<void> {
   const loFile = libreofficeConfigFile(opts);
   if (snap.libreofficeConfigText === undefined || snap.libreofficeConfigExisted === undefined) {
     console.log(`   − LibreOffice: kein Original im Snapshot (alter Snapshot), übersprungen`);
@@ -254,10 +248,10 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
   } else {
     console.log(`   − keine LibreOffice-Config im Snapshot, nichts zu tun`);
   }
-  }
+}
 
-  if (want("vscode")) {
-  // VS-Code-settings (nur colorTheme wurde von uns gesetzt → ganze Datei aus Snapshot)
+/** VS-Code-settings aus Snapshot wiederherstellen. */
+async function resetVscode(opts: ResetOptions, snap: Snapshot): Promise<void> {
   const vsFile = vscodeSettingsFile(opts);
   if (snap.vscodeSettingsText === undefined || snap.vscodeSettingsExisted === undefined) {
     console.log(`   − VS Code: kein Original im Snapshot (alter Snapshot), übersprungen`);
@@ -269,10 +263,10 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
   } else {
     console.log(`   − keine VS-Code-settings im Snapshot, nichts zu tun`);
   }
-  }
+}
 
-  if (want("wallpaper")) {
-  // Wallpaper-URIs (nur was im Snapshot stand)
+/** Wallpaper-URIs aus Snapshot wiederherstellen. */
+async function resetWallpaper(opts: ResetOptions, snap: Snapshot): Promise<void> {
   for (const [key, val] of [
     ["picture-uri", snap.wallpaperPictureUri],
     ["picture-uri-dark", snap.wallpaperPictureUriDark],
@@ -288,10 +282,10 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
       console.log(`   ✓ Wallpaper ${key} wiederhergestellt: ${val}`);
     }
   }
-  }
+}
 
-  if (want("shell")) {
-  // PaperWM-user.css: Original wiederherstellen bzw. nur unseren Block entfernen
+/** PaperWM-user.css wiederherstellen bzw. nur unseren Block entfernen. */
+async function resetShell(opts: ResetOptions, snap: Snapshot): Promise<void> {
   const pwFile = paperwmUserCssFile(opts);
   if (snap.paperwmUserCssText === undefined || snap.paperwmUserCssExisted === undefined) {
     console.log(`   − PaperWM: kein Original im Snapshot (alter Snapshot), übersprungen`);
@@ -326,9 +320,10 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
       console.log(`   − keine PaperWM-user.css vorhanden, nichts zu tun`);
     }
   }
-  }
+}
 
-  if (!opts.target) {
+/** Farbschema + User-Themes (nur beim vollständigen Reset ohne Ziel). */
+async function resetSystem(opts: ResetOptions, snap: Snapshot): Promise<void> {
   if (snap.colorScheme !== null) {
     if (opts.dry) {
       console.log(`  dry-run: gsettings color-scheme → ${snap.colorScheme}`);
@@ -339,15 +334,27 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
   } else {
     console.log(`   − color-scheme: kein Original im Snapshot, übersprungen`);
   }
-  if (snap.userThemeName !== undefined && snap.userThemeName !== null) {
-    if (opts.dry) {
-      console.log(`  dry-run: ${USER_THEME_SCHEMA} name → ${snap.userThemeName}`);
-    } else {
-      await realGSettingsWithSchemaDir(userThemeSchemaDir()).set(USER_THEME_SCHEMA, "name", snap.userThemeName);
-      console.log(`   ✓ User-Themes wiederhergestellt: ${snap.userThemeName}`);
-    }
-  } else {
-    console.log(`   − User-Themes-Original: kein Wert im Snapshot`);
+  await restoreUserTheme(opts, snap);
+}
+
+/** Stellt alle (bzw. das gewählte) Snapshot-Ziele wieder her. */
+export async function resetAll(opts: ResetOptions): Promise<void> {
+  const snap = await loadSnapshot(opts.stateDir);
+  if (!snap) {
+    throw new Error(
+      "Kein Snapshot vorhanden — nichts wiederherzustellen. " +
+        "Es wurde kein Originalzustand erfasst (install/apply wurden noch nie ausgeführt).",
+    );
   }
-  }
+  const want = (t: ResetTarget): boolean => !opts.target || opts.target === t;
+
+  if (want("ghostty")) await resetGhostty(opts, snap);
+  if (want("gtk3")) await resetGtk3(opts, snap);
+  if (want("shell-theme")) await resetShellTheme(opts, snap);
+  if (want("gtk4")) await resetGtk4(opts, snap);
+  if (want("libreoffice")) await resetLibreOffice(opts, snap);
+  if (want("vscode")) await resetVscode(opts, snap);
+  if (want("wallpaper")) await resetWallpaper(opts, snap);
+  if (want("shell")) await resetShell(opts, snap);
+  if (!opts.target) await resetSystem(opts, snap);
 }
