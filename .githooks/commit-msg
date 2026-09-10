@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+# Validate commit messages against the project's commit rules.
+bunx commitlint --edit "$1"
