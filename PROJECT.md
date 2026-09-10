@@ -70,7 +70,7 @@ From `themes/rose-pine/colors.toml` (`omacom/omarchy@quattro`):
 
 ## 4. Solution overview
 
-A tool `themeswitch set` (or `omarchy-gnome-theme set rose-pine`) reads an
+The tool (repository `omarchy-theme-adapter`, CLI `themeswitch set <theme>`) reads an
 Omarchy `colors.toml` and translates it into GNOME's own layers:
 
 1. **GNOME Shell** → generated `gnome-shell-theme.css`
@@ -123,7 +123,7 @@ When the project is complete:
 
 ## 7. Acceptance criteria
 
-### Feature: GNOME adapter `themeswitch`
+### Feature: GNOME adapter `omarchy-theme-adapter`
 - [x] Reads an Omarchy `colors.toml` correctly (including `mode`, fore-/backgrounds, ANSI sets).
 - [x] Generates valid GNOME Shell CSS from the palette.
 - [x] Generates valid GTK3 CSS from the palette.

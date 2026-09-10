@@ -1,11 +1,11 @@
-# themeswitch
+# omarchy-theme-adapter
 
 Apply any **Omarchy theme** as the appearance of an Ubuntu GNOME system —
 from its `colors.toml` (Option B: custom GNOME adapter, **without** Omarchy/Hyprland).
 Ghostty, GTK3, GTK4 and PaperWM artifacts are generated on the fly; `mode`
 controls `prefer-light`/`prefer-dark`, `icons.theme` controls the icon theme.
 
-> **Status:** functional. **Interpreter:** TypeScript + [Bun](https://bun.sh) (`./bin/themeswitch`).
+> **Status:** functional. **Interpreter:** TypeScript + [Bun](https://bun.sh) — CLI command `themeswitch` (`./bin/themeswitch`).
 > See [PROJECT.md](./PROJECT.md) for the project concept and [docs/architecture.md](./docs/architecture.md).
 
 ## Prerequisites
