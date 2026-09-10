@@ -57,8 +57,14 @@ FG_BRIGHT            = bright_foreground
 ACCENT               = accent
 SELECTION_BG         = selection
 OUTLINE/MUTED        = muted
-ANSI_[0..15]         = red..magenta + bright_*
+ANSI_[0..15]         = red, yellow, green, brown, blue, magenta, cyan,
+                       light_foreground, muted, bright_* (Reihenfolge src/colors.ts)
 ```
+
+> Hinweis: Die 16er-Reihenfolge ist **zweifach** definiert. `parse` (src/colors.ts) nutzt die
+> obige Reihenfolge, während die Ghostty-Palette (`palette.ts`, `ANSI16_KEYS`) exakt dem
+> Omarchy-Template folgt (`background, red, green, yellow, blue, magenta, cyan, foreground,
+> muted, bright_*`). Beide Deutungen existieren bewusst für ihre jeweiligen Konsumenten.
 
 ## 3. Mapping `colors.toml` → GNOME-Schichten
 
@@ -162,10 +168,12 @@ Extension-Installation und `workbench.colorTheme` in `settings.json`. Edit JSONC
 Regex (kein Reformat, Kommentare bleiben). Umsetzung: `src/render/vscode.ts`.
 
 ### 3.7 Wallpaper
-Omarchy-Default = erstes der sortierten `backgrounds/` = `1-funky-shapes.webp`
-(alle vier Dateien liegen in `themes/rose-pine/backgrounds/`).
+Omarchy-Default = erstes der sortierten `backgrounds/` (`1-funky-shapes.webp`).
+themeswitch bevorzugt davon abweichend `2-dot-map.webp` (Rose-Pine-Dot-Map), sofern
+vorhanden, sonst das erste sortierte; alle Dateien liegen in `themes/<id>/backgrounds/`.
 Umsetzung: `src/render/wallpaper.ts` setzt `picture-uri` + `picture-uri-dark` per gsettings
-(`install wallpaper [NAME]`); URIs sind snapshot-/reset-abgedeckt.
+(`install wallpaper [NAME]`); die URIs (via `pathToFileURL`, auch bei Pfaden mit Leerzeichen)
+sind snapshot-/reset-abgedeckt.
 
 ### 3.8 GNOME Shell / PaperWM-Topbar
 Auf diesem System rendert PaperWM die Top-Bar selbst (transparent, Klasse

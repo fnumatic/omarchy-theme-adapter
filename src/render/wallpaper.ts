@@ -5,6 +5,7 @@
 // picture-uri + picture-uri-dark per gsettings (file://-URI).
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { realGSettings, type GSettingsRunner } from "../gsettings.ts";
 
 /** Omarchy-Default-Regel: erstes der sortierten backgrounds (dynamisch). */
@@ -12,7 +13,7 @@ export const DEFAULT_WALLPAPER = "";
 
 export function backgroundsDir(): string {
   // src/render → ../../themes/rose-pine/backgrounds (Default-Theme)
-  return join(new URL(".", import.meta.url).pathname, "..", "..", "themes", "rose-pine", "backgrounds");
+  return join(fileURLToPath(new URL(".", import.meta.url)), "..", "..", "themes", "rose-pine", "backgrounds");
 }
 
 export async function listWallpapers(dir?: string): Promise<string[]> {
@@ -48,7 +49,7 @@ export async function installWallpaper(
   }
   const gs = opts.gs ?? realGSettings;
   const file = join(dir, name);
-  const uri = `file://${file}`;
+  const uri = pathToFileURL(file).href;
 
   if (opts.dry) {
     console.log(`  dry-run: gsettings picture-uri + picture-uri-dark → ${uri}`);

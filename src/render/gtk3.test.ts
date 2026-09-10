@@ -36,9 +36,15 @@ test("renderGtk3 enthält zentrale @define-color aus dem Mapping", () => {
 
 test("renderIndexTheme setzt Name und GtkTheme", () => {
   const t = renderIndexTheme();
-  expect(t).toContain("Name=RosePineDawn");
-  expect(t).toContain("GtkTheme=RosePineDawn");
+  expect(t).toContain("Name=RosePine");
+  expect(t).toContain("GtkTheme=RosePine");
   expect(t).toContain("Type=X-GNOME-Metatheme");
+});
+
+test("GTK3_THEME_NAME entspricht dem generierten Rose-Pine-Namen", async () => {
+  const { loadTheme } = await import("../themes.ts");
+  const t = await loadTheme("rose-pine");
+  expect(GTK3_THEME_NAME).toBe(t.gtkThemeName);
 });
 
 test("renderGtk3 enthält kompakte Headerbar-Regeln", () => {
@@ -65,11 +71,11 @@ test("installGtk3 schreibt gtk.css und index.theme", async () => {
   expect(css).toContain("@define-color theme_bg_color #faf4ed");
 
   const index = await readFile(res.indexFile, "utf8");
-  expect(index).toContain("GtkTheme=RosePineDawn");
+  expect(index).toContain("GtkTheme=RosePine");
 
   expect(gs.sets).toContainEqual([
     "org.gnome.desktop.interface",
     "gtk-theme",
-    "RosePineDawn",
+    "RosePine",
   ]);
 });

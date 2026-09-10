@@ -2,6 +2,7 @@ import { test, expect } from "bun:test";
 import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { fakeGSettings } from "../gsettings.ts";
 import { listWallpapers, installWallpaper, DEFAULT_WALLPAPER } from "./wallpaper.ts";
 
@@ -58,6 +59,16 @@ test("installWallpaper setzt picture-uri + picture-uri-dark", async () => {
     "picture-uri-dark",
     `'file://${join(dir, "1-a.webp")}'`,
   ]);
+});
+
+test("installWallpaper kodiert Pfade mit Leerzeichen als gültige file-URI", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "rpg wp-"));
+  await writeFile(join(dir, "1 a.webp"), "x");
+  const gs = fakeGSettings();
+  const res = await installWallpaper({ dry: false, name: "1 a.webp", backgrounds: dir, gs });
+  expect(res.uri).toBe(pathToFileURL(join(dir, "1 a.webp")).href);
+  expect(res.uri).not.toContain(" ");
+  expect(gs.sets[0]?.[2]).toBe(`'${res.uri}'`);
 });
 
 test("installWallpaper verweigert unbekannten Namen", async () => {

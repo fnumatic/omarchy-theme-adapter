@@ -3,8 +3,8 @@
 import type { Palette } from "../palette.ts";
 import { realGSettings, type GSettingsRunner } from "../gsettings.ts";
 
-/** Name des GTK-Themes (Verzeichnis unter ~/.themes). */
-export const GTK3_THEME_NAME = "RosePineDawn";
+/** Default-/Referenzname des GTK-Themes (Verzeichnis unter ~/.themes) — entspricht `pascal("rose-pine")`. */
+export const GTK3_THEME_NAME = "RosePine";
 
 /** Erzeugt ein `gtk-3.0/gtk.css` aus der aufgelösten Rollen-Palette. */
 export function renderGtk3(p: Palette): string {

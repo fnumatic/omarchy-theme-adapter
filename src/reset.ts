@@ -9,13 +9,17 @@ import { USER_THEME_SCHEMA } from "./render/shellTheme.ts";
 
 /** Ubuntu-Standard, falls ein früher Snapshot bereits unser GTK-Theme enthielt. */
 export const UBUNTU_DEFAULT_GTK_THEME = "Yaru";
+/** Alter, vor der generischen Benennung erzeugter GTK-Theme-Name. */
+export const LEGACY_GTK3_THEME_NAME = "RosePineDawn";
 /** Ghostty 1.3 startet ohne Theme-Eintrag dunkel; Ubuntu-heller Fallback. */
 export const GHOSTTY_DEFAULT_THEME = "GitHub Light Default";
 
 /** Ein Snapshot darf nie den vom Tool erzeugten Theme-Namen als Original zurückspielen. */
 export function restoreGtkTheme(snapshotTheme: string | null): { theme: string | null; migrated: boolean } {
   const theme = snapshotTheme?.replace(/^'|'$/gu, "") ?? null;
-  if (theme === GTK3_THEME_NAME) return { theme: UBUNTU_DEFAULT_GTK_THEME, migrated: true };
+  if (theme === GTK3_THEME_NAME || theme === LEGACY_GTK3_THEME_NAME) {
+    return { theme: UBUNTU_DEFAULT_GTK_THEME, migrated: true };
+  }
   return { theme, migrated: false };
 }
 

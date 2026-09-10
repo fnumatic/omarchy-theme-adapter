@@ -169,7 +169,7 @@ rosepinetheme/
 │       └── gtk4.ts           # libadwaita-Overlay (gtk-4.0/gtk.css) rendern/installieren (TS)
 │       └── libreoffice.ts    # LO folgt dem System-Theme (Automatic, mit Backup) (TS)
 │       └── vscode.ts         # VS-Code-Theme (Extension + colorTheme, JSONC-sicher) (TS)
-│       └── wallpaper.ts      # Wallpaper setzen (Omarchy-Default 1-funky-shapes) (TS)
+│       └── wallpaper.ts      # Wallpaper setzen (bevorzugt 2-dot-map, sonst erstes sortiert) (TS)
 │       └── shell.ts          # PaperWM-Topbar in Dawn (user.css-Block) (TS)
 ├── bin/
 │   └── themeswitch        # Wrapper → bun src/cli.ts

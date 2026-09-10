@@ -7,9 +7,12 @@ import { ensureSnapshot, loadSnapshot } from "./state.ts";
 import { resetAll, restoreGtkTheme, restoreGhosttyConfig, UBUNTU_DEFAULT_GTK_THEME, GHOSTTY_DEFAULT_THEME } from "./reset.ts";
 
 const ORIG_XDG_CONFIG = process.env.XDG_CONFIG_HOME;
+const ORIG_HOME = process.env.HOME;
 afterEach(() => {
   if (ORIG_XDG_CONFIG === undefined) delete process.env.XDG_CONFIG_HOME;
   else process.env.XDG_CONFIG_HOME = ORIG_XDG_CONFIG;
+  if (ORIG_HOME === undefined) delete process.env.HOME;
+  else process.env.HOME = ORIG_HOME;
 });
 
 test("ensureSnapshot erfasst Werte und wird nur einmal geschrieben", async () => {
@@ -30,6 +33,40 @@ test("ensureSnapshot erfasst Werte und wird nur einmal geschrieben", async () =>
   expect((await loadSnapshot(stateDir))?.gtkTheme).toBe("'Yaru'");
 });
 
+test("ensureSnapshot migriert alten Snapshot um fehlende Felder", async () => {
+  const home = await mkdtemp(join(tmpdir(), "rpg-state-mig-"));
+  const stateDir = join(home, "state");
+  process.env.HOME = home;
+  process.env.XDG_CONFIG_HOME = join(home, "cfg");
+  await mkdir(join(stateDir, "themeswitch"), { recursive: true });
+  await writeFile(
+    join(stateDir, "themeswitch", "state.json"),
+    JSON.stringify({
+      version: 1,
+      createdAt: "test",
+      ghosttyConfigExisted: false,
+      ghosttyConfigText: null,
+      gtkTheme: "'Adwaita'",
+      colorScheme: "'default'",
+    }),
+  );
+
+  const { created, snapshot } = await ensureSnapshot(fakeGSettings(), stateDir);
+  expect(created).toBe(false);
+  expect(snapshot.gtkTheme).toBe("'Adwaita'"); // bestehender Originalwert bleibt
+  for (const key of [
+    "gtk4CssText",
+    "libreofficeConfigText",
+    "vscodeSettingsText",
+    "wallpaperPictureUri",
+    "paperwmUserCssText",
+    "userThemeName",
+  ]) {
+    expect(key in snapshot).toBe(true);
+  }
+  await rm(home, { recursive: true, force: true });
+});
+
 test("reset ohne Snapshot wirft kontrollierten Fehler", async () => {
   const stateDir = await mkdtemp(join(tmpdir(), "rpg-state-empty-"));
   const gs = fakeGSettings();
@@ -42,7 +79,11 @@ test("reset ohne Snapshot wirft kontrollierten Fehler", async () => {
   expect(msg).toContain("Kein Snapshot");
 });
 
-test("reset migriert vergifteten RosePineDawn-Snapshot auf Yaru", () => {
+test("reset migriert vergifteten GTK-Theme-Snapshot (aktuell + legacy) auf Yaru", () => {
+  expect(restoreGtkTheme("'RosePine'")).toEqual({
+    theme: UBUNTU_DEFAULT_GTK_THEME,
+    migrated: true,
+  });
   expect(restoreGtkTheme("'RosePineDawn'")).toEqual({
     theme: UBUNTU_DEFAULT_GTK_THEME,
     migrated: true,
@@ -160,8 +201,8 @@ test("reset stellt Snapshot-Werte wieder her", async () => {
   await writeFile(join(cfgDir, "ghostty", "config"), "theme = rose-pine-dawn.conf\n");
   await writeFile(join(cfgDir, "ghostty", "themes", "rose-pine-dawn.conf"), "theme\n");
   const themesDir = join(home, "themes");
-  await mkdir(join(themesDir, "RosePineDawn", "gtk-3.0"), { recursive: true });
-  await writeFile(join(themesDir, "RosePineDawn", "gtk-3.0", "gtk.css"), "x");
+  await mkdir(join(themesDir, "RosePine", "gtk-3.0"), { recursive: true });
+  await writeFile(join(themesDir, "RosePine", "gtk-3.0", "gtk.css"), "x");
 
   const gs = fakeGSettings();
   await resetAll({ dry: false, gs, stateDir, themesDir });
@@ -179,7 +220,7 @@ test("reset stellt Snapshot-Werte wieder her", async () => {
   expect(themeGone).toBe(true);
   let gtkGone = false;
   try {
-    await readFile(join(themesDir, "RosePineDawn", "gtk-3.0", "gtk.css"), "utf8");
+    await readFile(join(themesDir, "RosePine", "gtk-3.0", "gtk.css"), "utf8");
   } catch {
     gtkGone = true;
   }
