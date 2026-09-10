@@ -27,11 +27,16 @@ export function hasOpenComment(text: string): boolean {
     .join("\n");
   return (stripped.match(/\/\*/gu) ?? []).length > (stripped.match(/\*\//gu) ?? []).length;
 }
-/** #rrggbb → rgba(r, g, b, a). Wirft bei ungültigem Hex. */
+/**
+ * Hex → rgba(r, g, b, a) mit dem übergebenen Alpha. Akzeptiert #rgb, #rgba,
+ * #rrggbb und #rrggbbaa (eingebettetes Alpha wird ignoriert). Wirft bei ungültigem Hex.
+ */
 export function hexToRgba(hex: string, alpha: number): string {
-  const m = /^#([0-9a-fA-F]{6})$/.exec(hex.trim());
-  if (!m) throw new Error(`Ungültige Hex-Farbe: ${hex}`);
-  const n = parseInt(m[1]!, 16);
+  let h = hex.trim().replace(/^#/u, "");
+  if (h.length === 3 || h.length === 4) h = h.split("").map((c) => c + c).join("");
+  if (h.length === 8) h = h.slice(0, 6);
+  if (!/^[0-9a-fA-F]{6}$/u.test(h)) throw new Error(`Ungültige Hex-Farbe: ${hex}`);
+  const n = parseInt(h, 16);
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 }
 
@@ -92,8 +97,11 @@ export async function installShellPaperwm(
   }
 
   let next: string;
-  if (existing.includes(MARKER)) {
-    const start = existing.indexOf(`/* ${MARKER}`);
+  const start = existing.indexOf(`/* ${MARKER}`);
+  if (existing.includes(MARKER) && start === -1) {
+    throw new Error(`Marker in ${cssFile} ohne Kommentar-Opener. Bitte manuell prüfen.`);
+  }
+  if (start !== -1) {
     const endToken = `/* ${END_MARKER} */`;
     const end = existing.indexOf(endToken, start);
     if (end === -1) throw new Error(`Markierter Block in ${cssFile} ist beschädigt. Bitte manuell prüfen.`);

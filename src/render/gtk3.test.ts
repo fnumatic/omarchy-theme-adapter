@@ -69,6 +69,17 @@ test("installGtk3 --dry-run schreibt nichts und setzt kein gsettings", async () 
   expect(gs.sets).toHaveLength(0);
 });
 
+test("installGtk3 verweigert ungültiges CSS", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "rpg3-bad-"));
+  let msg = "";
+  try {
+    await installGtk3("a { color }", { dry: false, themesDir: dir, gs: fakeGSettings() });
+  } catch (e) {
+    msg = String(e instanceof Error ? e.message : e);
+  }
+  expect(msg).toContain("CSS ungültig");
+});
+
 test("installGtk3 schreibt gtk.css und index.theme", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg3-inst-"));
   const gs = fakeGSettings();

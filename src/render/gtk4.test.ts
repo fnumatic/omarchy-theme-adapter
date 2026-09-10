@@ -79,6 +79,33 @@ test("installGtk4 verweigert fremde gtk.css statt zu überschreiben", async () =
   expect(await readFile(join(gtk4Dir, "gtk.css"), "utf8")).toBe("/* fremder Inhalt */\n");
 });
 
+test("installGtk4 verweigert ungültiges CSS", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "rpg4-bad-"));
+  const gtk4Dir = join(dir, "gtk-4.0");
+  let msg = "";
+  try {
+    await installGtk4("a { color }", { dry: false, gtk4Dir });
+  } catch (e) {
+    msg = String(e instanceof Error ? e.message : e);
+  }
+  expect(msg).toContain("CSS ungültig");
+});
+
+test("installGtk4 verweigert Marker ohne Kommentar-Opener", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "rpg4-badmark-"));
+  const gtk4Dir = join(dir, "gtk-4.0");
+  const { mkdir } = await import("node:fs/promises");
+  await mkdir(gtk4Dir, { recursive: true });
+  await writeFile(join(gtk4Dir, "gtk.css"), MARKER + "\n");
+  let msg = "";
+  try {
+    await installGtk4(renderGtk4(pal), { dry: false, gtk4Dir });
+  } catch (e) {
+    msg = String(e instanceof Error ? e.message : e);
+  }
+  expect(msg).toContain("Kommentar-Opener");
+});
+
 test("installGtk4 aktualisiert eigenen Block idempotent", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg4-idem-"));
   const gtk4Dir = join(dir, "gtk-4.0");

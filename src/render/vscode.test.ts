@@ -83,6 +83,21 @@ test("installVscode überspringt vorhandene Extension, setzt Theme trotzdem", as
   expect(await readFile(settings, "utf8")).toContain("Rosé Pine Dawn");
 });
 
+test("installVscode setzt Theme in leerer settings.json", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "rpg-vs-empty-"));
+  const settings = join(dir, "settings.json");
+  await writeFile(settings, "");
+  const state = { installed: [] as string[], log: [] as string[][] };
+
+  await installVscode({
+    dry: false,
+    descriptor: DESC,
+    targets: [{ cmd: "code", settingsPath: settings }],
+    run: fakeRun(state),
+  });
+  expect(await readFile(settings, "utf8")).toContain("Rosé Pine Dawn");
+});
+
 test("installVscode überspringt fehlenden Editor", async () => {
   const res = await installVscode({
     dry: false,

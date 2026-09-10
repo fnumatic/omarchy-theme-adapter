@@ -26,7 +26,7 @@ export function restoreGtkTheme(snapshotTheme: string | null): { theme: string |
 /** Frühere Snapshots konnten unsere Ghostty-Zeile fälschlich als Original sichern. */
 export function restoreGhosttyConfig(snapshotText: string | null): { text: string; migrated: boolean } | null {
   if (snapshotText === null) return null;
-  if (/^\s*theme\s*=\s*rose-pine-dawn(?:\.conf)?\s*$/mu.test(snapshotText)) {
+  if (/^\s*theme\s*=\s*rose-pine(?:-dawn)?(?:\.conf)?\s*$/mu.test(snapshotText)) {
     return { text: `theme = ${GHOSTTY_DEFAULT_THEME}\n`, migrated: true };
   }
   return { text: snapshotText, migrated: false };
@@ -214,10 +214,13 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
     // Es gab vorher keine gtk.css: nur unseren Block entfernen, fremde Inhalte nie löschen.
     try {
       const text = await readFile(cssFile, "utf8");
+      const markerAt = text.indexOf("/* " + GTK4_MARKER);
       if (!text.includes(GTK4_MARKER)) {
         console.log(`   − ${cssFile} enthält keinen themeswitch-Block, unangetastet`);
+      } else if (markerAt === -1) {
+        throw new Error(`Block beschädigt in ${cssFile}, bitte manuell prüfen.`);
       } else {
-        const head = text.slice(0, text.indexOf("/* " + GTK4_MARKER)).replace(/\s+$/u, "");
+        const head = text.slice(0, markerAt).replace(/\s+$/u, "");
         if (head) {
           await writeFile(cssFile, head + "\n");
           console.log(`   ✓ themeswitch-Block aus ${cssFile} entfernt (Rest erhalten)`);
@@ -226,7 +229,8 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
           console.log(`   ✓ ${cssFile} gelöscht (nur themeswitch-Block enthalten)`);
         }
       }
-    } catch {
+    } catch (e) {
+      if (e instanceof Error && e.message.includes("beschädigt")) throw e;
       console.log(`   − keine gtk-4.0/gtk.css vorhanden, nichts zu tun`);
     }
   }
@@ -298,6 +302,7 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
         console.log(`   − ${pwFile} enthält keinen themeswitch-Block, unangetastet`);
       } else {
         const start = text.indexOf(`/* ${SHELL_MARKER}`);
+        if (start === -1) throw new Error(`Block beschädigt in ${pwFile}, bitte manuell prüfen.`);
         const endToken = `/* ${SHELL_END_MARKER} */`;
         const end = text.indexOf(endToken, start);
         if (end === -1) throw new Error(`Block beschädigt in ${pwFile}, bitte manuell prüfen.`);

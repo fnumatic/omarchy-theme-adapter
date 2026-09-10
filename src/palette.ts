@@ -86,6 +86,11 @@ const ANSI16_KEYS = [
   "bright_foreground",
 ];
 
+/** Kern-Keys, ohne die die Palette auf den #000000-Fallback zurückfällt. */
+export function missingCoreColors(c: Colors): string[] {
+  return ["background", "foreground"].filter((k) => !c[k]);
+}
+
 /** Erster Treffer aus der Kette, sonst Fallback. */
 function first(c: Colors, chain: string[], fb: string): string {
   for (const k of chain) {

@@ -5,6 +5,8 @@ import { join } from "node:path";
 import { fakeGSettings } from "./gsettings.ts";
 import { ensureSnapshot, loadSnapshot } from "./state.ts";
 import { resetAll, restoreGtkTheme, restoreGhosttyConfig, UBUNTU_DEFAULT_GTK_THEME, GHOSTTY_DEFAULT_THEME } from "./reset.ts";
+import { MARKER as GTK4_MARKER } from "./render/gtk4.ts";
+import { MARKER as SHELL_MARKER } from "./render/shell.ts";
 
 const ORIG_XDG_CONFIG = process.env.XDG_CONFIG_HOME;
 const ORIG_HOME = process.env.HOME;
@@ -98,6 +100,16 @@ test("reset migriert vergifteten Ghostty-Rose-Pine-Snapshot auf hellen Standard"
   });
   expect(restoreGhosttyConfig("theme = rose-pine-dawn.conf\n")).toEqual({
     text: `theme = ${GHOSTTY_DEFAULT_THEME}\n`, migrated: true,
+  });
+  // aktuelle, generische Namensgebung ebenfalls migrieren
+  expect(restoreGhosttyConfig("theme = rose-pine.conf\n")).toEqual({
+    text: `theme = ${GHOSTTY_DEFAULT_THEME}\n`, migrated: true,
+  });
+  expect(restoreGhosttyConfig("theme = rose-pine\n")).toEqual({
+    text: `theme = ${GHOSTTY_DEFAULT_THEME}\n`, migrated: true,
+  });
+  expect(restoreGhosttyConfig("theme = catppuccin-latte.conf\n")).toEqual({
+    text: "theme = catppuccin-latte.conf\n", migrated: false,
   });
   expect(restoreGhosttyConfig("font-size = 14\n")).toEqual({ text: "font-size = 14\n", migrated: false });
 });
@@ -259,6 +271,50 @@ test("reset stellt LibreOffice-Config aus Snapshot wieder her", async () => {
   await resetAll({ dry: false, gs, stateDir, libreofficeConfigFile: loFile });
 
   expect(await readFile(loFile, "utf8")).toBe(ORIGINAL);
+  await rm(home, { recursive: true, force: true });
+});
+
+test("reset bricht bei gtk.css-Marker ohne Kommentar-Opener ab, ohne zu ändern", async () => {
+  const home = await mkdtemp(join(tmpdir(), "rpg-home-corrupt-g4-"));
+  const stateDir = join(home, "state");
+  const cfgDir = join(home, "cfg");
+  process.env.XDG_CONFIG_HOME = cfgDir;
+  await ensureSnapshot(fakeGSettings(), stateDir); // gtk4CssExisted=false
+  const cssPath = join(cfgDir, "gtk-4.0", "gtk.css");
+  await mkdir(join(cfgDir, "gtk-4.0"), { recursive: true });
+  const content = GTK4_MARKER + " ohne opener\n";
+  await writeFile(cssPath, content);
+
+  let msg = "";
+  try {
+    await resetAll({ dry: false, gs: fakeGSettings(), stateDir, configHome: cfgDir, target: "gtk4" });
+  } catch (e) {
+    msg = String(e instanceof Error ? e.message : e);
+  }
+  expect(msg).toContain("beschädigt");
+  expect(await readFile(cssPath, "utf8")).toBe(content);
+  await rm(home, { recursive: true, force: true });
+});
+
+test("reset bricht bei PaperWM-Marker ohne Kommentar-Opener ab, ohne zu ändern", async () => {
+  const home = await mkdtemp(join(tmpdir(), "rpg-home-corrupt-pw-"));
+  const stateDir = join(home, "state");
+  process.env.HOME = home;
+  process.env.XDG_CONFIG_HOME = join(home, "cfg");
+  await ensureSnapshot(fakeGSettings(), stateDir); // paperwmUserCssExisted=false
+  const pwFile = join(home, ".config", "paperwm", "user.css");
+  await mkdir(join(home, ".config", "paperwm"), { recursive: true });
+  const content = SHELL_MARKER + " ohne opener\n";
+  await writeFile(pwFile, content);
+
+  let msg = "";
+  try {
+    await resetAll({ dry: false, gs: fakeGSettings(), stateDir, target: "shell" });
+  } catch (e) {
+    msg = String(e instanceof Error ? e.message : e);
+  }
+  expect(msg).toContain("beschädigt");
+  expect(await readFile(pwFile, "utf8")).toBe(content);
   await rm(home, { recursive: true, force: true });
 });
 

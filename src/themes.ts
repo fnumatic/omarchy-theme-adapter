@@ -12,7 +12,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Colors } from "./colors.ts";
-import { mergeThemeColors, resolvePalette, type Palette } from "./palette.ts";
+import { mergeThemeColors, resolvePalette, missingCoreColors, type Palette } from "./palette.ts";
 import type { VscodeDescriptor } from "./render/vscode.ts";
 
 /** Root-Verzeichnis der Theme-Quellen (…/themes). */
@@ -104,6 +104,10 @@ export async function loadTheme(id: string, opts: LoadThemeOptions = {}): Promis
   const colors = mergeThemeColors(colorsText, extendedText);
   if (Object.keys(colors).length === 0) {
     throw new Error(`colors.toml von '${id}' konnte nicht geparst werden: ${join(dir, "colors.toml")}`);
+  }
+  const missing = missingCoreColors(colors);
+  if (missing.length > 0) {
+    console.warn(`   [!] Theme '${id}' ohne ${missing.join("/")} — Fallback #000000`);
   }
   const palette = resolvePalette(colors);
 

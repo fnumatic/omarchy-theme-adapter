@@ -1,6 +1,6 @@
 import { test, expect } from "bun:test";
 import { parseColors } from "./colors.ts";
-import { mergeThemeColors, resolvePalette, ROLE_SOURCES, ROSE_PINE_ROLES } from "./palette.ts";
+import { mergeThemeColors, resolvePalette, missingCoreColors, ROLE_SOURCES, ROSE_PINE_ROLES } from "./palette.ts";
 
 const COLORS = `mode = "light"
 background = "#faf4ed"
@@ -59,6 +59,12 @@ test("resolvePalette: ansi16 in Ghostty-Reihenfolge", () => {
   expect(p.ansi16[0]).toBe("#faf4ed");
   expect(p.ansi16[1]).toBe("#b4637a");
   expect(p.ansi16[7]).toBe("#575279");
+});
+
+test("missingCoreColors meldet fehlende Kern-Keys", () => {
+  expect(missingCoreColors(parseColors('background = "#fff"\nforeground = "#000"\n'))).toEqual([]);
+  expect(missingCoreColors(parseColors('mode = "light"\n'))).toEqual(["background", "foreground"]);
+  expect(missingCoreColors(parseColors('background = "#fff"\n'))).toEqual(["foreground"]);
 });
 
 test("ROLE_SOURCES deckt alle Rollen ab", () => {

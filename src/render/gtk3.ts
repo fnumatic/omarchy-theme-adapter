@@ -2,6 +2,7 @@
 // Mapping siehe docs/architektur.md §3.2.
 import type { Palette } from "../palette.ts";
 import { realGSettings, type GSettingsRunner } from "../gsettings.ts";
+import { assertValidCss } from "../cssutil.ts";
 
 /** Default-/Referenzname des GTK-Themes (Verzeichnis unter ~/.themes) — entspricht `pascal("rose-pine")`. */
 export const GTK3_THEME_NAME = "RosePine";
@@ -146,6 +147,7 @@ export async function installGtk3(
     return { cssFile, indexFile };
   }
 
+  assertValidCss(css, `GTK3-Theme ${name}`);
   const { mkdir, writeFile } = await import("node:fs/promises");
   await mkdir(`${themesDir}/${name}/gtk-3.0`, { recursive: true });
   await writeFile(cssFile, css);

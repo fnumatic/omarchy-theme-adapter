@@ -4,6 +4,7 @@
 // färben libadwaita-Apps inkl. Ghostty-Fensterrahmen. Mapping: docs/architektur.md §3.3.
 import type { Palette } from "../palette.ts";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { assertValidCss } from "../cssutil.ts";
 
 export const MARKER = "Generiert aus Omarchy colors.toml (Option B)";
 
@@ -147,6 +148,7 @@ export async function installGtk4(
     return { cssFile, appended: false };
   }
 
+  assertValidCss(css, "libadwaita-Overlay");
   await mkdir(dir, { recursive: true });
   let existing = "";
   try {
@@ -155,17 +157,23 @@ export async function installGtk4(
     existing = "";
   }
 
+  const markerAt = existing.indexOf("/* " + MARKER);
   if (existing && !existing.includes(MARKER)) {
     throw new Error(
       `${cssFile} existiert und stammt nicht von themeswitch — Abbruch statt Überschreiben. ` +
         `Bitte manuell sichern/zusammenführen.`,
     );
   }
+  if (existing.includes(MARKER) && markerAt === -1) {
+    throw new Error(
+      `${cssFile} enthält den themeswitch-Marker ohne Kommentar-Opener — Abbruch statt Beschädigung.`,
+    );
+  }
 
-  if (existing.includes(MARKER)) {
+  if (markerAt !== -1) {
     // Unseren alten Block ersetzen (Block = ab Marker bis Dateiende unklar,
     // daher: alles vor der ersten Marker-Zeile behalten, Rest neu).
-    const head = existing.slice(0, existing.indexOf("/* " + MARKER)).replace(/\s+$/u, "");
+    const head = existing.slice(0, markerAt).replace(/\s+$/u, "");
     await writeFile(cssFile, (head ? head + "\n\n" : "") + css);
     console.log(`   ✓ libadwaita-Overlay aktualisiert: ${cssFile}`);
     return { cssFile, appended: false };

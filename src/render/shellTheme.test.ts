@@ -42,8 +42,8 @@ test("renderShellTheme hängt Override an eine vollständige Basis an (valid)", 
 });
 
 test("assertValidCss akzeptiert das gerenderte Theme (praktische Strukturprüfung)", () => {
-  // css-tree ist strukturell tolerant; es darf zumindest das erzeugte Theme nie ablehnen,
-  // und der definitive Maßstab ist GNOME Shell (Journal) beim Laden.
+  // assertValidCss nutzt css-trees onParseError; das erwiesenermaßen valide Theme
+  // darf nie abgelehnt werden. Definitiver Maßstab bleibt GNOME Shell (Journal) beim Laden.
   assertValidCss(renderShellTheme("stage {}\n", renderShellOverride(pal)), "shell-theme");
 });
 

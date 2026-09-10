@@ -1,5 +1,5 @@
 import { test, expect } from "bun:test";
-import { mkdir, writeFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -10,10 +10,7 @@ import {
 } from "./themes.ts";
 
 async function makeThemeRoot(): Promise<string> {
-  const root = join(tmpdir(), "rpg-om-themes");
-  await rm(root, { recursive: true, force: true });
-  await mkdir(root, { recursive: true });
-  return root;
+  return mkdtemp(join(tmpdir(), "rpg-om-themes-"));
 }
 
 test("isValidThemeId erlaubt nur harmlose Namen", () => {
@@ -63,13 +60,33 @@ test("loadTheme setzt Icon-Default Yaru-blue und keine backgrounds", async () =>
   const root = await makeThemeRoot();
   const tdir = join(root, "nord");
   await mkdir(tdir, { recursive: true });
-  await writeFile(join(tdir, "colors.toml"), 'mode = "dark"\nbackground = "#2e3440"\n');
+  await writeFile(join(tdir, "colors.toml"), 'mode = "dark"\nbackground = "#2e3440"\nforeground = "#d8dee9"\n');
 
   const t = await loadTheme("nord", { root });
   expect(t.mode).toBe("dark");
   expect(t.iconsTheme).toBe("Yaru-blue");
   expect(t.vscode).toBeNull();
   expect(t.hasBackgrounds).toBe(false);
+});
+
+test("loadTheme warnt bei fehlenden Kernfarben", async () => {
+  const root = await makeThemeRoot();
+  const tdir = join(root, "kaputt");
+  await mkdir(tdir, { recursive: true });
+  await writeFile(join(tdir, "colors.toml"), 'mode = "light"\n');
+
+  const orig = console.warn;
+  let warned = "";
+  console.warn = (m?: unknown) => {
+    warned += String(m);
+  };
+  try {
+    await loadTheme("kaputt", { root });
+  } finally {
+    console.warn = orig;
+  }
+  expect(warned).toContain("Fallback");
+  expect(warned).toContain("foreground");
 });
 
 test("loadTheme wirft für unbekanntes Theme/Missing colors", async () => {

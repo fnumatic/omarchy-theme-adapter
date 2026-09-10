@@ -22,6 +22,13 @@ test("hexToRgba wandelt Dawn-Farben korrekt", () => {
   expect(hexToRgba("#575279", 1)).toBe("rgba(87, 82, 121, 1)");
 });
 
+test("hexToRgba akzeptiert Kurz- und 8-stellige Hex-Werte", () => {
+  expect(hexToRgba("#fff", 1)).toBe("rgba(255, 255, 255, 1)");
+  expect(hexToRgba("#abc", 0.5)).toBe("rgba(170, 187, 204, 0.5)");
+  expect(hexToRgba("#abcd", 1)).toBe("rgba(170, 187, 204, 1)");
+  expect(hexToRgba("#faf4edff", 0.5)).toBe("rgba(250, 244, 237, 0.5)");
+});
+
 test("hexToRgba verweigert ungültiges Hex", () => {
   let msg = "";
   try {
@@ -47,6 +54,19 @@ test("installShellPaperwm --dry-run schreibt nichts", async () => {
   await installShellPaperwm(renderShellPaperwm(pal), { dry: true, cssFile });
   const existing = await readFile(cssFile).catch(() => null);
   expect(existing).toBeNull();
+});
+
+test("installShellPaperwm verweigert Marker ohne Kommentar-Opener", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "rpg-sh-bad-"));
+  const cssFile = join(dir, "user.css");
+  await writeFile(cssFile, MARKER + "\n");
+  let msg = "";
+  try {
+    await installShellPaperwm(renderShellPaperwm(pal), { dry: false, cssFile });
+  } catch (e) {
+    msg = String(e instanceof Error ? e.message : e);
+  }
+  expect(msg).toContain("Kommentar-Opener");
 });
 
 test("installShellPaperwm erhält Fremdinhalt und ist idempotent", async () => {

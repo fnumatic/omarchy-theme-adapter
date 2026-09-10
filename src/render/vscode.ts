@@ -100,6 +100,8 @@ export async function installVscode(
       } catch {
         text = "{\n}\n";
       }
+      // Leere Datei → gültiges JSONC-Gerüst, sonst greift setColorTheme ins Leere.
+      if (text.trim() === "") text = "{\n}\n";
       await writeFile(settingsPath, setColorTheme(text, name));
       console.log(`   ✓ workbench.colorTheme → "${name}" (${t.cmd})`);
     }
