@@ -28,4 +28,5 @@ bun install                        # Dev dependencies (@types/bun, css-tree)
 - Themes under [`themes/<id>/`](./themes): each with `colors.toml` (required) + optional `vscode.json`, `icons.theme`, `backgrounds/`.
 
 ## License
-MIT (inspired by Omarchy).
+MIT (inspired by Omarchy). See [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md)
+for third-party theme data and background images.
