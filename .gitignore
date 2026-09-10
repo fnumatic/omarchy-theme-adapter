@@ -6,3 +6,4 @@ __pycache__/
 /out/
 /node_modules/
 .opencode/
+opencode.jsonc
