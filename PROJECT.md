@@ -160,17 +160,24 @@ rosepinetheme/
 ├── src/
 │   ├── cli.ts                # CLI-Einstieg (Bun): parse/render/install/apply/reset
 │   ├── colors.ts             # colors.toml-Parser + Normalisierung (TS)
+│   ├── palette.ts            # deklarative Rollenauflösung (ROLE_SOURCES → Palette)
+│   ├── themes.ts             # Theme-Resolver (colors.toml + vscode/icons/backgrounds)
 │   ├── gsettings.ts          # testbarer gsettings-Wrapper (real + fake)
+│   ├── paths.ts              # zentrale XDG-/HOME-Pfadauflösung
+│   ├── fsutil.ts             # ensureParent + Backup-Zeitstempel
+│   ├── managedBlock.ts       # markierte CSS-Blöcke finden/validieren
+│   ├── cssutil.ts            # CSS-Validierung (css-tree)
 │   ├── state.ts              # Snapshot des Originalzustands (nur einmal)
 │   ├── reset.ts              # Wiederherstellung aus Snapshot
 │   └── render/
 │       ├── ghostty.ts        # Ghostty-Theme rendern/installieren (TS)
 │       ├── gtk3.ts           # GTK3 gtk.css + index.theme rendern/installieren (TS)
-│       └── gtk4.ts           # libadwaita-Overlay (gtk-4.0/gtk.css) rendern/installieren (TS)
-│       └── libreoffice.ts    # LO folgt dem System-Theme (Automatic, mit Backup) (TS)
-│       └── vscode.ts         # VS-Code-Theme (Extension + colorTheme, JSONC-sicher) (TS)
-│       └── wallpaper.ts      # Wallpaper setzen (bevorzugt 2-dot-map, sonst erstes sortiert) (TS)
-│       └── shell.ts          # PaperWM-Topbar in Dawn (user.css-Block) (TS)
+│       ├── gtk4.ts           # libadwaita-Overlay (gtk-4.0/gtk.css) rendern/installieren (TS)
+│       ├── libreoffice.ts    # LO folgt dem System-Theme (Automatic, mit Backup) (TS)
+│       ├── vscode.ts         # VS-Code-Theme (Extension + colorTheme, JSONC-sicher) (TS)
+│       ├── wallpaper.ts      # Wallpaper setzen (bevorzugt 2-dot-map, sonst erstes sortiert) (TS)
+│       ├── shell.ts          # PaperWM-Topbar in Dawn (user.css-Block) (TS)
+│       └── shellTheme.ts     # GNOME-Shell-Theme (Yaru-Basis + Override) (TS)
 ├── bin/
 │   └── themeswitch        # Wrapper → bun src/cli.ts
 └── docs/

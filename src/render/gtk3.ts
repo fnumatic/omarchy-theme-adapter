@@ -1,8 +1,10 @@
 // render/gtk3.ts — GTK3-Theme aus colors.toml rendern + installieren (Option B).
 // Mapping siehe docs/architektur.md §3.2.
 import type { Palette } from "../palette.ts";
+import { mkdir, writeFile } from "node:fs/promises";
 import { realGSettings, type GSettingsRunner } from "../gsettings.ts";
 import { assertValidCss } from "../cssutil.ts";
+import { userThemesDir } from "../paths.ts";
 
 /** Default-/Referenzname des GTK-Themes (Verzeichnis unter ~/.themes) — entspricht `pascal("rose-pine")`. */
 export const GTK3_THEME_NAME = "RosePine";
@@ -134,7 +136,7 @@ export async function installGtk3(
   css: string,
   opts: InstallGtk3Options = { dry: false },
 ): Promise<{ cssFile: string; indexFile: string }> {
-  const themesDir = opts.themesDir ?? `${process.env.HOME}/.themes`;
+  const themesDir = opts.themesDir ?? userThemesDir();
   const name = opts.name ?? GTK3_THEME_NAME;
   const cssFile = `${themesDir}/${name}/gtk-3.0/gtk.css`;
   const indexFile = `${themesDir}/${name}/index.theme`;
@@ -148,7 +150,6 @@ export async function installGtk3(
   }
 
   assertValidCss(css, `GTK3-Theme ${name}`);
-  const { mkdir, writeFile } = await import("node:fs/promises");
   await mkdir(`${themesDir}/${name}/gtk-3.0`, { recursive: true });
   await writeFile(cssFile, css);
   await writeFile(indexFile, renderIndexTheme(name));

@@ -11,10 +11,20 @@ import { installGtk3, renderGtk3 } from "./render/gtk3.ts";
 import { installGtk4, renderGtk4 } from "./render/gtk4.ts";
 import { installLibreOffice } from "./render/libreoffice.ts";
 import { installVscode, defaultCodeTarget } from "./render/vscode.ts";
+import { installWallpaper, listWallpapers } from "./render/wallpaper.ts";
+import { installShellPaperwm, renderShellPaperwm } from "./render/shell.ts";
+import {
+  installShellTheme,
+  readSystemShellBase,
+  renderShellOverride,
+  renderShellTheme,
+  shellThemeName,
+} from "./render/shellTheme.ts";
 import { realGSettings } from "./gsettings.ts";
 import { ensureSnapshot, setAppliedTheme } from "./state.ts";
 import { resetAll, type ResetTarget } from "./reset.ts";
 import { loadTheme, listThemes, type Theme } from "./themes.ts";
+import { ghosttyThemesDir } from "./paths.ts";
 import { join } from "node:path";
 
 const ROOT = import.meta.dir; // …/src
@@ -139,6 +149,34 @@ async function snapshotOnce(dry: boolean): Promise<void> {
   if (created) console.log("   ✓ Originalzustand gesichert (Snapshot)");
 }
 
+/** PaperWM-Topbar-Block anwenden (on-the-fly aus der Palette). */
+async function applyPaperwm(p: Palette, dry: boolean): Promise<void> {
+  await installShellPaperwm(renderShellPaperwm(p), { dry });
+}
+
+/** Vollständiges GNOME-Shell-Theme installieren (System-Yaru + Override). */
+async function applyShellTheme(p: Palette, gtkName: string, dry: boolean): Promise<void> {
+  const base = await readSystemShellBase();
+  const css = renderShellTheme(base, renderShellOverride(p));
+  await installShellTheme(shellThemeName(gtkName), css, { dry });
+}
+
+/** Farbschema + Icon-Theme setzen (System-Grundlage, wie omarchy-theme-set-gnome). */
+async function applySystemSettings(t: Theme, dry: boolean): Promise<void> {
+  const scheme = t.mode === "light" ? "prefer-light" : "prefer-dark";
+  if (dry) {
+    console.log(`  dry-run: gsettings color-scheme → ${scheme}`);
+    console.log(`  dry-run: gsettings icon-theme → ${t.iconsTheme}`);
+    return;
+  }
+  const code = await realGSettings.set("org.gnome.desktop.interface", "color-scheme", scheme);
+  if (code !== 0) C.warn(`gsettings color-scheme fehlgeschlagen (${code})`);
+  else console.log(`   ✓ color-scheme: ${scheme}`);
+  const icode = await realGSettings.set("org.gnome.desktop.interface", "icon-theme", t.iconsTheme);
+  if (icode !== 0) C.warn(`gsettings icon-theme fehlgeschlagen (${icode})`);
+  else console.log(`   ✓ icon-theme: ${t.iconsTheme}`);
+}
+
 /** Wendet ein Theme vollständig auf alle Ziele an (Ghostty, GTK3, GTK4, VSCode, Wallpaper, Shell). */
 async function applyTheme(theme: Theme, dry: boolean): Promise<void> {
   await snapshotOnce(dry);
@@ -181,7 +219,6 @@ async function applyTheme(theme: Theme, dry: boolean): Promise<void> {
   // Wallpaper (nur wenn backgrounds vorhanden)
   if (theme.hasBackgrounds) {
     try {
-      const { installWallpaper } = await import("./render/wallpaper.ts");
       await installWallpaper({ dry, backgrounds: join(theme.dir, "backgrounds") });
     } catch (e) {
       C.die(`Wallpaper fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`);
@@ -192,50 +229,28 @@ async function applyTheme(theme: Theme, dry: boolean): Promise<void> {
 
   // PaperWM-Topbar
   try {
-    const { installShellPaperwm, renderShellPaperwm } = await import("./render/shell.ts");
-    await installShellPaperwm(renderShellPaperwm(p), { dry });
+    await applyPaperwm(p, dry);
   } catch (e) {
     C.die(`Shell fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`);
   }
 
   // GNOME-Shell-Theme (vollständig, Basis Yaru + rekolorierter Override)
-  const {
-    readSystemShellBase,
-    renderShellOverride,
-    renderShellTheme,
-    installShellTheme,
-    shellThemeName,
-  } = await import("./render/shellTheme.ts");
   try {
-    const base = await readSystemShellBase();
-    const css = renderShellTheme(base, renderShellOverride(p));
-    await installShellTheme(shellThemeName(theme.gtkThemeName), css, { dry });
+    await applyShellTheme(p, theme.gtkThemeName, dry);
   } catch (e) {
     C.warn(`GNOME-Shell-Theme: ${String(e instanceof Error ? e.message : e)}`);
   }
 
-  // Farbschema + Icon-Theme (System-Grundlage, wie omarchy-theme-set-gnome)
-  const scheme = theme.mode === "light" ? "prefer-light" : "prefer-dark";
-  if (dry) {
-    console.log(`  dry-run: gsettings color-scheme → ${scheme}`);
-    console.log(`  dry-run: gsettings icon-theme → ${theme.iconsTheme}`);
-  } else {
-    const code = await realGSettings.set("org.gnome.desktop.interface", "color-scheme", scheme);
-    if (code !== 0) C.warn(`gsettings color-scheme fehlgeschlagen (${code})`);
-    else console.log(`   ✓ color-scheme: ${scheme}`);
-    const icode = await realGSettings.set("org.gnome.desktop.interface", "icon-theme", theme.iconsTheme);
-    if (icode !== 0) C.warn(`gsettings icon-theme fehlgeschlagen (${icode})`);
-    else console.log(`   ✓ icon-theme: ${theme.iconsTheme}`);
+  // Farbschema + Icon-Theme (System-Grundlage)
+  await applySystemSettings(theme, dry);
 
-    await setAppliedTheme(
-      {
-        id: theme.id,
-        ghosttyThemeFile: `${process.env.XDG_CONFIG_HOME || `${process.env.HOME}/.config`}/ghostty/themes/${theme.ghosttyThemeName}`,
-        gtkThemeName: theme.gtkThemeName,
-        shellThemeName: shellThemeName(theme.gtkThemeName),
-      },
-      realGSettings,
-    );
+  if (!dry) {
+    await setAppliedTheme({
+      id: theme.id,
+      ghosttyThemeFile: join(ghosttyThemesDir(), theme.ghosttyThemeName),
+      gtkThemeName: theme.gtkThemeName,
+      shellThemeName: shellThemeName(theme.gtkThemeName),
+    });
   }
 }
 
@@ -286,7 +301,6 @@ async function installOne(args: Args): Promise<void> {
           C.warn(`Theme '${args.theme}' hat kein backgrounds/`);
           return;
         }
-        const { listWallpapers, installWallpaper } = await import("./render/wallpaper.ts");
         const name = args.cmds[2];
         const bgs = join(t.dir, "backgrounds");
         if (name !== undefined) {
@@ -300,26 +314,14 @@ async function installOne(args: Args): Promise<void> {
     case "shell-theme":
       await withTheme(args, async (t) => {
         await snapshotOnce(args.dry);
-        const {
-          readSystemShellBase,
-          renderShellOverride,
-          renderShellTheme,
-          installShellTheme,
-          shellThemeName,
-        } = await import("./render/shellTheme.ts");
-        const base = await readSystemShellBase().catch((e) =>
-          C.die(`GNOME-Shell-Theme fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`),
-        );
-        const css = renderShellTheme(base, renderShellOverride(t.palette));
-        await installShellTheme(shellThemeName(t.gtkThemeName), css, { dry: args.dry })
+        await applyShellTheme(t.palette, t.gtkThemeName, args.dry)
           .catch((e) => C.die(`install shell-theme fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`));
       });
       break;
     case "shell":
       await withTheme(args, async (t) => {
         await snapshotOnce(args.dry);
-        const { installShellPaperwm, renderShellPaperwm } = await import("./render/shell.ts");
-        await installShellPaperwm(renderShellPaperwm(t.palette), { dry: args.dry })
+        await applyPaperwm(t.palette, args.dry)
           .catch((e) => C.die(`install shell fehlgeschlagen: ${String(e instanceof Error ? e.message : e)}`));
       });
       break;
@@ -359,18 +361,7 @@ async function main(): Promise<void> {
       await withTheme(args, async (t) => {
         await snapshotOnce(args.dry);
         C.log(`${t.displayName} (${t.mode}) — Farbschema + Icon-Theme`);
-        const scheme = t.mode === "light" ? "prefer-light" : "prefer-dark";
-        if (args.dry) {
-          console.log(`  dry-run: gsettings color-scheme → ${scheme}`);
-          console.log(`  dry-run: gsettings icon-theme → ${t.iconsTheme}`);
-        } else {
-          const code = await realGSettings.set("org.gnome.desktop.interface", "color-scheme", scheme);
-          if (code !== 0) C.warn(`gsettings color-scheme fehlgeschlagen (${code})`);
-          else console.log(`   ✓ color-scheme: ${scheme}`);
-          const icode = await realGSettings.set("org.gnome.desktop.interface", "icon-theme", t.iconsTheme);
-          if (icode !== 0) C.warn(`gsettings icon-theme fehlgeschlagen (${icode})`);
-          else console.log(`   ✓ icon-theme: ${t.iconsTheme}`);
-        }
+        await applySystemSettings(t, args.dry);
       });
       break;
 

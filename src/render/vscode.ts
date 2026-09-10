@@ -5,7 +5,9 @@
 // installiert die Extension und setzt workbench.colorTheme in settings.json.
 // settings.json ist JSONC (Kommentare/trailing commas) → Edit per Regex wie
 // bei Omarchy, kein JSON-Roundtrip (kein Reformat, keine Kommentar-Verluste).
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
+import { ensureParent } from "../fsutil.ts";
+import { vscodeSettingsPath } from "../paths.ts";
 
 export interface VscodeDescriptor {
   name: string;
@@ -20,7 +22,7 @@ export interface EditorTarget {
 }
 
 export function defaultCodeTarget(): EditorTarget {
-  return { cmd: "code", settingsPath: `${process.env.HOME}/.config/Code/User/settings.json` };
+  return { cmd: "code", settingsPath: vscodeSettingsPath() };
 }
 
 export interface InstallVscodeOptions {
@@ -93,7 +95,7 @@ export async function installVscode(
     if (opts.dry) {
       console.log(`  dry-run: workbench.colorTheme → "${name}" in ${settingsPath}`);
     } else {
-      await mkdir(settingsPath.slice(0, settingsPath.lastIndexOf("/")), { recursive: true });
+      await ensureParent(settingsPath);
       let text = "";
       try {
         text = await readFile(settingsPath, "utf8");

@@ -10,15 +10,11 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import type { Palette } from "../palette.ts";
 import { realGSettingsWithSchemaDir, type GSettingsRunner } from "../gsettings.ts";
 import { assertValidCss } from "../cssutil.ts";
+import { userThemeSchemaDir, userThemesDir } from "../paths.ts";
 
 /** Basis des System-Shell-Themes (Ubuntu Yaru). */
 export function systemShellBasePath(): string {
   return "/usr/share/gnome-shell/theme/Yaru/gnome-shell.css";
-}
-
-/** Schema-Dir der User-Themes-Extension (für org.gnome.shell.extensions.user-theme). */
-export function userThemeSchemaDir(): string {
-  return `${process.env.HOME}/.local/share/gnome-shell/extensions/user-theme@gnome-shell-extensions.gcampax.github.com/schemas`;
 }
 
 export const USER_THEME_UUID = "user-theme@gnome-shell-extensions.gcampax.github.com";
@@ -275,7 +271,7 @@ export async function installShellTheme(
   css: string,
   opts: InstallShellThemeOptions = { dry: false },
 ): Promise<{ cssFile: string; themeDir: string }> {
-  const themesDir = opts.themesDir ?? `${process.env.HOME}/.themes`;
+  const themesDir = opts.themesDir ?? userThemesDir();
   const themeDir = `${themesDir}/${name}`;
   const cssFile = `${themeDir}/gnome-shell/gnome-shell.css`;
   const gs = opts.gs ?? realGSettingsWithSchemaDir(userThemeSchemaDir());

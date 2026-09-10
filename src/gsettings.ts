@@ -4,25 +4,31 @@ export interface GSettingsRunner {
   set(schema: string, key: string, value: string): Promise<number>;
 }
 
-export const realGSettings: GSettingsRunner = {
-  async get(schema, key): Promise<string | null> {
-    try {
-      const out = Bun.spawnSync(["gsettings", "get", schema, key]);
-      if (out.exitCode !== 0) return null;
-      return new TextDecoder().decode(out.stdout).trim() || null;
-    } catch {
-      return null;
-    }
-  },
-  async set(schema, key, value): Promise<number> {
-    try {
-      const out = Bun.spawnSync(["gsettings", "set", schema, key, value]);
-      return out.exitCode ?? -1;
-    } catch {
-      return -1;
-    }
-  },
-};
+/** Echter gsettings-Runner; `env` setzt optional eine abweichende Umgebung. */
+function makeRealGSettings(env?: Record<string, string | undefined>): GSettingsRunner {
+  const spawn = (args: string[]) => (env ? Bun.spawnSync(args, { env }) : Bun.spawnSync(args));
+  return {
+    async get(schema, key): Promise<string | null> {
+      try {
+        const out = spawn(["gsettings", "get", schema, key]);
+        if (out.exitCode !== 0) return null;
+        return new TextDecoder().decode(out.stdout).trim() || null;
+      } catch {
+        return null;
+      }
+    },
+    async set(schema, key, value): Promise<number> {
+      try {
+        const out = spawn(["gsettings", "set", schema, key, value]);
+        return out.exitCode ?? -1;
+      } catch {
+        return -1;
+      }
+    },
+  };
+}
+
+export const realGSettings: GSettingsRunner = makeRealGSettings();
 
 /** In-Memory-Fake für Tests. */
 export function fakeGSettings(initial: Record<string, string> = {}): GSettingsRunner & {
@@ -50,19 +56,5 @@ export function fakeGSettings(initial: Record<string, string> = {}): GSettingsRu
  * z. B. org.gnome.shell.extensions.user-theme, die nicht systemkompiliert sind).
  */
 export function realGSettingsWithSchemaDir(schemaDir: string): GSettingsRunner {
-  return {
-    async get(schema, key): Promise<string | null> {
-      const out = Bun.spawnSync(["gsettings", "get", schema, key], {
-        env: { ...process.env, GSETTINGS_SCHEMA_DIR: schemaDir },
-      });
-      if (out.exitCode !== 0) return null;
-      return new TextDecoder().decode(out.stdout).trim() || null;
-    },
-    async set(schema, key, value): Promise<number> {
-      const out = Bun.spawnSync(["gsettings", "set", schema, key, value], {
-        env: { ...process.env, GSETTINGS_SCHEMA_DIR: schemaDir },
-      });
-      return out.exitCode ?? -1;
-    },
-  };
+  return makeRealGSettings({ ...process.env, GSETTINGS_SCHEMA_DIR: schemaDir });
 }

@@ -56,7 +56,7 @@ test("installShellPaperwm --dry-run schreibt nichts", async () => {
   expect(existing).toBeNull();
 });
 
-test("installShellPaperwm verweigert Marker ohne Kommentar-Opener", async () => {
+test("installShellPaperwm verweigert beschädigten Marker", async () => {
   const dir = await mkdtemp(join(tmpdir(), "rpg-sh-bad-"));
   const cssFile = join(dir, "user.css");
   await writeFile(cssFile, MARKER + "\n");
@@ -66,7 +66,7 @@ test("installShellPaperwm verweigert Marker ohne Kommentar-Opener", async () => 
   } catch (e) {
     msg = String(e instanceof Error ? e.message : e);
   }
-  expect(msg).toContain("Kommentar-Opener");
+  expect(msg).toContain("beschädigt");
 });
 
 test("installShellPaperwm erhält Fremdinhalt und ist idempotent", async () => {

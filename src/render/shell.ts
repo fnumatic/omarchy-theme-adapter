@@ -5,8 +5,11 @@
 // Offizieller Eingriffspunkt: ~/.config/paperwm/user.css (wird als
 // User-Stylesheet geladen; nach Änderung Extension aus/ein, kein Logout nötig).
 // Wir verwalten nur unseren markierten Block; fremde Inhalte bleiben unangetastet.
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import type { Palette } from "../palette.ts";
+import { ensureParent } from "../fsutil.ts";
+import { locateBlock } from "../managedBlock.ts";
+import { paperwmUserCssPath } from "../paths.ts";
 
 export const MARKER = "themeswitch: PaperWM-Topbar (aus Omarchy colors.toml)";
 export const END_MARKER = "themeswitch: Ende PaperWM-Topbar";
@@ -16,7 +19,7 @@ export const CLOSER_HINT = "themeswitch: schliesst offenen Datei-Kommentar";
 export const TOPBAR_ALPHA = 0.95;
 
 export function userCssPath(): string {
-  return `${process.env.HOME}/.config/paperwm/user.css`;
+  return paperwmUserCssPath();
 }
 
 /** Zählt, ob CSS-Text mit offenem Kommentar endet (opens > closes). */
@@ -88,7 +91,7 @@ export async function installShellPaperwm(
     return { cssFile };
   }
 
-  await mkdir(cssFile.slice(0, cssFile.lastIndexOf("/")), { recursive: true });
+  await ensureParent(cssFile);
   let existing = "";
   try {
     existing = await readFile(cssFile, "utf8");
@@ -97,16 +100,13 @@ export async function installShellPaperwm(
   }
 
   let next: string;
-  const start = existing.indexOf(`/* ${MARKER}`);
-  if (existing.includes(MARKER) && start === -1) {
-    throw new Error(`Marker in ${cssFile} ohne Kommentar-Opener. Bitte manuell prüfen.`);
+  const loc = locateBlock(existing, MARKER, END_MARKER);
+  if (loc.kind === "corrupt") {
+    throw new Error(`Markierter Block in ${cssFile} ist beschädigt. Bitte manuell prüfen.`);
   }
-  if (start !== -1) {
-    const endToken = `/* ${END_MARKER} */`;
-    const end = existing.indexOf(endToken, start);
-    if (end === -1) throw new Error(`Markierter Block in ${cssFile} ist beschädigt. Bitte manuell prüfen.`);
-    const head = existing.slice(0, start).replace(/\s+$/u, "");
-    const tail = existing.slice(end + endToken.length).replace(/^\s+/u, "");
+  if (loc.kind === "found") {
+    const head = existing.slice(0, loc.start).replace(/\s+$/u, "");
+    const tail = existing.slice(loc.end).replace(/^\s+/u, "");
     next = (head ? head + "\n\n" : "") + block.trimEnd() + "\n" + (tail ? "\n" + tail : "");
     if (!next.endsWith("\n")) next += "\n";
   } else {

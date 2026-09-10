@@ -299,11 +299,13 @@ test("reset bricht bei gtk.css-Marker ohne Kommentar-Opener ab, ohne zu ändern"
 test("reset bricht bei PaperWM-Marker ohne Kommentar-Opener ab, ohne zu ändern", async () => {
   const home = await mkdtemp(join(tmpdir(), "rpg-home-corrupt-pw-"));
   const stateDir = join(home, "state");
+  const cfgDir = join(home, "cfg");
   process.env.HOME = home;
-  process.env.XDG_CONFIG_HOME = join(home, "cfg");
+  process.env.XDG_CONFIG_HOME = cfgDir;
   await ensureSnapshot(fakeGSettings(), stateDir); // paperwmUserCssExisted=false
-  const pwFile = join(home, ".config", "paperwm", "user.css");
-  await mkdir(join(home, ".config", "paperwm"), { recursive: true });
+  // PaperWM nutzt GLib.get_user_config_dir() → XDG_CONFIG_HOME
+  const pwFile = join(cfgDir, "paperwm", "user.css");
+  await mkdir(join(cfgDir, "paperwm"), { recursive: true });
   const content = SHELL_MARKER + " ohne opener\n";
   await writeFile(pwFile, content);
 

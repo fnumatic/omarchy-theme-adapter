@@ -1,7 +1,20 @@
 // reset.ts — stellt den im Snapshot gesicherten Originalzustand wieder her.
-import { readFile, rm, writeFile, mkdir } from "node:fs/promises";
+import { readFile, rm, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { loadSnapshot } from "./state.ts";
 import { realGSettingsWithSchemaDir, type GSettingsRunner } from "./gsettings.ts";
+import { ensureParent } from "./fsutil.ts";
+import { locateBlock } from "./managedBlock.ts";
+import {
+  ghosttyConfigPath,
+  ghosttyThemesDir,
+  gtk4CssPath,
+  libreofficeConfigPath,
+  paperwmUserCssPath,
+  userThemesDir,
+  userThemeSchemaDir,
+  vscodeSettingsPath,
+} from "./paths.ts";
 import { GTK3_THEME_NAME } from "./render/gtk3.ts";
 import { MARKER as GTK4_MARKER } from "./render/gtk4.ts";
 import { MARKER as SHELL_MARKER, END_MARKER as SHELL_END_MARKER, CLOSER_HINT as SHELL_CLOSER_HINT } from "./render/shell.ts";
@@ -52,39 +65,32 @@ export interface ResetOptions {
 }
 
 function paperwmUserCssFile(opts: ResetOptions): string {
-  return opts.paperwmUserCssFile ?? `${process.env.HOME}/.config/paperwm/user.css`;
+  return opts.paperwmUserCssFile ?? paperwmUserCssPath();
 }
 
 function vscodeSettingsFile(opts: ResetOptions): string {
-  return opts.vscodeSettingsFile ?? `${process.env.HOME}/.config/Code/User/settings.json`;
+  return opts.vscodeSettingsFile ?? vscodeSettingsPath();
 }
 
 async function writeEnsured(path: string, text: string): Promise<void> {
-  await mkdir(path.slice(0, path.lastIndexOf("/")), { recursive: true });
+  await ensureParent(path);
   await writeFile(path, text);
 }
 
-function configHomeOf(opts: ResetOptions): string {
-  return opts.configHome ?? process.env.XDG_CONFIG_HOME ?? `${process.env.HOME}/.config`;
-}
-
-function ghosttyConfigPath(opts: ResetOptions): string {
-  return `${configHomeOf(opts)}/ghostty/config`;
+function ghosttyConfigFile(opts: ResetOptions): string {
+  return ghosttyConfigPath(opts.configHome);
 }
 
 function ghosttyThemeFile(opts: ResetOptions): string {
-  return `${configHomeOf(opts)}/ghostty/themes/rose-pine-dawn.conf`;
+  return join(ghosttyThemesDir(opts.configHome), "rose-pine-dawn.conf");
 }
 
 function gtk4CssFile(opts: ResetOptions): string {
-  return `${configHomeOf(opts)}/gtk-4.0/gtk.css`;
+  return gtk4CssPath(opts.configHome);
 }
 
 function libreofficeConfigFile(opts: ResetOptions): string {
-  return (
-    opts.libreofficeConfigFile ??
-    `${process.env.HOME}/.config/libreoffice/4/user/registrymodifications.xcu`
-  );
+  return opts.libreofficeConfigFile ?? libreofficeConfigPath();
 }
 
 export async function resetAll(opts: ResetOptions): Promise<void> {
@@ -99,7 +105,7 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
 
   if (want("ghostty")) {
   // Ghostty-Config
-  const cfg = ghosttyConfigPath(opts);
+  const cfg = ghosttyConfigFile(opts);
   if (opts.dry) {
     console.log(`  dry-run: stelle ${cfg} aus Snapshot wieder her`);
   } else if (snap.ghosttyConfigExisted && snap.ghosttyConfigText !== null) {
@@ -142,7 +148,7 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
 
   if (want("gtk3")) {
   // Generiertes GTK3-Theme löschen (nur unseres)
-  const themesDir = opts.themesDir ?? `${process.env.HOME}/.themes`;
+  const themesDir = opts.themesDir ?? userThemesDir();
   const gtkName = snap.appliedTheme?.gtkThemeName ?? GTK3_THEME_NAME;
   const gtkDir = `${themesDir}/${gtkName}`;
   if (opts.dry) {
@@ -173,7 +179,7 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
 
   if (want("shell-theme")) {
   // Generiertes Shell-Theme entfernen + aktives User-Theme zurücksetzen
-  const themesDir = opts.themesDir ?? `${process.env.HOME}/.themes`;
+  const themesDir = opts.themesDir ?? userThemesDir();
   const shName = snap.appliedTheme?.shellThemeName;
   if (shName) {
     const shDir = `${themesDir}/${shName}`;
@@ -190,8 +196,7 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
     if (opts.dry) {
       console.log(`  dry-run: ${USER_THEME_SCHEMA} name → ${snap.userThemeName}`);
     } else {
-      const dir = `${process.env.HOME}/.local/share/gnome-shell/extensions/user-theme@gnome-shell-extensions.gcampax.github.com/schemas`;
-      const ut = realGSettingsWithSchemaDir(dir);
+      const ut = realGSettingsWithSchemaDir(userThemeSchemaDir());
       await ut.set(USER_THEME_SCHEMA, "name", snap.userThemeName);
       console.log(`   ✓ User-Themes wiederhergestellt: ${snap.userThemeName}`);
     }
@@ -214,13 +219,13 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
     // Es gab vorher keine gtk.css: nur unseren Block entfernen, fremde Inhalte nie löschen.
     try {
       const text = await readFile(cssFile, "utf8");
-      const markerAt = text.indexOf("/* " + GTK4_MARKER);
-      if (!text.includes(GTK4_MARKER)) {
+      const loc = locateBlock(text, GTK4_MARKER);
+      if (loc.kind === "absent") {
         console.log(`   − ${cssFile} enthält keinen themeswitch-Block, unangetastet`);
-      } else if (markerAt === -1) {
+      } else if (loc.kind === "corrupt") {
         throw new Error(`Block beschädigt in ${cssFile}, bitte manuell prüfen.`);
       } else {
-        const head = text.slice(0, markerAt).replace(/\s+$/u, "");
+        const head = text.slice(0, loc.start).replace(/\s+$/u, "");
         if (head) {
           await writeFile(cssFile, head + "\n");
           console.log(`   ✓ themeswitch-Block aus ${cssFile} entfernt (Rest erhalten)`);
@@ -298,21 +303,19 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
   } else {
     try {
       const text = await readFile(pwFile, "utf8");
-      if (!text.includes(SHELL_MARKER)) {
+      const loc = locateBlock(text, SHELL_MARKER, SHELL_END_MARKER);
+      if (loc.kind === "absent") {
         console.log(`   − ${pwFile} enthält keinen themeswitch-Block, unangetastet`);
+      } else if (loc.kind === "corrupt") {
+        throw new Error(`Block beschädigt in ${pwFile}, bitte manuell prüfen.`);
       } else {
-        const start = text.indexOf(`/* ${SHELL_MARKER}`);
-        if (start === -1) throw new Error(`Block beschädigt in ${pwFile}, bitte manuell prüfen.`);
-        const endToken = `/* ${SHELL_END_MARKER} */`;
-        const end = text.indexOf(endToken, start);
-        if (end === -1) throw new Error(`Block beschädigt in ${pwFile}, bitte manuell prüfen.`);
-        let head = text.slice(0, start).replace(/\s+$/u, "");
+        let head = text.slice(0, loc.start).replace(/\s+$/u, "");
         // Von uns ergänzte Kommentar-Schließung ebenfalls entfernen.
         const closerIdx = head.lastIndexOf(SHELL_CLOSER_HINT);
         if (closerIdx !== -1 && !head.slice(closerIdx).includes("\n\n")) {
           head = head.slice(0, head.lastIndexOf("\n", closerIdx)).replace(/\s+$/u, "");
         }
-        const tail = text.slice(end + endToken.length).replace(/^\s+/u, "");
+        const tail = text.slice(loc.end).replace(/^\s+/u, "");
         const next = (head ? head + "\n\n" : "") + (tail ? tail + "\n" : "");
         if (next) await writeFile(pwFile, next);
         else await rm(pwFile, { force: true });
@@ -337,11 +340,10 @@ export async function resetAll(opts: ResetOptions): Promise<void> {
     console.log(`   − color-scheme: kein Original im Snapshot, übersprungen`);
   }
   if (snap.userThemeName !== undefined && snap.userThemeName !== null) {
-    const dir = `${process.env.HOME}/.local/share/gnome-shell/extensions/user-theme@gnome-shell-extensions.gcampax.github.com/schemas`;
     if (opts.dry) {
       console.log(`  dry-run: ${USER_THEME_SCHEMA} name → ${snap.userThemeName}`);
     } else {
-      await realGSettingsWithSchemaDir(dir).set(USER_THEME_SCHEMA, "name", snap.userThemeName);
+      await realGSettingsWithSchemaDir(userThemeSchemaDir()).set(USER_THEME_SCHEMA, "name", snap.userThemeName);
       console.log(`   ✓ User-Themes wiederhergestellt: ${snap.userThemeName}`);
     }
   } else {

@@ -7,11 +7,9 @@
 // Fix: CurrentColorScheme=Automatic → LO folgt dem System-Theme.
 // Wichtig: registrymodifications.xcu nur bei BEENDETEM LibreOffice anfassen
 // (LO hält die Config im Speicher und schreibt sie beim Beenden zurück).
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-
-export function libreofficeConfigPath(): string {
-  return `${process.env.HOME}/.config/libreoffice/4/user/registrymodifications.xcu`;
-}
+import { readFile, writeFile } from "node:fs/promises";
+import { ensureParent, timestamp } from "../fsutil.ts";
+import { libreofficeConfigPath } from "../paths.ts";
 
 /** true, wenn ein LibreOffice-Prozess läuft (dann nicht anfassen). */
 export async function libreofficeRunning(): Promise<boolean> {
@@ -63,9 +61,8 @@ export async function installLibreOffice(
     return { configFile, changed: true };
   }
 
-  const stamp = new Date().toISOString().replace(/[-:T]/gu, "").slice(0, 14);
-  const backupFile = `${configFile}.bak-${stamp}`;
-  await mkdir(configFile.slice(0, configFile.lastIndexOf("/")), { recursive: true });
+  const backupFile = `${configFile}.bak-${timestamp()}`;
+  await ensureParent(configFile);
   await writeFile(backupFile, text);
 
   let next: string;

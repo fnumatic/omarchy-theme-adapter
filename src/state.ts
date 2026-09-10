@@ -1,6 +1,16 @@
 // state.ts — Snapshot der Originaleinstellungen vor dem ersten Eingriff.
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import type { GSettingsRunner } from "./gsettings.ts";
+import { ensureParent } from "./fsutil.ts";
+import {
+  ghosttyConfigPath,
+  gtk4CssPath,
+  libreofficeConfigPath,
+  paperwmUserCssPath,
+  stateFilePath,
+  userThemeSchemaDir,
+  vscodeSettingsPath,
+} from "./paths.ts";
 
 export interface Snapshot {
   version: 1;
@@ -33,22 +43,19 @@ export interface AppliedTheme {
 }
 
 export function statePath(overrideDir?: string): string {
-  const base =
-    overrideDir ?? process.env.XDG_STATE_HOME ?? `${process.env.HOME}/.local/state`;
-  return `${base}/themeswitch/state.json`;
+  return stateFilePath(overrideDir);
 }
 
 /** Schreibt das zuletzt angewandte Theme in den Snapshot (für Reset-Cleanup). */
 export async function setAppliedTheme(
   applied: AppliedTheme,
-  gs: GSettingsRunner,
   overrideDir?: string,
 ): Promise<void> {
   const snap = await loadSnapshot(overrideDir);
   if (!snap) return;
   const p = statePath(overrideDir);
   const updated: Snapshot = { ...snap, appliedTheme: applied };
-  await mkdir(p.slice(0, p.lastIndexOf("/")), { recursive: true });
+  await ensureParent(p);
   await writeFile(p, JSON.stringify(updated, null, 2) + "\n");
 }
 
@@ -61,33 +68,10 @@ export async function loadSnapshot(overrideDir?: string): Promise<Snapshot | nul
   }
 }
 
-function ghosttyConfigPath(): string {
-  const xdg = process.env.XDG_CONFIG_HOME || `${process.env.HOME}/.config`;
-  return `${xdg}/ghostty/config`;
-}
-
-function gtk4CssPath(): string {
-  const xdg = process.env.XDG_CONFIG_HOME || `${process.env.HOME}/.config`;
-  return `${xdg}/gtk-4.0/gtk.css`;
-}
-
-function libreofficeConfigPath(): string {
-  return `${process.env.HOME}/.config/libreoffice/4/user/registrymodifications.xcu`;
-}
-
-function vscodeSettingsPath(): string {
-  return `${process.env.HOME}/.config/Code/User/settings.json`;
-}
-
-function paperwmUserCssPath(): string {
-  return `${process.env.HOME}/.config/paperwm/user.css`;
-}
-
 /** Aktives GNOME-Shell-Theme (User-Themes) lesen — Schema-Dir ist Extension-spezifisch. */
 async function readUserThemeName(): Promise<string | null> {
-  const schemaDir = `${process.env.HOME}/.local/share/gnome-shell/extensions/user-theme@gnome-shell-extensions.gcampax.github.com/schemas`;
   const out = await Bun.spawnSync(["gsettings", "get", "org.gnome.shell.extensions.user-theme", "name"], {
-    env: { ...process.env, GSETTINGS_SCHEMA_DIR: schemaDir },
+    env: { ...process.env, GSETTINGS_SCHEMA_DIR: userThemeSchemaDir() },
   });
   if (out.exitCode !== 0) return null;
   return new TextDecoder().decode(out.stdout).trim().replace(/^'|'$/gu, "") || null;
@@ -147,7 +131,7 @@ export async function ensureSnapshot(
         appliedTheme: existing.appliedTheme ?? null,
       };
       const p = statePath(overrideDir);
-      await mkdir(p.slice(0, p.lastIndexOf("/")), { recursive: true });
+      await ensureParent(p);
       await writeFile(p, JSON.stringify(migrated, null, 2) + "\n");
       console.log("   ✓ Snapshot erweitert (Migration)");
       return { created: false, snapshot: migrated };
@@ -182,7 +166,7 @@ export async function ensureSnapshot(
     appliedTheme: null,
   };
   const p = statePath(overrideDir);
-  await mkdir(p.slice(0, p.lastIndexOf("/")), { recursive: true });
+  await ensureParent(p);
   await writeFile(p, JSON.stringify(snap, null, 2) + "\n");
   return { created: true, snapshot: snap };
 }

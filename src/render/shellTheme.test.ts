@@ -51,7 +51,6 @@ test("installShellTheme schreibt Datei, validiert CSS und setzt User-Themes (moc
   const home = await mkdtemp(join(tmpdir(), "rpg-shtheme-"));
   const themesDir = join(home, "themes");
   const gs = fakeGSettings({});
-  let didReload = false;
 
   const baseFull = renderShellTheme("stage {}\n", renderShellOverride(pal));
   const res = await installShellTheme("RosePineShell", baseFull, {

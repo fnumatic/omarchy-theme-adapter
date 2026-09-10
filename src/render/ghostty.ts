@@ -2,6 +2,9 @@
 // Logik (Option B): spiegelt omarchy default/themed/ghostty.conf.tpl.
 import type { Palette } from "../palette.ts";
 import { mkdir, writeFile, readFile } from "node:fs/promises";
+import { join } from "node:path";
+import { timestamp } from "../fsutil.ts";
+import { ghosttyConfigDir } from "../paths.ts";
 
 /**
  * Rendert ein gültiges Ghostty-Theme (.conf) aus der geparsten colors.toml.
@@ -53,12 +56,11 @@ export async function installGhostty(
   theme: string,
   opts: InstallOptions,
 ): Promise<InstallResult> {
-  const xdg = process.env.XDG_CONFIG_HOME || `${process.env.HOME}/.config`;
-  const configDir = opts.configDir ?? `${xdg}/ghostty`;
-  const themesDir = `${configDir}/themes`;
+  const configDir = opts.configDir ?? ghosttyConfigDir();
+  const themesDir = join(configDir, "themes");
   const themeName = opts.themeName;
-  const themeFile = `${themesDir}/${themeName}`;
-  const configFile = `${configDir}/config`;
+  const themeFile = join(themesDir, themeName);
+  const configFile = join(configDir, "config");
 
   const result: InstallResult = { themeFile, configFile };
 
@@ -82,8 +84,7 @@ export async function installGhostty(
 
   const themeRe = /^[ \t]*theme[ \t]*=.*$/mu;
   if (themeRe.test(cfgText)) {
-    const stamp = new Date().toISOString().replace(/[-:T]/gu, "").slice(0, 14);
-    const backupFile = `${configFile}.bak-${stamp}`;
+    const backupFile = `${configFile}.bak-${timestamp()}`;
     await writeFile(backupFile, cfgText);
     result.backupFile = backupFile;
   }
