@@ -91,9 +91,18 @@ siehe `src/render/shellTheme.ts` und die Findings in Abschnitt 3.8.
 | `@theme_selected_fg_color` | `foreground` (hell auf dunkler Selection) |
 | `@theme_text_color` | `foreground` |
 | `@theme_unfocused_*` | Ableitung aus `-foreground` |
+| `@theme_tooltip_bg_color` | `dark_background` (Surface) |
+| `@theme_tooltip_fg_color` | `foreground` |
 
 Umsetzung: `src/render/gtk3.ts` erzeugt das GTK3-Theme unter `~/.themes/<Theme>/gtk-3.0/gtk.css`
 (plus `index.theme`) und setzt `gsettings gtk-theme = <Theme>` (Dry-run unterstützt).
+
+**Tooltips:** Adwaita zeichnet Tooltips dunkel (`rgba(0,0,0,.8)`) mit weißem Text und setzt
+`tooltip * { color: white }`. Das globale `label`-Recolor hat denselben Spezifitätswert und steht
+danach → es überschrieb den Tooltip-Text mit dem dunklen Theme-Foreground (dunkel auf dunkel).
+Deshalb setzt `renderGtk3` am Ende explizite `tooltip`/`tooltip.background`-Regeln und die
+Farbnamen `@theme_tooltip_bg/fg_color`. Damit folgen auch LibreOffice (GTK3-VCL) und Electron
+(Chromium liest GTK-Farben) dem Theme.
 
 **Struktur:** GTK3 erwartet ein eigenständiges, vollständiges Theme. Ein dünnes Recolor-Overlay
 würde fenster/Strukturelemente durchscheinend und fehlend lassen. Deshalb importiert das Theme als
@@ -110,6 +119,9 @@ Deep-Override optional als `~/.config/gtk-3.0/gtk.css`.
 - Umsetzung: `src/render/gtk4.ts` rendert das Overlay; `install gtk4` schreibt/erweitert
   `~/.config/gtk-4.0/gtk.css`. **Fremde gtk.css werden nie überschrieben** (Abbruch mit Hinweis);
   eigene Blöcke werden idempotent aktualisiert (Marker). Betroffene Apps müssen neu gestartet werden.
+- **Tooltips:** libadwaita kodiert Hintergrund/Text fest (dunkel/weiß) und kennt keine
+  Tooltip-Farbnamen; das Overlay setzt daher `tooltip`/`tooltip.background` (Surface + Foreground)
+  explizit — konsistent zu GTK3.
 - **Bekannte Grenze:** kein Voll-Theme wie bei GTK3, sondern ein Recolor-Overlay auf Adwaita-Basis.
 
 **Fensterecken (Rundung):**

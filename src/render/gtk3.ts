@@ -34,6 +34,8 @@ export function renderGtk3(p: Palette): string {
 @define-color borders ${muted};
 @define-color content_view_bg ${base};
 @define-color insensitive_fg_color ${fgDisabled};
+@define-color theme_tooltip_bg_color ${base};
+@define-color theme_tooltip_fg_color ${fg};
 
 /* Konkrete Blöcke für gängigste Widgets (heller Dawn-Look) */
 .window-frame, .window-frame:backdrop { box-shadow: none; border-width: 0; }
@@ -75,6 +77,22 @@ windowcontrols button {
   padding: 0;
 }
 menubar, menuitem { padding-top: 1px; padding-bottom: 1px; }
+
+/* Tooltips: Adwaita nutzt einen dunklen Tooltip mit weißem Text. Das globale
+   label-Recolor oben hat denselben Selektor-Spezifitätswert und steht danach,
+   überschreibt also tooltip * → dunkler Text auf dunklem Grund. Hier explizit
+   auf die Theme-Fläche/-Vordergrund setzen (Regeln stehen am Ende → gewinnen). */
+tooltip,
+tooltip.background {
+  background-color: ${base};
+  color: ${fg};
+  border: 1px solid ${muted};
+  text-shadow: none;
+}
+tooltip * {
+  background-color: transparent;
+  color: ${fg};
+}
 `;
 }
 

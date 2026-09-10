@@ -34,6 +34,14 @@ test("renderGtk3 enthält zentrale @define-color aus dem Mapping", () => {
   expect(css).toContain("background-color: #faf4ed"); // opaker Toplevel-Hintergrund
 });
 
+test("renderGtk3 setzt Tooltip-Farben explizit (Lesbarkeit)", () => {
+  const css = renderGtk3(pal);
+  expect(css).toContain("@define-color theme_tooltip_bg_color #ede7e1");
+  expect(css).toContain("@define-color theme_tooltip_fg_color #575279");
+  expect(css).toContain("tooltip *");
+  expect(css).toContain("text-shadow: none");
+});
+
 test("renderIndexTheme setzt Name und GtkTheme", () => {
   const t = renderIndexTheme();
   expect(t).toContain("Name=RosePine");

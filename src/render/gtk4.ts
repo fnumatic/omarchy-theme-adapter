@@ -103,6 +103,19 @@ windowcontrols button {
   margin: 0;
   padding: 0;
 }
+
+/* Tooltips: libadwaita kodiert Hintergrund/Text fest (dunkel/weiß) und kennt
+   keine Farbnamen. Hier explizit auf die Theme-Fläche/-Vordergrund umstellen,
+   konsistent zu GTK3. */
+tooltip,
+tooltip.background {
+  background-color: ${surface};
+  color: ${fg};
+  border: 1px solid ${muted};
+}
+tooltip label {
+  color: ${fg};
+}
 `;
 }
 

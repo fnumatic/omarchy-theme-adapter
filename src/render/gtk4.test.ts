@@ -31,6 +31,13 @@ test("renderGtk4 enthält zentrale libadwaita-Farbnamen", () => {
   expect(css).toContain(MARKER);
 });
 
+test("renderGtk4 setzt Tooltip-Farben explizit", () => {
+  const css = renderGtk4(pal);
+  expect(css).toContain("tooltip.background");
+  expect(css).toContain("background-color: #ede7e1");
+  expect(css).toContain("tooltip label");
+});
+
 test("renderGtk4 enthält kompakte Headerbar-Regeln (spezifisch)", () => {
   const css = renderGtk4(pal);
   expect(css).toContain("window headerbar");
