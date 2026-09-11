@@ -1,6 +1,6 @@
 {
   "name": "omarchy-theme-adapter",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Apply Omarchy themes to an Ubuntu GNOME system (Ghostty, GTK3, GTK4, PaperWM, LibreOffice, VS Code) from their colors.toml.",
   "type": "module",
