@@ -57,6 +57,14 @@ export function libreofficeConfigPath(base?: string): string {
   return join(base ?? configHome(), "libreoffice", "4", "user", "registrymodifications.xcu");
 }
 
+/**
+ * Stable local directory for installed wallpapers. Wallpapers are copied here
+ * so GNOME does not reference a path inside the (movable) git checkout.
+ */
+export function wallpaperDataDir(base?: string): string {
+  return join(base ?? dataHome(), "themeswitch", "backgrounds");
+}
+
 /** Schema directory of the user themes extension. */
 export function userThemeSchemaDir(): string {
   return join(

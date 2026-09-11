@@ -3,9 +3,13 @@
 // Omarchy logic (bin/omarchy-theme-set): sorted backgrounds/ list, on theme
 // switch the first one → default = 1-funky-shapes.webp. GNOME implementation:
 // picture-uri + picture-uri-dark via gsettings (file:// URI).
-import { readdir } from "node:fs/promises";
-import { join } from "node:path";
+//
+// The wallpaper is copied into a stable per-user data directory before being
+// applied, so the URI never points into the (movable) git checkout.
+import { copyFile, mkdir, readdir } from "node:fs/promises";
+import { basename, dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { wallpaperDataDir } from "../paths.ts";
 import { realGSettings, type GSettingsRunner } from "../gsettings.ts";
 
 /** Omarchy default rule: first of the sorted backgrounds (dynamic). */
@@ -14,6 +18,11 @@ export const DEFAULT_WALLPAPER = "";
 export function backgroundsDir(): string {
   // src/render → ../../themes/rose-pine/backgrounds (default theme)
   return join(fileURLToPath(new URL(".", import.meta.url)), "..", "..", "themes", "rose-pine", "backgrounds");
+}
+
+/** Theme id inferred from a `…/themes/<id>/backgrounds` path. */
+export function themeIdFromBackgroundsDir(dir: string): string {
+  return basename(dirname(dir));
 }
 
 export async function listWallpapers(dir?: string): Promise<string[]> {
@@ -28,6 +37,8 @@ export interface InstallWallpaperOptions {
   /** File name in backgrounds/ (default: prefer 2-dot-map.webp, otherwise the first sorted) */
   name?: string;
   backgrounds?: string;
+  /** Stable destination directory (default: <data>/themeswitch/backgrounds/<theme-id>). */
+  destDir?: string;
   gs?: GSettingsRunner;
 }
 
@@ -48,13 +59,19 @@ export async function installWallpaper(
     );
   }
   const gs = opts.gs ?? realGSettings;
-  const file = join(dir, name);
+  const source = join(dir, name);
+  const destDir = opts.destDir ?? join(wallpaperDataDir(), themeIdFromBackgroundsDir(dir));
+  const file = join(destDir, name);
   const uri = pathToFileURL(file).href;
 
   if (opts.dry) {
+    console.log(`  dry-run: copy ${source} → ${file}`);
     console.log(`  dry-run: gsettings picture-uri + picture-uri-dark → ${uri}`);
     return { file, uri };
   }
+
+  await mkdir(destDir, { recursive: true });
+  await copyFile(source, file);
 
   for (const key of ["picture-uri", "picture-uri-dark"] as const) {
     const code = await gs.set("org.gnome.desktop.background", key, `'${uri}'`);
